@@ -1,0 +1,11 @@
+/* 图表控件位置及显示属性定义 开始 */
+ctrl-chart {
+    grid-area: tempchart;
+
+    width: calc(100% - 6px);    
+    margin: 3px;
+    border: 1px solid silver;
+    border-radius: 3px;
+    box-shadow: 0px 0px 3px rgba(120, 120, 120, 0.6);
+}
+/* 图表控件位置及显示属性定义 结束 */

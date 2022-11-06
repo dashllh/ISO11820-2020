@@ -1,0 +1,49 @@
+ctrl-toolbar {
+    grid-area: toolbar;
+    position: relative; /* 为了使新建试验对话框显示在该组件范围内，而不是全屏范围内 */
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    border: 1px solid silver;
+    background-color: rgb(105, 105, 105);
+    border-radius: 3px 3px 0 0;
+    box-shadow: 0 0 5px rgba(90, 90, 90, 0.6);
+}
+
+ctrl-toolbar a {
+    text-decoration: none;
+    color: black;
+}
+
+ctrl-toolbar img {
+    width: 16px;
+    height: 16px;
+}
+
+.toolbar-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2px;
+    gap: 2px;
+    border: 1px solid rgb(105, 105, 105);
+    background-color: rgb(105, 105, 105);
+    font-size: 0.8em;
+    padding: 3px;
+    transition: all 0.3s;
+}
+
+.toolbar-item a {
+    color: white;
+}
+
+.toolbar-item:hover {
+    border: 1px solid rgb(150, 150, 150);
+    background-color: rgb(199, 161, 90);
+    cursor: pointer;
+}
+
+/* 无效功能按钮的属性集合 */
+.toolbar-item[disabled='true'] {
+    pointer-events: none;
+}

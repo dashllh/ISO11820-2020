@@ -1,0 +1,13 @@
+/* 页面全局样式 开始 */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    width: 100%;
+    margin: 0 auto;
+    padding: 0;
+}
+/* 页面全局样式 结束*/
+
+
