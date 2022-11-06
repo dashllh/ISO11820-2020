@@ -40,8 +40,7 @@ namespace TestServer.Core
         //试验控制器工作函数(状态机)
         protected override void DoWork(object state)
         {
-            base.DoWork(state);
-            
+            base.DoWork(state);            
         }
 
     }
