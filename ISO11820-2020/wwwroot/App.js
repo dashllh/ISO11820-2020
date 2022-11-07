@@ -52,7 +52,6 @@ connection.on("MasterBroadCast", function (data) {
     if (viewTest !== null) {        
         viewTest.updateView(json);
     }
-
     //console.log(GlobalParam);
 });
 connection.start();

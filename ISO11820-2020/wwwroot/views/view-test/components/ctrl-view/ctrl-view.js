@@ -94,13 +94,14 @@ class CtrlView extends HTMLElement {
             model:JSON - 视图模型数据
     */
     updateDisplay(model) {        
-        this.#timer.Value     = model.Timer;     //试验计时
-        this.#temp1.Value     = model.Temp1;     //炉内温度1
-        this.#temp2.Value     = model.Temp2;     //炉内温度2
-        this.#tempSuf.Value   = model.TempSuf;   //试样表面温度
-        this.#tempCen.Value   = model.TempCen;   //试样中心温度
-        this.#tempDrift.Value = model.TempDriftMean; //炉内温度1与炉内温度2温度漂移平均值
-        this.#chart.refresh(model.Timer, model.Temp1, model.Temp2, model.TempSuf, model.TempCen); 
+        this.#timer.Value     = model.Timer;                   //试验计时
+        this.#temp1.Value     = model.sensorDataCatch.Temp1;   //炉内温度1
+        this.#temp2.Value     = model.sensorDataCatch.Temp2;   //炉内温度2
+        this.#tempSuf.Value   = model.sensorDataCatch.TempSuf; //试样表面温度
+        this.#tempCen.Value   = model.sensorDataCatch.TempCen; //试样中心温度
+        this.#tempDrift.Value = model.caculateDataCatch.TempDriftMean; //炉内温度1与炉内温度2温度漂移平均值
+        this.#chart.refresh(model.Timer,this.#temp1.Value,this.#temp2.Value,
+            this.#tempSuf.Value,this.#tempCen.Value); 
         //如果试验控制器为[Recording]状态,则增加传感器数据记录
         if (model.MasterStatus === 3) {
             this.#dataOutput.appendNewData(model);
@@ -118,7 +119,7 @@ class CtrlView extends HTMLElement {
                 if (GlobalParam.TestMasters[model.MasterId].Status === 0) {
                     console.log("Idle -> Preparing");
                     //设置"开始计时"按钮为有效状态
-                    this.#toolBar.setButtonStatus('starttimer', true);
+                    //this.#toolBar.setButtonStatus('starttimer', true);
                 }
                 //控制器状态从[Recording]转换为[Preparing]的情况
                 if (GlobalParam.TestMasters[model.MasterId].Status === 3) {

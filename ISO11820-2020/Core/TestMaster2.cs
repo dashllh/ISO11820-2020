@@ -19,18 +19,15 @@ namespace TestServer.Core
         }
 
         // 重载传感器数据获取函数
-        protected override SensorDataCatch FetchSensorData()
+        protected override void FetchSensorData()
         {
             //取得该试验控制器需要的传感器数据
-            SensorDataCatch data = new SensorDataCatch()
-            {
-                Timer = 0,
-                Temp1 = _sensors.Sensors[2].Outputvalue,
-                Temp2 = _sensors.Sensors[2].Outputvalue,
-                TempSuf = _sensors.Sensors[2].Outputvalue,
-                TempCen = _sensors.Sensors[2].Outputvalue
-            };
-            return data;
+            //刷新传感器数据缓存            
+            _sensorDataCatch.Timer = 0;
+            _sensorDataCatch.Temp1 = _sensors.Sensors[2].Outputvalue;
+            _sensorDataCatch.Temp2 = _sensors.Sensors[2].Outputvalue;
+            _sensorDataCatch.TempSuf = _sensors.Sensors[2].Outputvalue;
+            _sensorDataCatch.TempCen = _sensors.Sensors[2].Outputvalue;
         }
 
         //重载试验状态线程函数,执行二号炉的试验控制逻辑

@@ -40,10 +40,10 @@ class SensorDataList extends HTMLElement {
         let Cell4 = newRow.insertCell(3); //表面温度
         let Cell5 = newRow.insertCell(3); //中心温度
         Cell1.textContent = Math.round((data.Timer + Number.EPSILON) * 10) / 10;
-        Cell2.textContent = Math.round((data.Temp1 + Number.EPSILON) * 10) / 10;
-        Cell3.textContent = Math.round((data.Temp2 + Number.EPSILON) * 10) / 10;
-        Cell4.textContent = Math.round((data.TempSuf + Number.EPSILON) * 10) / 10;
-        Cell5.textContent = Math.round((data.TempCen + Number.EPSILON) * 10) / 10;
+        Cell2.textContent = Math.round((data.sensorDataCatch.Temp1 + Number.EPSILON) * 10) / 10;
+        Cell3.textContent = Math.round((data.sensorDataCatch.Temp2 + Number.EPSILON) * 10) / 10;
+        Cell4.textContent = Math.round((data.sensorDataCatch.TempSuf + Number.EPSILON) * 10) / 10;
+        Cell5.textContent = Math.round((data.sensorDataCatch.TempCen + Number.EPSILON) * 10) / 10;
     }
 
     //清空列表显示
