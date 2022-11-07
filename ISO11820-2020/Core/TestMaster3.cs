@@ -42,6 +42,5 @@ namespace TestServer.Core
         {
             base.DoWork(state);            
         }
-
     }
 }

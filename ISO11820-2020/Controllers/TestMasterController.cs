@@ -111,11 +111,11 @@ namespace TestServer.Controllers
             //}
         }
 
-        //测试代码: 系统登录
-        [HttpPost]
-        public IActionResult ProcessLogin([FromForm] MyData obj)
+        //系统登录
+        [HttpPost("login")]
+        public IActionResult ProcessLogin([FromForm] LoginData login)
         {
-            if (obj.Name.Equals("dash") && obj.Value.Equals("121"))
+            if (login.UserName.Equals("dash") && login.Password.Equals("121"))
                 return new JsonResult("manager");
             else
                 return new JsonResult("operator");
@@ -216,22 +216,59 @@ namespace TestServer.Controllers
          *  功能: 停止计时
          */
         [HttpGet("stoptimer/{id}")]
-        public void StopTimer(int id)
+        public IActionResult StopTimer(int id)
         {
             _testMasters.DictTestMaster?[id].StopRecording();
+
+            Message msg = new Message();
+            msg.Param = new Dictionary<string, object>();
+            msg.Cmd = "stoptimer";
+            msg.Ret = "0";
+            msg.Msg = "计时结束。";
+            msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
+
+            return new JsonResult(msg);
         }
 
         /*
-         * 功能: 取消试验
+         * 功能: 取消当前试验
          */
-        //[HttpGet("canceltest/{id}")]
+        [HttpGet("canceltest/{id}")]
+        public IActionResult CancelTest(int id)
+        {
+            //执行取消本次试验的控制器相关操作
+            //...
+
+            Message msg = new Message();
+            msg.Param = new Dictionary<string, object>();
+            msg.Cmd = "canceltest";
+            msg.Ret = "0";
+            msg.Msg = "本次试验已取消。";
+            msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
+
+            return new JsonResult(msg);
+        }
 
         /*
-         * 功能: 停止加热
+         * 功能: 停止不燃炉加热
          * 参数:
          *      id - 试验控制器ID
          */
-        //[HttpGet("stopheating/{id}")]
+        [HttpGet("stopheating/{id}")]
+        public IActionResult StopHeating(int id)
+        {
+            //执行停止不燃炉加热的相关操作
+            //...
+
+            Message msg = new Message();
+            msg.Param = new Dictionary<string, object>();
+            msg.Cmd = "stopheating";
+            msg.Ret = "0";
+            msg.Msg = "不燃炉已停止加热。";
+            msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
+
+            return new JsonResult(msg);
+        }
 
         /*
          * 功能: 设置试验后样品残余质量
@@ -240,35 +277,31 @@ namespace TestServer.Controllers
          *      mass - 当前试验样品的残余质量
          */
         [HttpPost("setpostmass/{id}")]
-        public IActionResult SetPostMass(int id,[FromBody] double mass)
+        public IActionResult SetPostData(int id,[FromBody] PostTestData postdata)
         {
             //设置当前试验样品的残余质量
-            _testMasters.DictTestMaster[id].SetPostMass(mass);
+            _testMasters.DictTestMaster[id].SetPostMass(postdata.PostMass);
 
-            return new JsonResult("operator");
+            //执行试验后期处理并生成本次试验的数据及报告文件
+            //...
+
+            Message msg = new Message();
+            msg.Param = new Dictionary<string, object>();
+            msg.Cmd = "setpostmass";
+            msg.Ret = "0";
+            msg.Msg = "已设置试样残余质量并生成试验报告。";
+            msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
+
+            return new JsonResult(msg);
         }
-
-        //// PUT api/<TestMasterController>/5
-        //[HttpPut("{id}")]
-        //public void Put(int id, [FromBody] string value)
-        //{
-        //}
-
-        //// DELETE api/<TestMasterController>/5
-        //[HttpDelete("{id}")]
-        //public void Delete(int id)
-        //{
-        //}
     }
 
-    /*
-     * 定义用于Action方法调用时的数据绑定的类型
-     */
-    //Login信息映射对象
-    public class MyData
+    /* 定义用于Action方法调用时的数据绑定的类型 */
+    //用户登录所需的信息类型
+    public class LoginData
     {
-        public string Name { get; set; } = string.Empty;
-        public string Value { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
     }
     //新建试验信息映射对象
     public class NewTestData
@@ -292,12 +325,23 @@ namespace TestServer.Controllers
         public int ConstPower { get; set; }
         public string TestMemo { get; set; }
     }
+
+    //试验结束后需要客户端提交的关键数据
+    public class PostTestData
+    {
+        public double PostMass { get; set; }
+    }
+
     //控制器函数返回消息对象
     internal class Message
     {
+        //操作命令
         public string Cmd { get; set; }
+        //返回结果("0":执行成功 | "-1":执行失败)
         public string Ret { get; set; }
+        //返回消息内容
         public string Msg { get; set; }
+        //返回的附加参数
         public Dictionary<string, object> Param { get; set; }
     }
 }

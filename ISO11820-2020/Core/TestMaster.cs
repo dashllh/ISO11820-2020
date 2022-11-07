@@ -139,12 +139,16 @@ namespace TestServer.Core
             //初始化控制器工作模式及状态
             WorkMode = MasterWorkMode.Standby;
             Status   = MasterStatus.Idle;
-        }        
+        }
 
-        /* 取得当前试验控制器对应的传感器数据当前值 */
-        protected virtual SensorDataCatch FetchSensorData()
+
+        /* ====================== 实现试验控制器通用接口方法 ================== */
+        /* 控制器初始化函数 */
+        public void OnInitialized()
         {
-            return new SensorDataCatch();
+            //启动试验控制器并设置状态为[Idle]           
+            Status = MasterStatus.Idle;
+            _timer?.Change(0, 1000);
         }
 
         /* 定时任务函数,执行系统空闲时的任务[Idle] */
@@ -172,15 +176,9 @@ namespace TestServer.Core
         {
         }
 
-        /* 试验完成后期数据处理函数 */
-        protected virtual void PostTestProcess()
-        {
-        }
-
         /* 初始化函数 */
 
         /* 内存清理函数 */
-
 
         /* 
          * 功能: 计算10min炉内温度漂移
@@ -207,37 +205,6 @@ namespace TestServer.Core
         }
 
         /*
-         * 功能: 设置当前试验样品的残余质量
-         * 参数:
-         *      mass - 样品残余质量
-         */
-        public void SetPostMass(double mass)
-        {
-        }
-
-        /*
-         * 功能: 试验结束后期处理(保存本次试验数据,视频记录等操作)
-         * 参数:
-         *      mass - 本次试验样品残余质量
-         */
-        public bool ProcessPostTest(double mass)
-        {
-            //保存CSV数据
-            using (var writer = new StreamWriter("filepath"))
-            using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
-            {
-                csv.WriteRecords(_bufSensorData);
-            }
-            //保存火焰视频记录(如果有)
-            //...
-
-            //清理本次试验数据缓存
-            ClearDataCatch();
-
-            return true;
-        }
-
-        /*
          * 功能: 清理试验数据缓存
          */
         protected void ClearDataCatch()
@@ -251,18 +218,6 @@ namespace TestServer.Core
         }
 
         public void CreateTest()
-        {
-            throw new NotImplementedException();
-        }
-
-        /* CSV结果文件输出函数 */
-        public void GenerateCSV(string filepath)
-        {
-            throw new NotImplementedException();
-        }
-
-        /* 报表文件(.xlsx | .pdf)生成函数 */
-        public void GenerateTestReport(string filepath)
         {
             throw new NotImplementedException();
         }
@@ -296,29 +251,14 @@ namespace TestServer.Core
             Status = MasterStatus.Preparing;
         }
 
-        public void OnInitialized()
-        {            
-            //启动试验控制器并设置状态为[Idle]           
-            Status = MasterStatus.Idle;
-            _timer?.Change(0, 1000);
-        }
-
-        /*
-         * 功能: 设置本次试验样品的产品信息
-         * 参数:
-         *       proddata - 本次试验样品的产品数据缓存对象
-         */
         public virtual void SetProductData(Productmaster prodmaster)
         {
+            throw new NotImplementedException();
         }
 
-        /*
-         * 功能: 设置本次试验数据缓存对象
-         * 参数:
-         *       testdata - 本次试验数据缓存对象
-         */
         public virtual void SetTestData(Testmaster testmaster)
         {
+            throw new NotImplementedException();
         }
 
         /*
@@ -327,7 +267,7 @@ namespace TestServer.Core
          *      phenocode - 主要现象编码
          *      memo      - 其他现象文字描述
          */
-        public void UpdatePhenomenon(string phenocode, string memo)
+        public void SetPhenomenon(string phenocode, string memo)
         {
             throw new NotImplementedException();
         }
@@ -347,5 +287,27 @@ namespace TestServer.Core
         {
             throw new NotImplementedException();
         }
+
+        /* 试验完成后期数据处理函数 */
+        public virtual void PostTestProcess()
+        {
+            throw new NotImplementedException();
+        }
+
+        /* ======================= ISO11820 独有的函数 ================ */
+        /* 取得当前试验控制器对应的传感器数据当前值 */
+        protected virtual SensorDataCatch FetchSensorData()
+        {
+            return new SensorDataCatch();
+        }
+
+        /*
+         * 功能: 设置当前试验样品的残余质量
+         * 参数:
+         *      mass - 样品残余质量
+         */
+        public void SetPostMass(double mass)
+        {
+        }        
     }
 }

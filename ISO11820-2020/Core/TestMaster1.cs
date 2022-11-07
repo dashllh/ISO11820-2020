@@ -62,7 +62,7 @@ namespace TestServer.Core
         }
 
         //重载试验完成后期处理函数
-        protected override async void PostTestProcess()
+        public override async void PostTestProcess()
         {
             base.PostTestProcess();
             /* 申明操作Excel文件的COM对象 */
