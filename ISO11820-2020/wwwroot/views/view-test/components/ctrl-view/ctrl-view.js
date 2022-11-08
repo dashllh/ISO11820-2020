@@ -86,8 +86,7 @@ class CtrlView extends HTMLElement {
 
         //试验后信息录入对话框
         this.#dlgPostTest = new DlgPostTest(this.#ctrlId);
-        this.appendChild(this.#dlgPostTest);        
-        
+        this.appendChild(this.#dlgPostTest);                
     }
 
     /* 文档回调函数 */

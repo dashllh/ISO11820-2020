@@ -13,9 +13,9 @@ class DlgPostTest extends HTMLElement {
     //对话框ViewModel
     #vmPostTest = {
         "flame": false,
-        "flametime": -1,
-        "flamedur": -1,
-        "postweight": -1
+        "flametime": "",
+        "flamedur": "",
+        "postweight": ""
     }
 
     constructor(id) {
@@ -26,6 +26,31 @@ class DlgPostTest extends HTMLElement {
     }
 
     confirmPostTest(event) {
+        //从对话框获取用户输入
+        if (this.#chkFlame.checked) {
+            this.#vmPostTest.flame = true;
+            this.#vmPostTest.flametime = document.getElementById(`flametime${this.#id}`).value;
+            this.#vmPostTest.flamedur = document.getElementById(`flamedur${this.#id}`).value;
+        } else {
+            this.#vmPostTest.flame = false;
+        }        
+        this.#vmPostTest.postweight = document.getElementById(`postweight${this.#id}`).value;
+
+        console.log(this.#vmPostTest);
+
+        //上传信息
+        let option = {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(this.#vmPostTest)
+        }
+        fetch(`api/testmaster/setpostmass/${this.#id}`, option)
+            .then(response => response.json())
+            .then(data => console.log(data));
+
+        //关闭对话框
         this.style.display = 'none';
     }
 

@@ -72,6 +72,8 @@ namespace TestServer.Models
         [StringLength(12)]
         [Unicode(false)]
         public string Phenocode { get; set; }
+        [Column("flametime")]
+        public int Flametime { get; set; }
         [Column("flameduration")]
         public int Flameduration { get; set; }
         [Column("maxtf1")]

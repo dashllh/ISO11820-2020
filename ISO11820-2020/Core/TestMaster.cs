@@ -428,7 +428,12 @@ namespace TestServer.Core
                     sheet_main.Cells["C15"].Value = _productMaster.Height;
                     //试样试验前质量
                     sheet_main.Cells["D15"].Value = _testmaster.Preweight;
-
+                    //试样残余质量
+                    sheet_main.Cells["E15"].Value = _testmaster.Postweight;
+                    //火焰起始时间
+                    sheet_main.Cells["H23"].Value = _testmaster.Flametime;
+                    //火焰持续时间
+                    sheet_main.Cells["I23"].Value = _testmaster.Flameduration;
                     //保存本次试验报表
                     //package.SaveAs($"{rptpath}\\report.xlsx");
                     await package.SaveAsAsync($"{rptpath}\\report.xlsx");
@@ -454,7 +459,7 @@ namespace TestServer.Core
                 //终温时间
                 _testmaster.Totaltesttime = Convert.ToInt32(oSheet.Range["B23"].Value);
                 //温升
-                //...
+                //...                
                 //其他关键属性
                 //...
 
@@ -502,8 +507,11 @@ namespace TestServer.Core
          * 参数:
          *      mass - 样品残余质量
          */
-        public void SetPostMass(double mass)
+        public void SetPostTestData(int flametime,int flamedur,double mass)
         {
+            _testmaster.Flametime = flametime;
+            _testmaster.Flameduration = flamedur;
+            _testmaster.Postweight = mass;
         }        
     }
 }

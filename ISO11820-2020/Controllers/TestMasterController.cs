@@ -282,7 +282,8 @@ namespace TestServer.Controllers
         public async Task<IActionResult> SetPostData(int id,[FromBody] PostTestData postdata)
         {
             //设置当前试验样品的残余质量
-            _testMasters.DictTestMaster[id].SetPostMass(postdata.PostMass);
+            _testMasters.DictTestMaster[id].SetPostTestData(postdata.FlameTime, 
+                postdata.FlameDur,postdata.PostWeight);
             //执行试验后期处理并生成本次试验的数据及报告文件
             await _testMasters.DictTestMaster[id].PostTestProcess();
             //构造返回消息
@@ -330,7 +331,10 @@ namespace TestServer.Controllers
     //试验结束后需要客户端提交的关键数据
     public class PostTestData
     {
-        public double PostMass { get; set; }
+        public bool Flame { get; set; }
+        public int FlameTime { get; set; }
+        public int FlameDur { get; set; }
+        public double PostWeight { get; set; }
     }
 
     //控制器函数返回消息对象
