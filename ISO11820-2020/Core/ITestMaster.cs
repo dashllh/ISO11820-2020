@@ -60,6 +60,6 @@ namespace TestServer.Core
         public void SetTestData(Testmaster testmaster);
 
         /* 试验结束后期处理(保存本次试验数据,视频记录等操作) */
-        public void PostTestProcess();
+        public Task PostTestProcess();
     }
 }

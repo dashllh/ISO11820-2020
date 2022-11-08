@@ -63,15 +63,8 @@ namespace TestServer.Core
         public int MasterMode { get; set; }   //控制器工作模式
         public int MasterStatus { get; set; } //控制器状态        
         /* 传感器数据项 */
-        //public double Temp1 { get; set; }   //炉内温度1 
-        //public double Temp2 { get; set; }   //炉内温度2
-        //public double TempSuf { get; set; } //表面温度
-        //public double TempCen { get; set; } //中心温度
         public SensorDataCatch sensorDataCatch { get; set; }
         /* 计算数据项 */
-        //public double Temp1Drift10Min { get; set; }  //炉内温度2 10Min漂移
-        //public double Temp2Drift10Min  { get; set; } //炉内温度1 10Min漂移
-        //public double TempDriftMean { get; set; }    //炉内温度1与炉内温度2平均漂移
         public CaculateDataCatch caculateDataCatch { get; set; }
         /* 试验现象记录数据项(该处需要后续调整完善) */
         public bool   FlameDetected { get; set; }  = false; //记录是否检测到火焰事件
@@ -127,9 +120,6 @@ namespace TestServer.Core
         protected int _iCntDeviation; //10Min温度偏离读秒,当前秒满足范围则减1,否则重置为600
         protected int _iCntDrift;     //10Min温度漂移读秒,当前秒满足范围则减1,否则重置为600
 
-        /* [Recording]状态数据结构 */
-        protected int _iCntDriftEnd; //10Min温度漂移读秒,当前秒满足范围则减1,否则重置为600
-
         /* 构造函数 */
         public TestMaster(SensorDictionary sensors, IHubContext<NotificationHub> notificationHub,
             IDbContextFactory<ISO11820DbContext> contextFactory)
@@ -155,7 +145,6 @@ namespace TestServer.Core
             _iCntStable = 0;
             _iCntDeviation = 0;
             _iCntDrift = 0;
-            //_iCntDriftEnd = 600;
 
             //初始化控制器工作模式及状态
             WorkMode = MasterWorkMode.Standby;
@@ -361,7 +350,7 @@ namespace TestServer.Core
         }
 
         /* 试验完成后期数据处理函数 */
-        public virtual async void PostTestProcess()
+        public virtual async Task PostTestProcess()
         {
             /* 申明操作Excel文件的COM对象 */
             Microsoft.Office.Interop.Excel.Application oXL = null;
@@ -375,15 +364,16 @@ namespace TestServer.Core
             string rptpath = $"{smppath}\\report";
             try
             {
-                //创建样品根目录
+                /* 创建本次试验结果文件的存储目录 */
+                //试验样品根目录
                 Directory.CreateDirectory(prodpath);
-                //创建本次试验根目录
+                //本次试验根目录
                 Directory.CreateDirectory(smppath);
-                //创建本次试验数据目录
+                //本次试验原始数据目录
                 Directory.CreateDirectory(datapath);
-                //创建本次试验报表目录
+                //本次试验报表目录
                 Directory.CreateDirectory(rptpath);
-                /* 保存试验数据文件 */
+                /* 保存本次试验数据文件 */
                 //传感器采集数据
                 using (var writer = new StreamWriter($"{datapath}\\sensordata.csv", false))
                 using (var csvwriter = new CsvWriter(writer, CultureInfo.InvariantCulture))
@@ -391,20 +381,20 @@ namespace TestServer.Core
                     //写入数据内容
                     await csvwriter.WriteRecordsAsync(_bufSensorData);
                 }
-                //其他文件
+                //其他数据文件(比如视频记录等)
                 //...
 
                 /* 生成本次试验的报表 */
-                //设置EPPlus license版本
+                //设置EPPlus license版本为非商用版本
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-                //设置CSV文件格式参数
+                //设置CSV文件格式
                 var format = new ExcelTextFormat()
                 {
                     Delimiter = ',',
                     EOL = "\r"       // DEFAULT IS "\r\n";
                                      // format.TextQualifier = '"';
                 };
-
+                //操作Excel文件
                 using (ExcelPackage package = new ExcelPackage(new FileInfo($"D:\\ISO11820\\template_report_{MasterId}.xlsx")))
                 {
                     //取得rawdata页面
@@ -440,9 +430,12 @@ namespace TestServer.Core
                     sheet_main.Cells["D15"].Value = _testmaster.Preweight;
 
                     //保存本次试验报表
-                    package.SaveAs($"{rptpath}\\report.xlsx");
+                    //package.SaveAs($"{rptpath}\\report.xlsx");
+                    await package.SaveAsAsync($"{rptpath}\\report.xlsx");
                 }
-
+                /* 使用COM接口操作Excel报表文件,以激活计算公式并回填关键数据项
+                 * (以下函数调用只适用于Windows平台,非Windows平台解决方案待定)
+                 */
                 oXL = new Microsoft.Office.Interop.Excel.Application();
                 oXL.Visible = false;
                 oXL.DisplayAlerts = false;

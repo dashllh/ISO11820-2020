@@ -201,12 +201,14 @@ namespace TestServer.Controllers
         [HttpGet("starttimer/{id}")]
         public IActionResult StartTimer(int id)
         {
+            int _masterId = id;
             _testMasters.DictTestMaster?[id].StartRecording();
             Message msg = new Message();
             msg.Param = new Dictionary<string, object>();
             msg.Cmd = "starttimer";
             msg.Ret = "0";
             msg.Msg = "计时开始。";
+            msg.Param.Add("masterid", _masterId);
             msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
 
             return new JsonResult(msg);
@@ -277,14 +279,13 @@ namespace TestServer.Controllers
          *      mass - 当前试验样品的残余质量
          */
         [HttpPost("setpostmass/{id}")]
-        public IActionResult SetPostData(int id,[FromBody] PostTestData postdata)
+        public async Task<IActionResult> SetPostData(int id,[FromBody] PostTestData postdata)
         {
             //设置当前试验样品的残余质量
             _testMasters.DictTestMaster[id].SetPostMass(postdata.PostMass);
-
             //执行试验后期处理并生成本次试验的数据及报告文件
-            //...
-
+            await _testMasters.DictTestMaster[id].PostTestProcess();
+            //构造返回消息
             Message msg = new Message();
             msg.Param = new Dictionary<string, object>();
             msg.Cmd = "setpostmass";

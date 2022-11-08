@@ -261,25 +261,14 @@ namespace TestServer.Core
             }            
             //创建并初始化SignalR客户端通信数据对象
             SignalRCatch data = new SignalRCatch()
-            {
-                //控制器ID
-                MasterId = MasterId,
-                //控制器实时工作模式及状态
-                MasterMode = (int)WorkMode,
-                MasterStatus = (int)Status,
-                //传感器数据
-                Timer = 0,
-                //Temp1 = sensordata.Temp1,
-                //Temp2 = sensordata.Temp2,
-                //TempSuf = sensordata.TempSuf,
-                //TempCen = sensordata.TempCen,
-                sensorDataCatch = _sensorDataCatch,
-                //计算数据
-                //Temp1Drift10Min = 8888,
-                //Temp2Drift10Min = 8888,
-                caculateDataCatch = _caculateDataCatch,
-                //消息对象
-                MasterMessages = new Dictionary<string, string>()
+            {                
+                MasterId          = MasterId,           //控制器ID                
+                MasterMode        = (int)WorkMode,      //控制器实时工作模式
+                MasterStatus      = (int)Status,        //控制器实时状态
+                Timer             = 0,                  //计时器
+                sensorDataCatch   = _sensorDataCatch,   //传感器数据
+                caculateDataCatch = _caculateDataCatch, //计算数据                
+                MasterMessages    = new Dictionary<string, string>() //消息对象
             };
 
             /* 根据控制器状态驱动试验逻辑 */
@@ -310,11 +299,11 @@ namespace TestServer.Core
                     //保存传感器数据至历史记录缓存
                     _bufSensorData.Add(new SensorDataCatch()
                     {
-                        Timer = _sensorDataCatch.Timer,
-                        Temp1 = _sensorDataCatch.Temp1,
-                        Temp2 = _sensorDataCatch.Temp2,
-                        TempSuf = _sensorDataCatch.TempSuf,
-                        TempCen = _sensorDataCatch.TempCen
+                        Timer   = _sensorDataCatch.Timer,    //计时器
+                        Temp1   = _sensorDataCatch.Temp1,    //炉内温度1
+                        Temp2   = _sensorDataCatch.Temp2,    //炉内温度2
+                        TempSuf = _sensorDataCatch.TempSuf,  //试样表面温度 
+                        TempCen = _sensorDataCatch.TempCen   //试样中心温度
                     });                    
                     // 计时到达60Min,无条件终止本次试验
                     if (Timer == 3600)
@@ -332,7 +321,7 @@ namespace TestServer.Core
                         {   
                             Status = MasterStatus.Complete;
                             //设置客户端消息: 本次试验已完成
-                            data.MasterMessages.Add(DateTime.Now.ToString("HH:mm"), "本次试验已完成");
+                            data.MasterMessages.Add(DateTime.Now.ToString("HH:mm"), "本次试验已完成。");
                         }
                     }
                     //增加计时器
@@ -340,15 +329,15 @@ namespace TestServer.Core
                     break;
                 case MasterStatus.Complete:  //试验结束状态
                     data.MasterStatus = (int)MasterStatus.Complete;
-                    /* 重置试验控制变量 */
+                    /* 重置试验控制相关数据缓存 */
+                    //清零计时器
                     Timer  = 0;
-                    //设置控制器状态为[Preparing],并重置10分钟读秒控制变量
+                    //设置控制器状态为[Preparing],自动为下一个试验做准备
                     Status = MasterStatus.Preparing;
-                    //_iCntStable = 600;
-                    //_iCntDrift = 600;
-                    //_iCntDeviation = 600;
-                    /* 执行终止本次试验的操作 */
-                    PostTestProcess();
+                    //重置10分钟读秒控制变量
+                    _iCntStable = 0;
+                    _iCntDrift = 0;
+                    _iCntDeviation = 0;
                     break;
                 default:
                     break;

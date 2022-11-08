@@ -17,12 +17,22 @@ class TestView extends HTMLElement {
     }
 
     /*
-        功能: 更新视图显示数据
+        功能: 更新视图显示数据(只处理试验控制器返回的消息)
         参数:
              model:JSON - 要更新显示的数据对象
     */
     updateView(model) {
         this.#ctrlViews[model.MasterId].updateDisplay(model);       
+    }
+
+    /*
+     * 功能: 处理服务器端Action API的返回消息
+     * 参数:
+     *       msg:JSON - 服务器端Action API的返回消息
+     */
+    parseControllerMsg(msg) {
+        console.log(msg);
+        this.#ctrlViews[msg.param.masterid].handleControllerMsg(msg);
     }
 }
 

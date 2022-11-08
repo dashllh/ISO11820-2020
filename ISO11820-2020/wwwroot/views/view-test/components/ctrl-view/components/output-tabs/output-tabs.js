@@ -1,3 +1,5 @@
+/* 该组件实现试验控制面板输出组件的Tab选项按钮 */
+
 //导入控制器消息显示子控件
 import { MasterMsg } from "../ctrl-msg/ctrl-msg.js"
 //导入传感器历史数据显示子控件

@@ -97,7 +97,6 @@ function SendClientCmd(cmd, param) {
                 document.body.appendChild(viewTest);
                 CurrentViewObject = viewTest;
                 GlobalParam.CurrentViewName = 'TestView';
-
                 GlobalParam.LoginUser = "dash";
             } else {
                 console.log('user name invalid.');
@@ -109,12 +108,12 @@ function SendClientCmd(cmd, param) {
             break;
         case 'starttimer':     //开始记录数据
             window.fetch(`api/testmaster/starttimer/${param}`)
-                .then(response => console.log(response.json()))
-                .then(data => console.log(data));
+                .then(response => response.json())
+                .then(data => viewTest.parseControllerMsg(data));
             break;
         case 'stoptimer':      //停止记录数据
             window.fetch(`api/testmaster/stoptimer/${param}`)
-                .then(response => console.log(response.json()));
+                .then(response => response.json());
             break;
         case 'changeview':    //切换客户端视图
             if (GlobalParam.CurrentViewName !== param) {

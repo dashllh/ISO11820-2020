@@ -17,45 +17,48 @@ class MasterMsg extends HTMLElement {
         this.setAttributeNode(attrId);
     }
 
-    attributeChangedCallback() {
-        this.render();
+    attributeChangedCallback() {        
     }
 
     connectedCallback() {
         if (this.#objMsgTable === null) {
             this.#objMsgTable = document.getElementById(`_idMsgTable${this.#msgTableId}`);
         }
-
     }
 
     /*
         功能: 在列表第一行插入一条数据
         参数:
-              data:JSON - 消息数据 
+              time:string    - 时间
+              content:string - 消息内容
     */
-    appendNewMsg(msg) {
-
+    appendNewMsg(time, content) {
+        let newRow = this.#objMsgTable.insertRow(0);
+        let Cell1 = newRow.insertCell(0); //消息时间
+        let Cell2 = newRow.insertCell(1); //消息内容
+        Cell1.textContent = time;
+        Cell2.textContent = content;
     }
 
-    //清空列表显示
+    //清空列表显示(排除首行标题栏)
     clear() {
-
+        var i;
+        var totallen = this.#objMsgTable.rows.length;
+        for (i = totallen - 1; i >= 0; i--) {
+            this.#objMsgTable.deleteRow(i);
+        }
     }
 
     get template() {
         return `
-                <table id="_idMsgTable${this.#msgTableId}">
+                <table>
                     <thead>
                         <tr>
                             <th>时间</th>
                             <th>消息内容</th>
                         </tr>
                     </thead>
-                    <tbody> 
-                        <tr>
-                            <td>16:52:33</td>
-                            <td>开始计时</td>
-                        </tr>
+                    <tbody id="_idMsgTable${this.#msgTableId}">
                     </tbody>
                 </table>
                 `;

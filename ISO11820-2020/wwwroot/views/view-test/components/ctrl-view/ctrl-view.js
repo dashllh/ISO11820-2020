@@ -9,6 +9,8 @@ import { MasterToolBar } from "./components/ctrl-toolbar/ctrl-toolbar.js"
 import { TempChart } from "./components/ctrl-chart/ctrl-chart.js"
 //导入消息输出组件
 import { MasterOutput } from "./components/ctrl-output/ctrl-output.js"
+//导入试验后信息录入对话框
+import { DlgPostTest } from "./components/ctrl-posttest/ctrl-posttest.js"
 
 /* 该类型定义试验控制器客户端操作面板 */
 class CtrlView extends HTMLElement {
@@ -29,6 +31,8 @@ class CtrlView extends HTMLElement {
     #tabOutput = null;  //消息输出组件的内部Tab组件
     #msgOutput = null;  //控制器消息列表
     #dataOutput = null; //传感器数据列表
+
+    #dlgPostTest = null; //试验完成后信息录入对话框
 
     constructor(id) {
         super();
@@ -59,11 +63,11 @@ class CtrlView extends HTMLElement {
 
         //温度图表
         this.#chart = new TempChart(this.#ctrlId);
-        //消息输出
+        //构造消息输出组件
         this.#Output = new MasterOutput(this.#ctrlId);
         this.#tabOutput = this.#Output.getInnerTabCtrl();
-        this.#msgOutput = this.#tabOutput.getMsgList();
-        this.#dataOutput = this.#tabOutput.getDataList();
+        this.#msgOutput = this.#tabOutput.getMsgList();  //控制器消息
+        this.#dataOutput = this.#tabOutput.getDataList();//传感器数据列表
 
         /* 组装该控制面板各个子控件 */
         //工具栏
@@ -79,6 +83,11 @@ class CtrlView extends HTMLElement {
         this.appendChild(this.#chart);
         //消息输出
         this.appendChild(this.#Output);
+
+        //试验后信息录入对话框
+        this.#dlgPostTest = new DlgPostTest(this.#ctrlId);
+        this.appendChild(this.#dlgPostTest);        
+        
     }
 
     /* 文档回调函数 */
@@ -89,7 +98,7 @@ class CtrlView extends HTMLElement {
     /* 接口方法定义 */
 
     /*
-        功能: 更新控制器视图显示
+        功能: 更新控制器视图显示(只处理试验控制器返回的消息)
         参数:
             model:JSON - 视图模型数据
     */
@@ -100,12 +109,12 @@ class CtrlView extends HTMLElement {
         this.#tempSuf.Value   = model.sensorDataCatch.TempSuf; //试样表面温度
         this.#tempCen.Value   = model.sensorDataCatch.TempCen; //试样中心温度
         this.#tempDrift.Value = model.caculateDataCatch.TempDriftMean; //炉内温度1与炉内温度2温度漂移平均值
-        this.#chart.refresh(model.Timer,this.#temp1.Value,this.#temp2.Value,
-            this.#tempSuf.Value,this.#tempCen.Value); 
-        //如果试验控制器为[Recording]状态,则增加传感器数据记录
-        if (model.MasterStatus === 3) {
-            this.#dataOutput.appendNewData(model);
-        }     
+        //如果试验控制器为[Recording]状态,则增加传感器数据记录并刷新曲线图表显示
+        //if (model.MasterStatus === 3) {
+        //    this.#dataOutput.appendNewData(model);
+        //    this.#chart.refresh(model.Timer, this.#temp1.Value, this.#temp2.Value,
+        //        this.#tempSuf.Value, this.#tempCen.Value); 
+        //}     
         /* 根据控制器当前状态设置控制器显示 */
         switch (model.MasterStatus) {
             case 0:    //Idle
@@ -127,6 +136,12 @@ class CtrlView extends HTMLElement {
                     //设置"开始计时"按钮为有效状态
                     //...
                 }
+                //[Complete]转换为[Preparing]的情况
+                if (GlobalParam.TestMasters[model.MasterId].Status === 4) {
+                    console.log("Complete -> Preparing");
+                    //设置"开始计时"按钮为有效状态
+                    //...
+                }
                 break;
             case 2:    //Ready
                 //控制器状态从[Preparing]转换为[Ready]的情况
@@ -145,11 +160,24 @@ class CtrlView extends HTMLElement {
                     //设置"停止计时"按钮为有效状态
                     this.#toolBar.setButtonStatus('stoptimer', true);
                 }
+                //增加传感器数据记录并刷新曲线图表显示
+                this.#dataOutput.appendNewData(model);
+                this.#chart.refresh(model.Timer, this.#temp1.Value, this.#temp2.Value,
+                    this.#tempSuf.Value, this.#tempCen.Value); 
                 break;
             case 4:    //Complete
                 //控制器状态从[Recording]转换为[Complete]的情况
                 if (GlobalParam.TestMasters[model.MasterId].Status === 3) {
                     console.log("Recording -> Complete");
+                    /* 本次试验结束,清空显示 */
+                    //消息列表
+                    this.#msgOutput.clear();
+                    //传感器列表
+                    this.#dataOutput.clear();
+                    //曲线图表
+                    this.#chart.resetChart();
+                    //弹出试验后录入信息对话框        
+                    this.#dlgPostTest.style.display = 'block';
                 }
                 break;
             default:
@@ -157,6 +185,15 @@ class CtrlView extends HTMLElement {
         //同步客户端试验控制器状态
         GlobalParam.TestMasters[model.MasterId].Mode = model.MasterMode;
         GlobalParam.TestMasters[model.MasterId].Status = model.MasterStatus;        
+    }
+
+    /*
+     * 功能: 处理服务器端Action API的返回消息
+     * 参数:
+     *       msg:JSON - 服务器端Action API的返回消息
+     */
+    handleControllerMsg(msg) {
+        this.#msgOutput.appendNewMsg(msg.param.time, msg.msg);
     }
 
     get template() {

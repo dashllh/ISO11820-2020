@@ -84,6 +84,7 @@ class NewTest extends HTMLElement {
         document.getElementById(`testmemo${this.#id}`).value         = this.#vmNewTest.Memo;
     }
 
+    /* 提交新试验数据至试验控制器 */
     confirmNewTest(event) {
         /* 确认输入信息并上传试验控制器 */
         //获取输入信息
