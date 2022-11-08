@@ -13,9 +13,9 @@ class DlgPostTest extends HTMLElement {
     //对话框ViewModel
     #vmPostTest = {
         "flame": false,
-        "flametime": "",
-        "flamedur": "",
-        "postweight": ""
+        "flametime": 0,
+        "flamedur": 0,
+        "postweight": 0.0
     }
 
     constructor(id) {
@@ -34,7 +34,7 @@ class DlgPostTest extends HTMLElement {
         } else {
             this.#vmPostTest.flame = false;
         }        
-        this.#vmPostTest.postweight = document.getElementById(`postweight${this.#id}`).value;
+        this.#vmPostTest.postweight = this.#txtPostWeight.value;
 
         console.log(this.#vmPostTest);
 
@@ -46,12 +46,19 @@ class DlgPostTest extends HTMLElement {
             },
             body: JSON.stringify(this.#vmPostTest)
         }
-        fetch(`api/testmaster/setpostmass/${this.#id}`, option)
+        fetch(`api/testmaster/setpostdata/${this.#id}`, option)
             .then(response => response.json())
             .then(data => console.log(data));
 
         //关闭对话框
         this.style.display = 'none';
+    }
+
+    /* 控件事件监听器 */
+    onFlameEventCheck(event) {
+        this.#txtFlameTime.disabled = this.#chkFlame.checked ? false : true;
+        this.#txtFlameDur.disabled = this.#chkFlame.checked ? false : true;
+        console.log(this.#txtFlameTime.disabled);
     }
 
     connectedCallback() {
@@ -61,16 +68,18 @@ class DlgPostTest extends HTMLElement {
             this.#btnConfirm = document.getElementById(`btnConfirmPostTest${this.#id}`);
             this.#btnConfirm.addEventListener('click', this.confirmPostTest.bind(this));
         }
-
-        if (this.#chkFlame === null) {
-            this.#chkFlame = document.getElementById(`chkflame${this.#id}`);
-        }
+                
         if (this.#txtFlameTime === null) {
             this.#txtFlameTime = document.getElementById(`flametime${this.#id}`);
         }
         if (this.#txtFlameDur === null) {
             this.#txtFlameDur = document.getElementById(`flamedur${this.#id}`);
         }
+        if (this.#chkFlame === null) {
+            this.#chkFlame = document.getElementById(`chkflame${this.#id}`);
+            this.#chkFlame.addEventListener('change', this.onFlameEventCheck.bind(this));
+        }
+
         if (this.#txtPostWeight === null) {
             this.#txtPostWeight = document.getElementById(`postweight${this.#id}`);
         }
@@ -82,24 +91,24 @@ class DlgPostTest extends HTMLElement {
                 <form id="formPostTest${this.#id}" class="dlgposttest">
                     <!-- 试验现象 -->
                     <fieldset class="testpheno">
-                        <legend>试验现象</legend>
-                        <input type="checkbox" name="chkflame${this.#id}" id="chkflame${this.#id}">
-                        <label for="chkflame${this.#id}">持续火焰</label>
-                        <br>
+                        <legend>
+                            <input type="checkbox" name="chkflame${this.#id}" id="chkflame${this.#id}">
+                            <label for="chkflame${this.#id}">持续火焰</label>
+                        </legend>
                         <label for="flametime${this.#id}">发生时间(s):</label>
-                        <input type="text" name="flametime${this.#id}" id="flametime${this.#id}">
+                        <input type="text" name="flametime${this.#id}" id="flametime${this.#id}" disabled />
                         <br>
                         <label for="flamedur${this.#id}">持续时间(s):</label>
-                        <input type="text" name="flamedur${this.#id}" id="flamedur${this.#id}">
+                        <input type="text" name="flamedur${this.#id}" id="flamedur${this.#id}" disabled />
                     </fieldset>
                 <!-- 试样残余质量 -->
                     <fieldset class="weightinfo">
-                        <legend>质量信息</legend>
-                        <label for="postweight${this.#id}">试样残余质量(g):</label>
+                        <legend>试样质量</legend>
+                        <label for="postweight${this.#id}">残余质量(g):</label>
                         <input type="text" name="postweight${this.#id}" id="postweight${this.#id}">
                     </fieldset>
 
-                    <input type="button" id="btnConfirmPostTest${this.#id}" value="确定">
+                    <input type="button" id="btnConfirmPostTest${this.#id}" class="posttestbutton" value="确定">
                 </form>
                `;
     }

@@ -278,12 +278,16 @@ namespace TestServer.Controllers
          *      id   - 试验控制器索引
          *      mass - 当前试验样品的残余质量
          */
-        [HttpPost("setpostmass/{id}")]
+        [HttpPost("setpostdata/{id}")]
         public async Task<IActionResult> SetPostData(int id,[FromBody] PostTestData postdata)
         {
-            //设置当前试验样品的残余质量
-            _testMasters.DictTestMaster[id].SetPostTestData(postdata.FlameTime, 
-                postdata.FlameDur,postdata.PostWeight);
+            //设置当前试验样品的残余质量及火焰信息
+            if(postdata.Flame) {
+                _testMasters.DictTestMaster[id].SetPostTestData(postdata.FlameTime,
+                postdata.FlameDur, postdata.PostWeight);
+            } else {
+                _testMasters.DictTestMaster[id].SetPostTestData(0,0, postdata.PostWeight);
+            }            
             //执行试验后期处理并生成本次试验的数据及报告文件
             await _testMasters.DictTestMaster[id].PostTestProcess();
             //构造返回消息
