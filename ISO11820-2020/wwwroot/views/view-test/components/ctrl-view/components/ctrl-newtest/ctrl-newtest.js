@@ -86,6 +86,9 @@ class NewTest extends HTMLElement {
 
     /* 提交新试验数据至试验控制器 */
     confirmNewTest(event) {
+        //浮点数正则表达式Pattern
+        let reg_float = /^[+]?\d+(\.\d+)?$/; //float类型正则表达式Pattern
+        let tmpfloat = ""; //用于缓存用户输入的浮点数的临时变量
         /* 确认输入信息并上传试验控制器 */
         //获取输入信息
         this.#vmNewTest.AmbTemp = document.getElementById(`ambtemp${this.#id}`).value;
@@ -94,11 +97,33 @@ class NewTest extends HTMLElement {
         this.#vmNewTest.SmpSubId = document.getElementById(`smpsubid${this.#id}`).value;
         this.#vmNewTest.SmpName = document.getElementById(`smpname${this.#id}`).value;
         this.#vmNewTest.SmpSpec = document.getElementById(`smpspec${this.#id}`).value;
-        this.#vmNewTest.SmpHeight = document.getElementById(`smpheight${this.#id}`).value;
-        this.#vmNewTest.SmpDiameter = document.getElementById(`smpdiameter${this.#id}`).value;
-        this.#vmNewTest.SmpWeight = document.getElementById(`smpweight${this.#id}`).value;
+        //试样高度
+        tmpfloat = document.getElementById(`smpheight${this.#id}`).value;        
+        if (!reg_float.test(tmpfloat)) {
+            document.getElementById(`smpheight${this.#id}`).focus();
+            return;
+        } else {
+            this.#vmNewTest.SmpHeight = parseFloat(tmpfloat);
+        }
+        //试样直径
+        tmpfloat = document.getElementById(`smpdiameter${this.#id}`).value;        
+        if (!reg_float.test(tmpfloat)) {
+            document.getElementById(`smpdiameter${this.#id}`).focus();
+            return;
+        } else {
+            this.#vmNewTest.SmpDiameter = parseFloat(tmpfloat);
+        }
+        //样品质量
+        tmpfloat = document.getElementById(`smpweight${this.#id}`).value;        
+        if (!reg_float.test(tmpfloat)) {
+            document.getElementById(`smpweight${this.#id}`).focus();
+            return;
+        } else {
+            this.#vmNewTest.SmpWeight = parseFloat(tmpfloat);
+        }
+        //试验编号
         this.#vmNewTest.TestId = document.getElementById(`testid${this.#id}`).value;
-
+        //试验日期
         var curDate = new Date();
         document.getElementById(`testdate${this.#id}`).value = curDate.getFullYear() + "/" + (curDate.getMonth()+1) + "/" + curDate.getDate();
         this.#vmNewTest.TestDate = document.getElementById(`testdate${this.#id}`).value;

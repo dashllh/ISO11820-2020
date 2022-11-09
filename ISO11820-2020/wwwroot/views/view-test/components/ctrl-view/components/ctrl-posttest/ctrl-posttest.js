@@ -26,15 +26,38 @@ class DlgPostTest extends HTMLElement {
     }
 
     confirmPostTest(event) {
+        let reg_float = /^[+]?\d+(\.\d+)?$/; //float类型正则表达式Pattern
+        let tmpfloat = ""; //用于缓存用户输入的浮点数的临时变量
         //从对话框获取用户输入
         if (this.#chkFlame.checked) {
             this.#vmPostTest.flame = true;
-            this.#vmPostTest.flametime = document.getElementById(`flametime${this.#id}`).value;
-            this.#vmPostTest.flamedur = document.getElementById(`flamedur${this.#id}`).value;
+            //起火时间
+            tmpfloat = document.getElementById(`flametime${this.#id}`).value;            
+            if (!reg_float.test(tmpfloat)) {
+                document.getElementById(`flametime${this.#id}`).focus();
+                return;
+            } else {
+                this.#vmPostTest.flametime = parseFloat(tmpfloat);
+            }
+            //火焰持续时间
+            tmpfloat = document.getElementById(`flamedur${this.#id}`).value;            
+            if (!reg_float.test(tmpfloat)) {
+                document.getElementById(`flamedur${this.#id}`).focus();
+                return;
+            } else {
+                this.#vmPostTest.flamedur = parseFloat(tmpfloat);
+            }
         } else {
             this.#vmPostTest.flame = false;
-        }        
-        this.#vmPostTest.postweight = this.#txtPostWeight.value;
+        }       
+        //试样残余质量
+        tmpfloat = this.#txtPostWeight.value;        
+        if (!reg_float.test(tmpfloat)) {
+            this.#txtPostWeight.focus();
+            return;
+        } else {
+            this.#vmPostTest.postweight = parseFloat(tmpfloat);
+        }
 
         console.log(this.#vmPostTest);
 
@@ -62,24 +85,26 @@ class DlgPostTest extends HTMLElement {
     }
 
     connectedCallback() {
-        /* 注册按钮事件 */
-        //确定
+        /* 初始化控件对象并注册按钮事件 */
+        //确定按钮
         if (this.#btnConfirm === null) {
             this.#btnConfirm = document.getElementById(`btnConfirmPostTest${this.#id}`);
             this.#btnConfirm.addEventListener('click', this.confirmPostTest.bind(this));
         }
-                
+        //起火时间  
         if (this.#txtFlameTime === null) {
             this.#txtFlameTime = document.getElementById(`flametime${this.#id}`);
         }
+        //火焰持续时间
         if (this.#txtFlameDur === null) {
             this.#txtFlameDur = document.getElementById(`flamedur${this.#id}`);
         }
+        //是否发生持续火焰
         if (this.#chkFlame === null) {
             this.#chkFlame = document.getElementById(`chkflame${this.#id}`);
             this.#chkFlame.addEventListener('change', this.onFlameEventCheck.bind(this));
         }
-
+        //试样残余质量
         if (this.#txtPostWeight === null) {
             this.#txtPostWeight = document.getElementById(`postweight${this.#id}`);
         }

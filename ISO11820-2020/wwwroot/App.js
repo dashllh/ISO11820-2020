@@ -129,7 +129,9 @@ function SendClientCmd(cmd, param) {
                     GlobalParam.CurrentViewName = 'ReportView';
                     console.log('viewReport selected.');
                 } else if (param === 'QueryView') {
-
+                    //切换当前视图至QueryView
+                    GlobalParam.CurrentViewName = 'QueryView';
+                    console.log('viewQuery selected.');
                 }
             }            
             break;
