@@ -1,1 +1,76 @@
-﻿
+﻿view-report {
+    margin: 25px 15px;
+}
+
+.criteria {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+.detail {
+    display: block;
+    margin-top: 25px;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.detail table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.detail table th {
+    position: sticky;
+    top: 0;
+    font-weight: normal;
+    background-color: #4260e7;
+    color: white;
+}
+
+.detail table th, td {
+    border-left: 1px solid #DDDDDD;
+    border-right: 1px solid #DDDDDD;
+    border-bottom: 1px solid #DDDDDD;
+    text-align: center;
+    padding: 5px 8px;
+}
+
+.detail table a {
+    padding: 5px;
+    color: white;
+    background-color: #4260e7;
+    border-radius: 2px;
+    font-size: 12px;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.detail table a:hover {
+    background-color: rgb(231, 184, 97);
+}
+
+input[type='text'] {
+    font-size: 16px;
+}
+
+.criteria #txtProductId {
+    width: 120px;
+}
+
+.criteria #txtProductName {
+    width: 320px;
+}
+
+.detail input[type='text'] {
+    width: 60px;
+}
+
+.action {
+    margin: 25px;
+    text-align: center;
+}
+
+.action button {
+    padding: 8px 10px;
+}

@@ -308,6 +308,9 @@ namespace TestServer.Core
                     // 计时到达60Min,无条件终止本次试验
                     if (Timer == 3600)
                     {
+                        //设置试验总时长
+                        _testmaster.Totaltesttime = 3600;
+                        //更新控制器状态
                         Status = MasterStatus.Complete;
                         //设置客户端消息: 本次试验已完成
                         data.MasterMessages.Add(DateTime.Now.ToString("HH:mm"), "本次试验已完成");                        
@@ -318,7 +321,10 @@ namespace TestServer.Core
                     {
                         //判断试验终止条件是否满足                        
                         if (CheckTerminateCriteria())
-                        {   
+                        {
+                            //设置试验总时长
+                            _testmaster.Totaltesttime = Timer;
+                            //更新控制器状态
                             Status = MasterStatus.Complete;
                             //设置客户端消息: 本次试验已完成
                             data.MasterMessages.Add(DateTime.Now.ToString("HH:mm"), "本次试验已完成。");

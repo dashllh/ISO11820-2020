@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using ISO11820_2020.Models;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using TestServer.Models;
@@ -22,6 +23,7 @@ namespace TestServer.Models
         public virtual DbSet<Productmaster> Productmasters { get; set; }
         public virtual DbSet<Testmaster> Testmasters { get; set; }
         public virtual DbSet<Sensor> Sensors { get; set; } = null!;
+        public virtual DbSet<ViewTestInfo> ViewTestInfos { get; set; }
 
         //protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         //{
@@ -51,6 +53,11 @@ namespace TestServer.Models
             modelBuilder.Entity<Sensor>(entity =>
             {
                 entity.Property(e => e.Sensorid).ValueGeneratedNever();
+            });
+
+            modelBuilder.Entity<ViewTestInfo>(entity =>
+            {
+                entity.ToView("View_TestInfo");
             });
 
             OnModelCreatingPartial(modelBuilder);

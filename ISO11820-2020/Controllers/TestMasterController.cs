@@ -3,6 +3,8 @@ using TestServer.Core;
 using TestServer.Models;
 using TestServer.Global;
 using Microsoft.EntityFrameworkCore;
+using ISO11820_2020.Models;
+using Microsoft.EntityFrameworkCore.Internal;
 
 namespace TestServer.Controllers
 {
@@ -299,6 +301,23 @@ namespace TestServer.Controllers
             msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
 
             return new JsonResult(msg);
+        }
+
+        /*
+         * 功能: 获取试验数据列表
+         * 参数:
+         *       productid - 样品编码
+         * 返回:
+         *       testlist  - 样品对应的试验信息列表
+         */
+        [HttpGet("gettestinfo/{productid}")]
+        public async Task<IList<ViewTestInfo>> GetTestInfo(string productid)
+        {
+            IList<ViewTestInfo> result = null;
+            //初始化全局对象中的传感器集合对象
+            var ctx = _contextFactory.CreateDbContext();
+            result = await ctx.ViewTestInfos.Where(x => x.Productid == productid).ToListAsync();
+            return result;
         }
     }
 
