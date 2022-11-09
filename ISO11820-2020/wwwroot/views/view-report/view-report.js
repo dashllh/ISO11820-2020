@@ -8,6 +8,8 @@ class ReportView extends HTMLElement {
 
     #CurrentDetails = [];  //当前显示的试验明细缓存
 
+    #reg_float = /^[+]?\d+(\.\d+)?$/; //float类型正则表达式Pattern
+
     constructor() {
         super();
 
@@ -49,7 +51,23 @@ class ReportView extends HTMLElement {
         //清空现有试验明细
         this.clearDetails();
         //添加新明细数据并更新缓存
-        data.forEach((detail, index) => this.appendNewDetail(detail, index));
+        data.forEach((detail, index) => {
+            this.appendNewDetail(detail, index);
+            //添加文本框change事件监听器,以自动更新失重率
+            let item = document.getElementById(`txtPostWeight${index}`);
+            item.addEventListener('change', (event) => {
+                let idx = item.closest('tr').rowIndex - 1; //此处tr索引为其在table中的索引,即包含标题行索引,减去1转换为tbody一致的索引
+                //验证用户输入
+                if (!this.#reg_float.test(event.target.value)) {
+                    event.target.focus();
+                    return;
+                } else {
+                    this.#CurrentDetails[idx].postweight = parseFloat(event.target.value);
+                }
+                this.#tblTestDetail.rows[idx].cells[11].textContent =
+                    ((this.#CurrentDetails[idx].preweight - this.#CurrentDetails[idx].postweight) / this.#CurrentDetails[idx].preweight * 100).toFixed(1);                
+            });
+        });
         this.#CurrentDetails = data;
     }
 
@@ -74,7 +92,8 @@ class ReportView extends HTMLElement {
         let Cell12 = newRow.insertCell(11);//失重率
         Cell1.innerHTML   = `<input type="checkbox" value="${index}">`;
         Cell2.textContent = data.testid;
-        Cell3.textContent = data.preweight;
+        Cell3.textContent = data.preweight.toFixed(1); //toFixed 四舍五入至小数点后1位
+        //增加试样残余质量录入框并设置初始值
         Cell4.innerHTML   = `<input type="text" id="txtPostWeight${index}" value="${data.postweight}">`;
         Cell5.textContent = data.maxtf1;
         Cell6.textContent = data.maxtf2;
@@ -83,7 +102,7 @@ class ReportView extends HTMLElement {
         Cell9.textContent = data.deltatf1;
         Cell10.textContent = data.deltatf2;
         Cell11.textContent = data.flameduration;
-        Cell12.textContent = (data.preweight - data.postweight) / data.preweight * 100;
+        Cell12.textContent = ((data.preweight - data.postweight) / data.preweight * 100).toFixed(1);
     }
 
     /* 清空当前明细(保留首行) */
