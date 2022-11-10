@@ -81,10 +81,36 @@ input[type='text']:focus {
 }
 
 .action {
-    margin: 25px;
+    margin: 25px 18px;
     text-align: center;
 }
 
-.action button {
-    padding: 8px 10px;
+/* 命令按钮样式 */
+.cmdbutton {
+    cursor: pointer;
+    border: 1px solid;
+    border-radius: 3px;
+    background-color: #4260e7;
+    color: white;
+    transition: all 0.2s;
+}
+
+.cmdbutton:hover {
+    background-color: rgb(231, 184, 97);
+}
+
+#btnGenerateFinalReport {
+    width:120px;
+    height:45px;
+}
+
+/* 定义指标项是否达标的显示属性 */
+.fullfilled {
+    font-weight: 600;
+    color: forestgreen;
+}
+
+.non-fullfilled {
+    font-weight: 600;
+    color: red;
 }
