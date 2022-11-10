@@ -5,6 +5,8 @@ using TestServer.Global;
 using Microsoft.EntityFrameworkCore;
 using ISO11820_2020.Models;
 using Microsoft.EntityFrameworkCore.Internal;
+using Microsoft.VisualBasic;
+using OfficeOpenXml;
 
 namespace TestServer.Controllers
 {
@@ -319,7 +321,148 @@ namespace TestServer.Controllers
             result = await ctx.ViewTestInfos.Where(x => x.Productid == productid).ToListAsync();
             return result;
         }
-    }
+
+        /*
+         * 功能: 更新指定样品编号的试验明细的残余质量,并根据指定的明细生成汇总试验报告
+         * 参数:
+         *       postdata:JSON Array - 试验明细数据
+         */
+        [HttpPost("generatereport")]
+        public async Task<IActionResult> GetTestInfo([FromBody] FinalReportData postdata)
+        {
+            /* 更新数据库中对应样品编号的试验明细数据的残余质量 */
+            var ctx = _contextFactory.CreateDbContext();
+            var records = await ctx.Testmasters.Where(x => x.Productid == postdata.Details[0].Productid).ToListAsync();
+            foreach (var item in records)
+            {
+                foreach (var detail in postdata.Details)
+                {
+                    if(item.Testid == detail.Testid)
+                    {
+                        item.Postweight = detail.Postweight;
+                        break;
+                    }
+                }
+            }
+            await ctx.SaveChangesAsync();
+
+            /* 生成汇总报告 */
+            //设置EPPlus license版本为非商用版本
+            ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+            //设置CSV文件格式
+            var format = new ExcelTextFormat()
+            {
+                Delimiter = ',',
+                EOL = "\r"       // DEFAULT IS "\r\n";
+                                 // format.TextQualifier = '"';
+            };
+            //打开汇总报表模板
+            using (ExcelPackage package = new ExcelPackage(new FileInfo($"D:\\ISO11820\\template_report_final.xlsx")))
+            {
+                //取得main页面
+                ExcelWorksheet sheet_main = package.Workbook.Worksheets.ElementAt(0);
+                /* 设置报表表头数据项 */
+                //实验室温度
+                sheet_main.Cells["B5"].Value = postdata.Details[0].Ambtemp;
+                //实验室湿度
+                sheet_main.Cells["E5"].Value = postdata.Details[0].Ambhumi;
+                //试验日期
+                sheet_main.Cells["H5"].Value = postdata.Details[0].Testdate;
+                //试验人员
+                sheet_main.Cells["K5"].Value = postdata.Details[0].Operator;
+                //产品名称
+                sheet_main.Cells["B6"].Value = postdata.Details[0].Productname;
+                //规格型号
+                sheet_main.Cells["B7"].Value = postdata.Details[0].Specific;
+                //样品编号
+                sheet_main.Cells["K6"].Value = postdata.Details[0].Productid;
+                //报告编号
+                sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                /* 设置试验明细数据项 */
+                /* 第一条明细 */
+                //直径1
+                sheet_main.Cells["B15"].Value = postdata.Details[postdata.Indexes[0]].Diameter;
+                //高度1
+                sheet_main.Cells["C15"].Value = postdata.Details[postdata.Indexes[0]].Height;
+                //烧前质量1
+                sheet_main.Cells["D15"].Value = postdata.Details[postdata.Indexes[0]].Preweight;
+                //烧后质量1
+                sheet_main.Cells["E15"].Value = postdata.Details[postdata.Indexes[0]].Postweight;
+                //炉温1
+                sheet_main.Cells["F15"].Value = 750;
+                //最高温度TF1
+                sheet_main.Cells["G15"].Value = postdata.Details[postdata.Indexes[0]].Maxtf1;
+                //最高温度TF2
+                //...
+                ////最高温度TS1
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////最高温度TC1
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////最高温度时间TF1
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////最高温度时间TF2
+                ////...
+                ////最高温度时间TS1
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////最高温度时间TC1
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////终平衡温度TF1
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////终平衡温度TF2
+                ////...
+                ////终平衡温度TS1
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////终平衡温度TC1
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////终温时间
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////温升TF1
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////温升TF2
+                ////...
+                ////温升TS1
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////温升TC1
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////起火时间
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////火焰持续时间
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////失重
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+                ////失重率
+                //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
+
+                /* 第二条明细 */
+                //尺寸2
+
+                /* 第三条明细 */
+                //尺寸3
+
+                /* 第四条明细 */
+                //尺寸4
+
+                /* 第五条明细 */
+                //尺寸5
+
+                //另存为汇总报表
+                await package.SaveAsAsync($"D:\\ISO11820\\{postdata.Details[0].Productid}\\final_report.xlsx");
+            }
+
+            /* 使用COM接口另存为PDF格式 */
+            //...
+
+            //构造返回消息
+            Message msg = new Message();
+            msg.Param = new Dictionary<string, object>();
+            msg.Cmd = "generatereport";
+            msg.Ret = "0";
+            msg.Msg = "已生成汇总报告。";
+
+            return new JsonResult(msg);
+        }
+    }    
+
 
     /* 定义用于Action方法调用时的数据绑定的类型 */
     //用户登录所需的信息类型
@@ -371,5 +514,12 @@ namespace TestServer.Controllers
         public string Msg { get; set; }
         //返回的附加参数
         public Dictionary<string, object> Param { get; set; }
+    }
+
+    //生成汇总报表的上传数据对象
+    public class FinalReportData
+    {
+       public IList<int> Indexes { get; set; }
+       public IList<ViewTestInfo> Details { get; set; }
     }
 }

@@ -28,7 +28,30 @@ class ReportView extends HTMLElement {
 
     onGenerateRptClick(event) {
         let items = document.querySelectorAll("input[type='checkbox']:checked");
-        items.forEach(item => console.log(this.#CurrentDetails[item.value].testid));
+        
+        //验证所有明细行的残余质量录入情况
+        //...
+        //构造数据结构用于上传
+        let updata = {
+            indexes: [],
+            details:[]
+        }
+        items.forEach(item => updata.indexes.push(item.value));
+        updata.details = this.#CurrentDetails;
+
+        console.log(updata);
+
+        let option = {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updata)
+        }
+        
+        fetch("api/testmaster/generatereport", option)
+            .then(response => response.json())
+            .then(data => console.log(data));
     }
 
     /* 重载函数 */
