@@ -72,7 +72,7 @@ class AppToolBar extends HTMLElement {
 
     get template() {
         return `                
-                <span class="apptb-brand">建筑材料不燃性试验系统 版本 2.0</span>
+                <span class="apptb-brand">建筑材料不燃性试验系统 版本 3.0</span>
                 <!-- 功能按钮区域 -->
                 <div class="apptb-btn-view">
                     <input type="radio" name="app-toolbar-item" id="_idTbTestView" checked>

@@ -58,9 +58,6 @@ class DlgPostTest extends HTMLElement {
         } else {
             this.#vmPostTest.postweight = parseFloat(tmpfloat);
         }
-
-        console.log(this.#vmPostTest);
-
         //上传信息
         let option = {
             method: "POST",
@@ -72,7 +69,6 @@ class DlgPostTest extends HTMLElement {
         fetch(`api/testmaster/setpostdata/${this.#id}`, option)
             .then(response => response.json())
             .then(data => console.log(data));
-
         //关闭对话框
         this.style.display = 'none';
     }

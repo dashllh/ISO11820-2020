@@ -6,7 +6,7 @@
         "ctrlview2 ctrlview3";
     grid-template-rows: 1fr 1fr;
     grid-template-columns: 1fr 1fr;
-    margin: 3px;
+    margin: 0px;
 }
 
 .ctrl-view0 {

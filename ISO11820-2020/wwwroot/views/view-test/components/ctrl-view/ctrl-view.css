@@ -10,7 +10,7 @@ ctrl-view {
         "tempcen    tempchart"
         "tempdrift  tempchart"
         "mastermsg  mastermsg";
-    grid-template-rows: 32px 1fr 1fr 1fr 1fr 1fr 1fr 180px;
+    grid-template-rows: 32px 1.1fr 1.1fr 1.1fr 1.1fr 1.1fr 1.1fr 185px;
     grid-template-columns: 200px 1fr;
 
     margin: 5px;

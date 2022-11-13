@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Hosting;
 using TestServer.Core;
 using TestServer.Models;
 using TestServer.Global;
@@ -7,6 +8,10 @@ using ISO11820_2020.Models;
 using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.VisualBasic;
 using OfficeOpenXml;
+using Microsoft.Office.Interop.Excel;
+using System.Reflection;
+using System.Runtime.InteropServices;
+using System.Diagnostics;
 
 namespace TestServer.Controllers
 {
@@ -22,6 +27,8 @@ namespace TestServer.Controllers
         //private AppGlobal _global;
         //数据库上下文对象
         private readonly IDbContextFactory<ISO11820DbContext> _contextFactory;
+        //服务器环境对象
+        private IWebHostEnvironment _Environment;
         /*
          * 功能: 试验控制器构造函数
          * 参数:
@@ -33,12 +40,14 @@ namespace TestServer.Controllers
          */
         public TestMasterController(TestMasters testMasters, TestMaster1 testMaster1,
             TestMaster2 testMaster2, TestMaster3 testMaster3, TestMaster4 testMaster4,
-            IDbContextFactory<ISO11820DbContext> contextFactory)
+            IDbContextFactory<ISO11820DbContext> contextFactory, IWebHostEnvironment Environment)
         {
             //_global = global;   
             _testMasters = testMasters;
             //初始化数据库上下文对象
             _contextFactory = contextFactory;
+            //初始化服务器环境对象
+            _Environment = Environment;
             if (!bMasterInitialized)
             {                
                 //添加四个试验控制器对象,对应四个试验炉
@@ -327,9 +336,14 @@ namespace TestServer.Controllers
          * 参数:
          *       postdata:JSON Array - 试验明细数据
          */
-        [HttpPost("generatereport")]
-        public async Task<IActionResult> GetTestInfo([FromBody] FinalReportData postdata)
+        [HttpPost("getfinalreport")]
+        public async Task<IActionResult> GetFinalReport([FromBody] FinalReportData postdata)
         {
+            /* 申明操作Excel文件的COM对象 */
+            Microsoft.Office.Interop.Excel.Application oXL = null;
+            Microsoft.Office.Interop.Excel.Workbooks oWBs = null;
+            Microsoft.Office.Interop.Excel.Workbook oWB = null;
+            Microsoft.Office.Interop.Excel.Worksheet oSheet = null;
             /* 更新数据库中对应样品编号的试验明细数据的残余质量 */
             var ctx = _contextFactory.CreateDbContext();
             var records = await ctx.Testmasters.Where(x => x.Productid == postdata.Details[0].Productid).ToListAsync();
@@ -434,7 +448,18 @@ namespace TestServer.Controllers
                 //sheet_main.Cells["K7"].Value = postdata.Details[0].Rptno;
 
                 /* 第二条明细 */
-                //尺寸2
+                //直径2
+                sheet_main.Cells["B16"].Value = postdata.Details[postdata.Indexes[1]].Diameter;
+                //高度2
+                sheet_main.Cells["C16"].Value = postdata.Details[postdata.Indexes[1]].Height;
+                //烧前质量2
+                sheet_main.Cells["D16"].Value = postdata.Details[postdata.Indexes[1]].Preweight;
+                //烧后质量2
+                sheet_main.Cells["E16"].Value = postdata.Details[postdata.Indexes[1]].Postweight;
+                //炉温2
+                sheet_main.Cells["F16"].Value = 750;
+                //最高温度TF1
+                sheet_main.Cells["G16"].Value = postdata.Details[postdata.Indexes[1]].Maxtf1;
 
                 /* 第三条明细 */
                 //尺寸3
@@ -448,16 +473,50 @@ namespace TestServer.Controllers
                 //另存为汇总报表
                 await package.SaveAsAsync($"D:\\ISO11820\\{postdata.Details[0].Productid}\\final_report.xlsx");
             }
-
             /* 使用COM接口另存为PDF格式 */
-            //...
+            /* (以下函数调用只适用于Windows平台,非Windows平台解决方案待定) */
+            oXL = new Microsoft.Office.Interop.Excel.Application();
+            oXL.Visible = false;
+            oXL.DisplayAlerts = false;
+            oWBs = oXL.Workbooks;
+            //打开报表文件
+            oWB = oWBs.Open($"D:\\ISO11820\\{postdata.Details[0].Productid}\\final_report.xlsx");
+            //选中报表首页
+            oSheet = (Microsoft.Office.Interop.Excel.Worksheet)oWB.Sheets.Item[1];
+            //另存报表为PDF格式
+            oSheet.ExportAsFixedFormat2(XlFixedFormatType.xlTypePDF, $"D:\\ISO11820\\{postdata.Details[0].Productid}\\final_report.pdf",
+                Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value,
+                false, Missing.Value, Missing.Value);
+            //关闭报表文件
+            oWB.Close(false);
+            oWBs.Close();
+            oXL.Quit();
+            //释放COM组件对象
+            Marshal.FinalReleaseComObject(oSheet);
+            Marshal.FinalReleaseComObject(oWB);
+            Marshal.FinalReleaseComObject(oWBs);
+            Marshal.FinalReleaseComObject(oXL);
+            oSheet = null;
+            oWB = null;
+            oWBs = null;
+            oXL = null;
+            //垃圾回收,确保Excel进程被彻底清理
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+
+            //复制报表文件至客户端下载文件夹
+            string path = _Environment.WebRootPath + $"\\finalreports\\{postdata.Details[0].Productid}";
+            Directory.CreateDirectory(path);
+            System.IO.File.Copy($"D:\\ISO11820\\{postdata.Details[0].Productid}\\final_report.pdf",
+                path + "\\final_report.pdf", true);
 
             //构造返回消息
             Message msg = new Message();
             msg.Param = new Dictionary<string, object>();
-            msg.Cmd = "generatereport";
+            msg.Cmd = "finalreport";
             msg.Ret = "0";
             msg.Msg = "已生成汇总报告。";
+            msg.Param.Add("downloadpath",$"finalreports\\{postdata.Details[0].Productid}\\final_report.pdf");
 
             return new JsonResult(msg);
         }

@@ -5,6 +5,7 @@ class ReportView extends HTMLElement {
     #btnSearch = null; //明细检索按钮
     #btnGenerateRpt = null; //生成汇总报告按钮
     #tblTestDetail = null;  //试验明细列表对象
+    #frmPdfViewer = null;   //汇总报表显示区域对象
 
     #CurrentDetails = [];  //当前显示的试验明细缓存
 
@@ -20,10 +21,16 @@ class ReportView extends HTMLElement {
     onSearchClick(event) {
         //获取用户输入的样品编号并提交
         let prodId = document.getElementById("txtProductId").value;
+        //设置按钮显示效果
+        //this.#btnSearch.innerHTML = "<div class='loader'></div>";
+        this.#btnSearch.innerHTML = "检索中...";
         //提交查询请求        
         fetch(`api/testmaster/gettestinfo/${prodId}`)
             .then(response => response.json())
-            .then(data => this.loadTestDetails(data));
+            .then(data => {
+                this.#btnSearch.innerHTML = "检索";
+                this.loadTestDetails(data);
+            });
     }
 
     onGenerateRptClick(event) {
@@ -39,8 +46,6 @@ class ReportView extends HTMLElement {
         items.forEach(item => updata.indexes.push(item.value));
         updata.details = this.#CurrentDetails;
 
-        console.log(updata);
-
         let option = {
             method: "POST",
             headers: {
@@ -48,10 +53,18 @@ class ReportView extends HTMLElement {
             },
             body: JSON.stringify(updata)
         }
-        
-        fetch("api/testmaster/generatereport", option)
+
+        //设置按钮显示效果
+        this.#btnGenerateRpt.innerHTML = "报告生成中...";
+        //this.#btnGenerateRpt.innerHTML = "<div class='loader'></div>";
+        fetch("api/testmaster/getfinalreport", option)
             .then(response => response.json())
-            .then(data => console.log(data));
+            .then(data => {
+                //在客户端打开报表文件
+                //window.open(data.param.downloadpath, '_blank');
+                this.#btnGenerateRpt.innerHTML = "生成汇总报告";
+                this.#frmPdfViewer.src = data.param.downloadpath;
+            });
     }
 
     /* 重载函数 */
@@ -66,13 +79,32 @@ class ReportView extends HTMLElement {
         }
         if (this.#tblTestDetail === null) {
             this.#tblTestDetail = document.getElementById("tblDetail");
+            this.#tblTestDetail.addEventListener("click", ({ target }) => {
+                // discard direct clicks on input elements
+                if (target.nodeName === "INPUT") return;
+                // get the nearest tr
+                const tr = target.closest("tr");
+                if (tr) {
+                    // if it exists, get the first checkbox
+                    const checkbox = tr.querySelector("input[type='checkbox']");
+                    if (checkbox) {
+                        // if it exists, toggle the checked property
+                        checkbox.checked = !checkbox.checked;
+                    }
+                }
+            });
+        }
+        if (this.#frmPdfViewer === null) {
+            this.#frmPdfViewer = document.getElementById("pdfviewer");
         }
     }
 
     /* 加载试验明细 */
     loadTestDetails(data) {
-        //清空现有试验明细
+        //清空先前的试验明细
         this.clearDetails();
+        //清空先前的报告显示
+        this.#frmPdfViewer.src = "";
         //查无记录的情况
         if (data.length === 0) {
             document.getElementById("txtProductName").value = "";
@@ -217,6 +249,11 @@ class ReportView extends HTMLElement {
             <!-- 操作按钮 -->
             <div class="action">
                 <button id="btnGenerateFinalReport" class="cmdbutton">生成汇总报告</button>
+            </div>
+
+            <div class="reportviewer">
+                <iframe id="pdfviewer" width="100%" height="600px">                
+                </iframe>
             </div>
         `;
     }
