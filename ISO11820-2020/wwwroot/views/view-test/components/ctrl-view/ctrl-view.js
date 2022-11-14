@@ -41,7 +41,7 @@ class CtrlView extends HTMLElement {
         this.#ctrlId = id;
         /* 初始化子控件引用 */
         //工具栏
-        this.#toolBar = new MasterToolBar(this.#ctrlId, 'operator');        
+        this.#toolBar = new MasterToolBar(this.#ctrlId, GlobalParam.LoginUserType);        
         //实时值Item
         this.#timer = new RealTimeItem('试验计时(s)', '0');
         this.#timer.classList.add('timer');

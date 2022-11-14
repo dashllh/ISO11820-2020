@@ -76,11 +76,11 @@ class AppToolBar extends HTMLElement {
                 <!-- 功能按钮区域 -->
                 <div class="apptb-btn-view">
                     <input type="radio" name="app-toolbar-item" id="_idTbTestView" checked>
-                    <label for="_idTbTestView">试验视图</label>
+                    <label for="_idTbTestView">试验控制</label>
                     <input type="radio" name="app-toolbar-item" id="_idTbReportView">
-                    <label for="_idTbReportView">报表视图</label>
+                    <label for="_idTbReportView">试验生成</label>
                     <input type="radio" name="app-toolbar-item" id="_idTbQueryView">
-                    <label for="_idTbQueryView">查询视图</label>
+                    <label for="_idTbQueryView">记录查询</label>
                 </div>
                 <!-- 用户信息区域 -->
                 <div class="apptb-btn-func">

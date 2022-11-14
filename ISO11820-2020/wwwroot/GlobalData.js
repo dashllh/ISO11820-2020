@@ -14,6 +14,7 @@ let GlobalParam = {
         { "Id": 3, "Mode": 0, "Status": 0, "Id": "", "Name": "", "Port": "", "CheckDate": "", "ConstPower": 3 },
     ],
     "LoginUser": "",
+    "LoginUserType": "",
     "CurrentViewName": "TestView"
 };
 

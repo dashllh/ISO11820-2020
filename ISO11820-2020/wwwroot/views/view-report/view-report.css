@@ -10,7 +10,8 @@
 
 .detail {
     display: block;
-    margin-top: 25px;
+    width: 98%;
+    margin: 8px auto;
     overflow-x: hidden;
     overflow-y: auto;
 }
@@ -18,6 +19,7 @@
 .detail table {
     width: 100%;
     border-collapse: collapse;
+    border-radius:3px;
 }
 
 .detail th {
@@ -26,6 +28,25 @@
     font-weight: normal;
     background-color: #4260e7;
     color: white;
+}
+
+/* 设置表格边角属性 */
+.detail th:first-child {
+    border-left: none;
+    border-top-left-radius: 3px;
+}
+
+.detail th:last-child {
+    border-right: none;
+    border-top-right-radius: 3px;
+}
+
+.detail table tr:last-child td:first-child {
+    border-bottom-left-radius: 3px;
+}
+
+.detail table tr:last-child td:last-child {
+    border-bottom-right-radius: 3px;
 }
 
 .detail table th, td {
@@ -99,6 +120,12 @@ input[type='text']:focus {
     background-color: rgb(231, 184, 97);
 }
 
+.disabledbutton {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
 #btnGenerateFinalReport {
     width:120px;
     height:45px;
@@ -116,16 +143,20 @@ input[type='text']:focus {
 }
 
 /* 报表浏览区域属性 */
-#pdfviewer {
-    border:none;
+.pdfviewer-border {
+    border: 1px solid silver;
+    border-radius: 5px;
+}
+
+.pdfviewer-nonborder {
+    border: none;
 }
 
 .reportviewer {
     width: 98%;
-    height: 600px;
-    margin: 0 auto;
-    border-radius: 2px;
-    text-align: center;
+    height: 640px;
+    margin: 5px auto;
+    border-radius: 5px;
 }
 
 .loader {

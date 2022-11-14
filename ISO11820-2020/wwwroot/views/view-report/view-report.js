@@ -24,11 +24,13 @@ class ReportView extends HTMLElement {
         //设置按钮显示效果
         //this.#btnSearch.innerHTML = "<div class='loader'></div>";
         this.#btnSearch.innerHTML = "检索中...";
+        this.#btnSearch.classList.add("disabledbutton");
         //提交查询请求        
         fetch(`api/testmaster/gettestinfo/${prodId}`)
             .then(response => response.json())
             .then(data => {
                 this.#btnSearch.innerHTML = "检索";
+                this.#btnSearch.classList.remove("disabledbutton");
                 this.loadTestDetails(data);
             });
     }
@@ -56,6 +58,7 @@ class ReportView extends HTMLElement {
 
         //设置按钮显示效果
         this.#btnGenerateRpt.innerHTML = "报告生成中...";
+        this.#btnGenerateRpt.classList.add("disabledbutton");
         //this.#btnGenerateRpt.innerHTML = "<div class='loader'></div>";
         fetch("api/testmaster/getfinalreport", option)
             .then(response => response.json())
@@ -63,7 +66,10 @@ class ReportView extends HTMLElement {
                 //在客户端打开报表文件
                 //window.open(data.param.downloadpath, '_blank');
                 this.#btnGenerateRpt.innerHTML = "生成汇总报告";
+                this.#btnGenerateRpt.classList.remove("disabledbutton");
                 this.#frmPdfViewer.src = data.param.downloadpath;
+                this.#frmPdfViewer.classList.remove("pdfviewer-nonborder");
+                this.#frmPdfViewer.classList.add("pdfviewer-border");
             });
     }
 
@@ -80,15 +86,15 @@ class ReportView extends HTMLElement {
         if (this.#tblTestDetail === null) {
             this.#tblTestDetail = document.getElementById("tblDetail");
             this.#tblTestDetail.addEventListener("click", ({ target }) => {
-                // discard direct clicks on input elements
+                // 过滤掉点击文本框的情况
                 if (target.nodeName === "INPUT") return;
-                // get the nearest tr
+                // 取得点击行的tr元素对象
                 const tr = target.closest("tr");
                 if (tr) {
-                    // if it exists, get the first checkbox
+                    // 取得本行的checkbox对象
                     const checkbox = tr.querySelector("input[type='checkbox']");
                     if (checkbox) {
-                        // if it exists, toggle the checked property
+                        // 修改checkbox的选中状态
                         checkbox.checked = !checkbox.checked;
                     }
                 }
@@ -105,6 +111,8 @@ class ReportView extends HTMLElement {
         this.clearDetails();
         //清空先前的报告显示
         this.#frmPdfViewer.src = "";
+        this.#frmPdfViewer.classList.remove("pdfviewer-border");
+        this.#frmPdfViewer.classList.add("pdfviewer-nonborder");        
         //查无记录的情况
         if (data.length === 0) {
             document.getElementById("txtProductName").value = "";
@@ -251,7 +259,7 @@ class ReportView extends HTMLElement {
                 <button id="btnGenerateFinalReport" class="cmdbutton">生成汇总报告</button>
             </div>
             <div class="reportviewer">
-                <iframe id="pdfviewer" width="100%" height="600px">                
+                <iframe id="pdfviewer" class="pdfviewer-nonborder" width="100%" height="640px">                
                 </iframe>
             </div>
         `;

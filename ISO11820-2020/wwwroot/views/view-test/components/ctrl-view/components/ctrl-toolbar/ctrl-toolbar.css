@@ -45,5 +45,7 @@ ctrl-toolbar img {
 
 /* 无效功能按钮的属性集合 */
 .toolbar-item[disabled='true'] {
+    opacity: 0.6;
+    cursor: not-allowed;
     pointer-events: none;
 }

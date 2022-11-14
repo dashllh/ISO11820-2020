@@ -157,13 +157,13 @@ class MasterToolBar extends HTMLElement {
 
         /* 根据登录角色构造工具栏功能按钮组合 */
         switch (this.#role) {
-            case 'operator':  //试验员权限
+            case '1':  //试验员权限
                 this.#items.push(this.#item_newTest);
                 this.#items.push(this.#item_startTimer);
                 this.#items.push(this.#item_stopTimer);
                 this.#items.push(this.#item_stopHeating);
                 break;
-            case 'manager':   //试验管理员权限
+            case '0':   //试验管理员权限
                 this.#items.push(this.#item_newTest);
                 this.#items.push(this.#item_startTimer);
                 this.#items.push(this.#item_stopTimer);

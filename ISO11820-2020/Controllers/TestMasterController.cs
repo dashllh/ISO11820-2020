@@ -126,12 +126,25 @@ namespace TestServer.Controllers
 
         //系统登录
         [HttpPost("login")]
-        public IActionResult ProcessLogin([FromForm] LoginData login)
+        public async Task<IActionResult> ProcessLogin([FromBody] LoginData data)
         {
-            if (login.UserName.Equals("dash") && login.Password.Equals("121"))
-                return new JsonResult("manager");
-            else
-                return new JsonResult("operator");
+            Message msg = new Message();
+            msg.Param = new Dictionary<string, object>();
+            //查询数据库,判断登录信息是否合法
+            var ctx = _contextFactory.CreateDbContext();
+            var user = await ctx.Operators.Where(x => x.Username == data.UserName && x.Pwd == data.Password)
+                .FirstOrDefaultAsync();
+            if (user != null) {                
+                msg.Ret = "0";
+                msg.Msg = "登录成功。";
+                msg.Param.Add("user", user.Username);
+                msg.Param.Add("usertype",user.Usertype);
+            } else {
+                msg.Ret = "-1";
+                msg.Msg = "没有该用户的信息,请检查输入是否有误。";
+            }
+            
+            return new JsonResult(msg);
         }
 
         /* 样品试验操作相关接口函数定义 */
@@ -381,7 +394,7 @@ namespace TestServer.Controllers
                 //实验室湿度
                 sheet_main.Cells["E5"].Value = postdata.Details[0].Ambhumi;
                 //试验日期
-                sheet_main.Cells["H5"].Value = postdata.Details[0].Testdate;
+                sheet_main.Cells["H5"].Value = postdata.Details[0].Testdate.ToString("yyyy年MM月dd日");
                 //试验人员
                 sheet_main.Cells["K5"].Value = postdata.Details[0].Operator;
                 //产品名称

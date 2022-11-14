@@ -26,10 +26,11 @@ class LoginView extends HTMLElement {
             this.#btnSubmit = document.getElementById('btnSubmit');
             this.#btnSubmit.addEventListener('click', (e) => {
                 e.preventDefault();
-                let name = this.#txtUserName.value;
-                let param = { userName:  `${name}`};
+                let param = {
+                    username: this.#txtUserName.value,
+                    password: this.#txtPasswd.value,
+                };
                 SendClientCmd('login', param);
-                console.log('login command sent.');
             });
         }
 

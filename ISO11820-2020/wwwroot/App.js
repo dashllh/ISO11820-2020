@@ -20,18 +20,16 @@ import { ReportView } from "./views/view-report/view-report.js";
 //导入查询视图组件
 //...
 
+/* 系统页面及组件对象 */
+let viewLogin = null;
+let tbAppToolBar = null;
+let viewTest = null;
+let viewReport = null;
+let viewQuery = null;
+
 /* 创建客户端视图组件 */
 // 登录视图
-const viewLogin = new LoginView();
-// 主视图工具栏
-const tbAppToolBar = new AppToolBar();
-// 试验视图
-const viewTest = new TestView();
-// 报表视图
-const viewReport = new ReportView();
-
-// 查询视图
-//...
+viewLogin = new LoginView();
 
 //创建视图索引-对象集合
 //let viewMap = new Map();
@@ -80,27 +78,44 @@ connection.start();
 function SendClientCmd(cmd, param) {
     switch (cmd) {
         case 'login':  //系统登录
-            // window.fetch(`api/TestMaster/startidle/${id}`)
-            //     .then(console.log(`Master ${id} Idle Started.`));
-            //若登录成功,则更新客户端全局存储
-            //...
-
-            //测试代码: 允许dash账户登录
-            console.log(param.userName);
-            if(param.userName === 'dash') {
-                // 移除登录视图页面组件
-                document.body.removeChild(viewLogin);
-                // 取消主视图背景图片显示
-                document.body.style.backgroundImage = "";
-                // 添加主视图页面组件
-                document.body.appendChild(tbAppToolBar);
-                document.body.appendChild(viewTest);
-                CurrentViewObject = viewTest;
-                GlobalParam.CurrentViewName = 'TestView';
-                GlobalParam.LoginUser = "dash";
-            } else {
-                console.log('user name invalid.');
+            let option = {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(param)
             }
+            window.fetch("api/TestMaster/login", option)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.ret === '0') {  //登录成功
+                        console.log(data);
+                        //设置当前登录用户信息                        
+                        GlobalParam.LoginUser = data.param.user;
+                        GlobalParam.LoginUserType = data.param.usertype;
+                        //设置登录首页为试验控制页面
+                        GlobalParam.CurrentViewName = 'TestView';
+                        /* 初始化各个页面对象 */
+                        // 主视图工具栏
+                        tbAppToolBar = new AppToolBar();
+                        // 试验视图
+                        viewTest = new TestView();
+                        // 报表视图
+                        viewReport = new ReportView();
+                        // 查询视图
+                        //viewQuery = new QueryView();
+                        // 移除登录视图页面组件
+                        document.body.removeChild(viewLogin);
+                        // 取消主视图背景图片显示
+                        document.body.style.backgroundImage = "";
+                        // 添加主视图页面组件
+                        document.body.appendChild(tbAppToolBar);
+                        document.body.appendChild(viewTest);
+                        CurrentViewObject = viewTest;                        
+                    } else {   //登录失败,提示错误信息
+                        alert(data.msg);
+                    }
+                });            
             break;
         case 'getmasterinfo':  //获取控制器信息
             window.fetch("api/testmaster")
@@ -140,7 +155,7 @@ function SendClientCmd(cmd, param) {
     }
 }
 
-//document.body.appendChild(viewTest);
+//设置系统首页为用户登录页面
 document.body.appendChild(viewLogin);
 CurrentViewObject = viewLogin;
 

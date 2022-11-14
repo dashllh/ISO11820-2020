@@ -10,6 +10,6 @@
         WindowState="Maximized"
         Closed="Window_Closed">
     <Grid>
-        <wv2:WebView2 x:Name="wvContent" Source="https://localhost:44379/index.html"></wv2:WebView2>
+        <wv2:WebView2 x:Name="wvContent" Source="https://localhost:7241/index.html"></wv2:WebView2>
     </Grid>
 </Window>
