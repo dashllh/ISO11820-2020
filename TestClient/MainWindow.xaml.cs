@@ -22,7 +22,12 @@ namespace TestClient
     {
         public MainWindow()
         {
-            InitializeComponent();
+            InitializeComponent(); 
+        }
+
+        private async void Window_Closed(object sender, EventArgs e)
+        {
+            await wvContent.CoreWebView2.CallDevToolsProtocolMethodAsync("Network.clearBrowserCache", "{}");
         }
     }
 }

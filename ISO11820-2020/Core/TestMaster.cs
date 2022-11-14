@@ -1,19 +1,14 @@
 ﻿using Microsoft.AspNetCore.SignalR;
-using System.Text.Json;
-using TestServer.Global;
 using TestServer.Hubs;
 using TestServer.Models;
 using MathNet.Numerics;
 using CsvHelper;
-using System.IO;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Internal;
 using Microsoft.Office.Interop.Excel;
 using OfficeOpenXml;
 using System.Reflection;
 using System.Runtime.InteropServices;
-//using Microsoft.Office.Interop.Excel;
 
 namespace TestServer.Core
 {

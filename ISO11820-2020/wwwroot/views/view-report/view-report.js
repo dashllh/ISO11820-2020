@@ -250,7 +250,6 @@ class ReportView extends HTMLElement {
             <div class="action">
                 <button id="btnGenerateFinalReport" class="cmdbutton">生成汇总报告</button>
             </div>
-
             <div class="reportviewer">
                 <iframe id="pdfviewer" width="100%" height="600px">                
                 </iframe>

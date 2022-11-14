@@ -126,7 +126,7 @@ class DlgPostTest extends HTMLElement {
                     <fieldset class="weightinfo">
                         <legend>试样质量</legend>
                         <label for="postweight${this.#id}">残余质量(g):</label>
-                        <input type="text" name="postweight${this.#id}" id="postweight${this.#id}">
+                        <input type="text" name="postweight${this.#id}" id="postweight${this.#id}" value="0">
                     </fieldset>
 
                     <input type="button" id="btnConfirmPostTest${this.#id}" class="posttestbutton" value="确定">

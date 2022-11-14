@@ -2,7 +2,7 @@
 table-mastermsg {
     display: none;
     margin-top: 8px;
-    height: 132px;
+    height: 165px;
     font-size: 0.8em;
     overflow-x: hidden;
     overflow-y: auto;
@@ -20,7 +20,7 @@ table-mastermsg th,td {
     border-left: 1px solid #DDDDDD;
     border-bottom: 1px solid #DDDDDD;
     text-align: center;
-    padding: 3px 5px;
+    padding: 2px 5px;
 }
 
 /* 设置表头固定及背景色 */

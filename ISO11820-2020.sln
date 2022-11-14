@@ -5,7 +5,10 @@ VisualStudioVersion = 17.2.32630.192
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ISO11820-2020", "ISO11820-2020\ISO11820-2020.csproj", "{24A2F513-A523-4B9D-A094-90FCD5E8740B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestClient", "TestClient\TestClient.csproj", "{238F6500-63AF-416C-8BCD-BDF36412619A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "TestClient", "TestClient\TestClient.csproj", "{238F6500-63AF-416C-8BCD-BDF36412619A}"
+	ProjectSection(ProjectDependencies) = postProject
+		{24A2F513-A523-4B9D-A094-90FCD5E8740B} = {24A2F513-A523-4B9D-A094-90FCD5E8740B}
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

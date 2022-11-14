@@ -1,7 +1,7 @@
 ﻿ctrl-newtest {
     display: none; /* 初始不显示,点击新建试验后显示 */
     position: absolute;
-    top: 40px;
+    top: 25px;
     left: 35px;
     width: 58em;
     height: 30em;
