@@ -2,6 +2,7 @@
 
 class ReportView extends HTMLElement {
     /* 属性定义 */
+    #txtProdId = null; //样品编号文本框对象
     #btnSearch = null; //明细检索按钮
     #btnGenerateRpt = null; //生成汇总报告按钮
     #tblTestDetail = null;  //试验明细列表对象
@@ -20,26 +21,18 @@ class ReportView extends HTMLElement {
     /* 用户事件响应函数 */
     onSearchClick(event) {
         //获取用户输入的样品编号并提交
-        let prodId = document.getElementById("txtProductId").value;
-        //设置按钮显示效果
-        //this.#btnSearch.innerHTML = "<div class='loader'></div>";
-        this.#btnSearch.innerHTML = "检索中...";
-        this.#btnSearch.classList.add("disabledbutton");
-        //提交查询请求        
-        fetch(`api/testmaster/gettestinfo/${prodId}`)
-            .then(response => response.json())
-            .then(data => {
-                this.#btnSearch.innerHTML = "检索";
-                this.#btnSearch.classList.remove("disabledbutton");
-                this.loadTestDetails(data);
-            });
+        this.loadTestDetailFromSmpId(this.#txtProdId.value);
     }
 
     onGenerateRptClick(event) {
-        let items = document.querySelectorAll("input[type='checkbox']:checked");
-        
-        //验证所有明细行的残余质量录入情况
+        //验证所有明细行的残余质量录入情况(输入值应大于0 且 满足浮点数格式)
         //...
+        let items = this.#tblTestDetail.querySelectorAll("input[type='checkbox']:checked");
+        //验证是否刚好选择了5项试验明细
+        if (items.length > 5) {
+            alert("选定的试验记录不能大于5项,请重新选择。");
+            return;
+        }
         //构造数据结构用于上传
         let updata = {
             indexes: [],
@@ -73,6 +66,27 @@ class ReportView extends HTMLElement {
             });
     }
 
+    /* 内部私有函数 */
+    /*
+     * 功能: 根据样品编号加载该样品的试验明细数据
+     * 参数:
+     *       prodId:string - 样品编号
+     */
+    loadTestDetailFromSmpId(prodId) {        
+        //设置按钮显示效果
+        //this.#btnSearch.innerHTML = "<div class='loader'></div>";
+        this.#btnSearch.innerHTML = "检索中...";
+        this.#btnSearch.classList.add("disabledbutton");
+        //提交查询请求        
+        fetch(`api/testmaster/gettestinfo/${prodId}`)
+            .then(response => response.json())
+            .then(data => {
+                this.#btnSearch.innerHTML = "检索";
+                this.#btnSearch.classList.remove("disabledbutton");
+                this.loadTestDetails(data);
+            });
+    }
+
     /* 重载函数 */
     connectedCallback() {
         if (this.#btnSearch === null) {
@@ -85,6 +99,7 @@ class ReportView extends HTMLElement {
         }
         if (this.#tblTestDetail === null) {
             this.#tblTestDetail = document.getElementById("tblDetail");
+            //向明细记录行添加点击事件,以实现点击某一行而改变checkbox选中状态
             this.#tblTestDetail.addEventListener("click", ({ target }) => {
                 // 过滤掉点击文本框的情况
                 if (target.nodeName === "INPUT") return;
@@ -102,6 +117,30 @@ class ReportView extends HTMLElement {
         }
         if (this.#frmPdfViewer === null) {
             this.#frmPdfViewer = document.getElementById("pdfviewer");
+        }
+        //添加试验明细"全选"事件监听
+        const chkSelectAll = document.getElementById("chkSelectAll");
+        chkSelectAll.addEventListener('change', (event) => {
+            let items = this.#tblTestDetail.querySelectorAll("input[type='checkbox']");
+            if (chkSelectAll.checked) {                
+                items.forEach(item => {
+                    item.checked = true;
+                });
+            } else {
+                items.forEach(item => {
+                    item.checked = false;
+                });
+            }
+        });
+
+        //添加样品编号搜索框回车响应事件
+        if (this.#txtProdId === null) {
+            this.#txtProdId = document.getElementById("txtProductId");
+            this.#txtProdId.addEventListener('keydown', (event) => {
+                if (event.keyCode === 13) {
+                    this.loadTestDetailFromSmpId(this.#txtProdId.value);
+                }
+            });
         }
     }
 
@@ -160,19 +199,19 @@ class ReportView extends HTMLElement {
      *       index     - 当前明细数据在缓存数组中的索引
      */
     appendNewDetail(data,index) {
-        let newRow = this.#tblTestDetail.insertRow(-1);
-        let Cell1 = newRow.insertCell(0);  //checkbox
-        let Cell2 = newRow.insertCell(1);  //试验编号
-        let Cell3 = newRow.insertCell(2);  //烧前质量
-        let Cell4 = newRow.insertCell(3);  //烧后质量
-        let Cell5 = newRow.insertCell(4);  //最高温度TF1
-        let Cell6 = newRow.insertCell(5);  //最高温度TF2
-        let Cell7 = newRow.insertCell(6);  //终平衡温度TF1
-        let Cell8 = newRow.insertCell(7);  //终平衡温度TF2
-        let Cell9 = newRow.insertCell(8);  //温升TF1
-        let Cell10 = newRow.insertCell(9); //温升TF2
-        let Cell11 = newRow.insertCell(10);//火焰持续时间
-        let Cell12 = newRow.insertCell(11);//失重率
+        let newRow = this.#tblTestDetail.insertRow(-1);        
+        let Cell2 = newRow.insertCell(0);  //试验编号
+        let Cell3 = newRow.insertCell(1);  //烧前质量
+        let Cell4 = newRow.insertCell(2);  //烧后质量
+        let Cell5 = newRow.insertCell(3);  //最高温度TF1
+        let Cell6 = newRow.insertCell(4);  //最高温度TF2
+        let Cell7 = newRow.insertCell(5);  //终平衡温度TF1
+        let Cell8 = newRow.insertCell(6);  //终平衡温度TF2
+        let Cell9 = newRow.insertCell(7);  //温升TF1
+        let Cell10 = newRow.insertCell(8); //温升TF2
+        let Cell11 = newRow.insertCell(9); //火焰持续时间
+        let Cell12 = newRow.insertCell(10);//失重率
+        let Cell1 = newRow.insertCell(11); //checkbox
         Cell1.innerHTML   = `<input type="checkbox" value="${index}">`;
         Cell2.textContent = data.testid;
         Cell3.textContent = data.preweight.toFixed(1); //toFixed 四舍五入至小数点后1位
@@ -235,8 +274,7 @@ class ReportView extends HTMLElement {
             <div class="detail">
                 <table>
                     <thead>
-                        <tr>
-                            <th></th>
+                        <tr>                            
                             <th>试验编号</th>
                             <th>烧前质量(g)</th>
                             <th>烧后质量(g)</th>
@@ -248,9 +286,10 @@ class ReportView extends HTMLElement {
                             <th>温升TF2(℃)</th>
                             <th>火焰持续时间(s)</th>
                             <th>失重率(%)</th>
+                            <th><input id="chkSelectAll" type="checkbox">全选</th>
                         </tr>
                     </thead>
-                    <tbody id="tblDetail">                        
+                    <tbody id="tblDetail">
                     </tbody>
                 </table>
             </div>
@@ -259,7 +298,7 @@ class ReportView extends HTMLElement {
                 <button id="btnGenerateFinalReport" class="cmdbutton">生成汇总报告</button>
             </div>
             <div class="reportviewer">
-                <iframe id="pdfviewer" class="pdfviewer-nonborder" width="100%" height="640px">                
+                <iframe id="pdfviewer" class="pdfviewer-nonborder" width="100%" height="640px">
                 </iframe>
             </div>
         `;
