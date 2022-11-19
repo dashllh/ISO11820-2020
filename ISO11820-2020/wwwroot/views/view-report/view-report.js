@@ -26,11 +26,26 @@ class ReportView extends HTMLElement {
 
     onGenerateRptClick(event) {
         //验证所有明细行的残余质量录入情况(输入值应大于0 且 满足浮点数格式)
-        //...
-        let items = this.#tblTestDetail.querySelectorAll("input[type='checkbox']:checked");
+        let weights = this.#tblTestDetail.querySelectorAll("input[type='text']");
+        let bExist = false; //用于记录是否存在不满足要求的录入项(true:存在|false:不存在),初始默认为不存在
+        for (let i = 0; i < weights.length; i++) {
+            //从当前输入框对象Id获取对应数据项在当前明细数据缓存中的索引值(参见第256行)
+            let idx = parseInt(weights[i].id.substring(13));
+            if (!this.checkPostWeightValue(this.#CurrentDetails[idx].preweight,weights[i].value)) {
+                weights[i].style = "border:1px solid red;";
+                bExist = true;
+            } else {
+                weights[i].style = "";
+            }            
+        }      
+        //如果存在一项输入不满足要求则退出本次处理
+        if (bExist) {
+            return;
+        }            
         //验证是否刚好选择了5项试验明细
-        if (items.length > 5) {
-            alert("选定的试验记录不能大于5项,请重新选择。");
+        let items = this.#tblTestDetail.querySelectorAll("input[type='checkbox']:checked");
+        if (items.length !== 5) {
+            alert("只能选定5项试验记录,请重新选择。");
             return;
         }
         //构造数据结构用于上传
@@ -40,7 +55,7 @@ class ReportView extends HTMLElement {
         }
         items.forEach(item => updata.indexes.push(item.value));
         updata.details = this.#CurrentDetails;
-
+        //构造HTTP请求表头
         let option = {
             method: "POST",
             headers: {
@@ -48,7 +63,6 @@ class ReportView extends HTMLElement {
             },
             body: JSON.stringify(updata)
         }
-
         //设置按钮显示效果
         this.#btnGenerateRpt.innerHTML = "报告生成中...";
         this.#btnGenerateRpt.classList.add("disabledbutton");
@@ -67,6 +81,7 @@ class ReportView extends HTMLElement {
     }
 
     /* 内部私有函数 */
+
     /*
      * 功能: 根据样品编号加载该样品的试验明细数据
      * 参数:
@@ -85,6 +100,29 @@ class ReportView extends HTMLElement {
                 this.#btnSearch.classList.remove("disabledbutton");
                 this.loadTestDetails(data);
             });
+    }
+
+    /*
+     * 功能: 检查一条试验明细数据的残余质量值
+     * 参数:
+     *       preweight:float - 烧前质量
+     *       value:string    - 残余质量
+     * 返回:
+     *       true  - 输入字符合法且值符合指定条件
+     *       false - 输入字符不合法或值不符合指定条件
+     */
+    checkPostWeightValue(preweight, value) {
+        console.log(preweight);
+        if (!this.#reg_float.test(value)) { //输入字符不合法            
+            return false;
+        } else { //输入字符合法,但值不满足条件(残余质量 应大于0 且 不大于烧前质量)
+            let fValue = parseFloat(value);
+            if (Math.floor(fValue * 1000) <= 0 || parseInt(fValue * 1000) > parseInt(preweight * 1000)) {
+                return false;
+            } else {  //输入字符合法且值满足条件
+                return true;
+            }
+        }
     }
 
     /* 重载函数 */
@@ -178,7 +216,7 @@ class ReportView extends HTMLElement {
                 }
                 //计算并更新对应行的失重率显示(四舍五入至小数点后1位)
                 let lostper = ((this.#CurrentDetails[idx].preweight - this.#CurrentDetails[idx].postweight) / this.#CurrentDetails[idx].preweight * 100).toFixed(1);                
-                let cell = this.#tblTestDetail.rows[idx].cells[11];
+                let cell = this.#tblTestDetail.rows[idx].cells[10];
                 if (parseInt(lostper * 10) <= 500) { //达标
                     cell.classList.remove("non-fullfilled");
                     cell.classList.add("fullfilled");
@@ -286,7 +324,7 @@ class ReportView extends HTMLElement {
                             <th>温升TF2(℃)</th>
                             <th>火焰持续时间(s)</th>
                             <th>失重率(%)</th>
-                            <th><input id="chkSelectAll" type="checkbox">全选</th>
+                            <th><input id="chkSelectAll" type="checkbox"><label for="chkSelectAll" style="cursor: pointer;">全选</label></th>
                         </tr>
                     </thead>
                     <tbody id="tblDetail">

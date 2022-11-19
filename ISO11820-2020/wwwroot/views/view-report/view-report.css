@@ -142,6 +142,11 @@ input[type='text']:focus {
     color: red;
 }
 
+/* 残余质量错误属性 */
+.postweight-err {
+    border: 2px solid red;
+}
+
 /* 报表浏览区域属性 */
 .pdfviewer-border {
     border: 1px solid silver;
