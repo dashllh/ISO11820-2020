@@ -9,6 +9,7 @@ using Microsoft.Office.Interop.Excel;
 using OfficeOpenXml;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Emgu.CV;
 
 namespace TestServer.Core
 {
@@ -96,6 +97,12 @@ namespace TestServer.Core
 
         /* 试验设备操作对象 */
         protected ApparatusManipulator _apparatusManipulator;
+
+        /* 视频实时分析对象 */
+        protected FlameAnalyzer _flameAnalyzer;
+
+        /* 持续火焰视频片段帧缓存对象 */
+        protected List<Emgu.CV.Mat> _FrameBuf;
 
         /* 本次试验的产品数据及试样数据缓存 */
         protected readonly IDbContextFactory<ISO11820DbContext> _contextFactory;
@@ -397,7 +404,7 @@ namespace TestServer.Core
                     await csvwriter.WriteRecordsAsync(_bufSensorData);
                 }
                 //其他数据文件(比如视频记录等)
-                //...
+                OutputFlameVideo($"{datapath}\\flamevideo.avi");
 
                 /* 生成本次试验的报表 */
                 //设置EPPlus license版本为非商用版本
@@ -527,6 +534,25 @@ namespace TestServer.Core
             _testmaster.Flametime = flametime;
             _testmaster.Flameduration = flamedur;
             _testmaster.Postweight = mass;
-        }        
+        }       
+        
+        /* ========== 视频处理函数 ========= */
+
+        /*
+         * 功能: 输出火焰视频
+         * 参数:
+         *       filepath - 文件路径
+         */
+        protected void OutputFlameVideo(string filepath)
+        {
+            System.Drawing.Size size = new System.Drawing.Size(640,480);
+            VideoWriter writer = new VideoWriter(filepath, VideoWriter.Fourcc('X', 'V', 'I', 'D'),
+                size,true);
+            foreach (var frame in _FrameBuf)
+            {
+                writer.Write(frame);
+            }
+            _FrameBuf.Clear();
+        }
     }
 }

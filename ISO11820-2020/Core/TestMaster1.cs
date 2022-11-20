@@ -16,6 +16,16 @@ namespace TestServer.Core
             MasterId = 0;
             //初始化设备控制器
             _apparatusManipulator = new ApparatusManipulator("COM1","COM2");
+            //初始化视频分析器
+            _flameAnalyzer = new FlameAnalyzer(MasterId,"rtsp://...");
+            //挂载火焰事件处理函数
+            _flameAnalyzer.FlameDetected += OnFlameDetected;
+        }        
+
+        /* 检测到持续火焰事件时调用的委托函数 */
+        private void OnFlameDetected(object sender, FlameEventArgs eventArgs)
+        {
+
         }
 
         // 重载传感器数据获取函数
