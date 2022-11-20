@@ -1,6 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Microsoft.EntityFrameworkCore;
 
@@ -28,6 +26,6 @@ namespace TestServer.Models
         [Unicode(false)]
         public string Port { get; set; }
         [Column("constpower")]
-        public int Constpower { get; set; }
+        public int Constpower { get; set; }        
     }
 }

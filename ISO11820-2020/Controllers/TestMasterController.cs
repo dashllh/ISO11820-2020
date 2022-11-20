@@ -5,8 +5,6 @@ using TestServer.Models;
 using TestServer.Global;
 using Microsoft.EntityFrameworkCore;
 using ISO11820_2020.Models;
-using Microsoft.EntityFrameworkCore.Internal;
-using Microsoft.VisualBasic;
 using OfficeOpenXml;
 using Microsoft.Office.Interop.Excel;
 using System.Reflection;
@@ -124,7 +122,13 @@ namespace TestServer.Controllers
             //}
         }
 
-        //系统登录
+        /*
+         * 功能: 系统登录
+         * 参数:
+         *       data - 客户端提交的用户名和密码
+         * 返回:
+         *       JSON - Message与四个试验设备的当前信息
+         */
         [HttpPost("login")]
         public async Task<IActionResult> ProcessLogin([FromBody] LoginData data)
         {
@@ -152,7 +156,7 @@ namespace TestServer.Controllers
         /*
          * 功能: 新建试验 
          * 参数:
-         *      id:int - 试验控制器ID
+         *      id:int    - 试验控制器ID
          *      data:JSON - 新建试验相关信息
          */
         [HttpPost("newtest/{id}")]
@@ -286,7 +290,7 @@ namespace TestServer.Controllers
         public IActionResult StopHeating(int id)
         {
             //执行停止不燃炉加热的相关操作
-            //...
+            _testMasters.DictTestMaster?[id].StopHeating();
 
             Message msg = new Message();
             msg.Param = new Dictionary<string, object>();
@@ -536,7 +540,7 @@ namespace TestServer.Controllers
     }    
 
 
-    /* 定义用于Action方法调用时的数据绑定的类型 */
+    /* =========== 定义用于Action方法调用时的数据绑定的类型 ========== */
     //用户登录所需的信息类型
     public class LoginData
     {

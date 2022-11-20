@@ -14,6 +14,8 @@ namespace TestServer.Core
         {
             //设置试验控制器ID - 对应一号试验炉
             MasterId = 0;
+            //初始化设备控制器
+            _apparatusManipulator = new ApparatusManipulator("COM1","COM2");
         }
 
         // 重载传感器数据获取函数
@@ -160,6 +162,8 @@ namespace TestServer.Core
                     _iCntStable = 0;
                     _iCntDrift = 0;
                     _iCntDeviation = 0;
+                    //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温
+                    _apparatusManipulator.SwitchToPID();
                     break;
                 default:
                     break;

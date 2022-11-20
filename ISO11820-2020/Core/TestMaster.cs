@@ -94,6 +94,9 @@ namespace TestServer.Core
         // 持续火焰现象的视频片段缓存
         //...
 
+        /* 试验设备操作对象 */
+        protected ApparatusManipulator _apparatusManipulator;
+
         /* 本次试验的产品数据及试样数据缓存 */
         protected readonly IDbContextFactory<ISO11820DbContext> _contextFactory;
         protected Productmaster _productMaster;
@@ -235,14 +238,18 @@ namespace TestServer.Core
             /* 开始样品试验前的初始化工作 */
             //重置计时器
             Timer = 0;
+            //2022-11-20 向试验设备控制器发送指令,切换加热方式为恒功率输出
+            _apparatusManipulator.SwitchToConstPower();
             //修改试验控制器状态为[Recording]
-            Status = MasterStatus.Recording;
+            Status = MasterStatus.Recording;            
         }
 
         public void StopRecording()
         {
             //重置计时器
             Timer = 0;
+            //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温
+            _apparatusManipulator.SwitchToPID();
             //修改试验控制器状态为[Preparing],根据具体试验任务确定
             Status = MasterStatus.Preparing;
         }
@@ -252,8 +259,21 @@ namespace TestServer.Core
          */
         public void StartPreparing()
         {
+            //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温
+            _apparatusManipulator.SwitchToPID();
             //修改试验控制器状态为[Preparing],根据具体试验任务确定
             Status = MasterStatus.Preparing;
+        }
+
+        /*
+         * 功能: 停止不燃炉加热
+         */
+        public void StopHeating()
+        {
+            //2022-11-20 向试验设备控制器发送指令,停止加热
+            _apparatusManipulator.StopHeating();
+            //修改试验控制器状态为[Preparing],根据具体试验任务确定
+            Status = MasterStatus.Idle;
         }
 
         public virtual void SetProductData(Productmaster prodmaster)
