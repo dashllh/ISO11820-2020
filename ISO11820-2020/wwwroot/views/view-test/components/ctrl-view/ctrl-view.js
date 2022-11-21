@@ -112,8 +112,13 @@ class CtrlView extends HTMLElement {
         //if (model.MasterStatus === 3) {
         //    this.#dataOutput.appendNewData(model);
         //    this.#chart.refresh(model.Timer, this.#temp1.Value, this.#temp2.Value,
-        //        this.#tempSuf.Value, this.#tempCen.Value); 
-        //}     
+        //        this.#tempSuf.Value, this.#tempCen.Value);
+        //}
+
+        //2022-11-21 显示试验控制器消息
+        //this.#msgOutput.appendNewMsg(model.param.time, model.msg);
+        console.log(model.MasterMessages);
+
         /* 根据控制器当前状态设置控制器显示 */
         switch (model.MasterStatus) {
             case 0:    //Idle

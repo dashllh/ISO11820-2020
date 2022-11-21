@@ -31,7 +31,6 @@ class TestView extends HTMLElement {
      *       msg:JSON - 服务器端Action API的返回消息
      */
     parseControllerMsg(msg) {
-        console.log(msg);
         this.#ctrlViews[msg.param.masterid].handleControllerMsg(msg);
     }
 }

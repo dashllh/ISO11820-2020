@@ -16,6 +16,9 @@ namespace TestServer.Core
         //定义火焰事件的委托
         public event EventHandler<FlameEventArgs> FlameDetected;
 
+        //测试变量
+        private int iCnt;
+
         /* 火焰分析函数使用的全局变量 */
         private bool     _bFirstFlame;      //是否是当前试验过程中发生的第一帧火焰
         private DateTime _dtFirstFlameTime; //当前试验过程的第一火焰帧发生时间
@@ -38,7 +41,8 @@ namespace TestServer.Core
             _dtPreFlameTime = DateTime.Now;
             _dtCurFlameTime = DateTime.Now;
             //初始化视频控制对象
-            _videoCapture = new VideoCapture(url);
+            //_videoCapture = new VideoCapture(url);
+            _videoCapture = new VideoCapture("E:\\11.mp4");
             _videoCapture.ImageGrabbed += _capture_ImageGrabbed;
         }
 
@@ -53,7 +57,7 @@ namespace TestServer.Core
             _videoCapture.Stop();
         }
 
-        protected virtual void OnFlameDetected(FlameEventArgs e)
+        protected virtual void FireFlameDetected(FlameEventArgs e)
         {
             EventHandler<FlameEventArgs> handler = FlameDetected;
             if (handler != null) {
@@ -64,11 +68,9 @@ namespace TestServer.Core
         private void _capture_ImageGrabbed(object sender, EventArgs e)
         {
             try
-            {
-                // 原图
-                Mat frame = new Mat();
-                // 改变后的图片
-                Mat sizedFrame = new Mat();
+            {                
+                Mat frame = new Mat(); // 原图                
+                Mat sizedFrame = new Mat(); // 改变后的图片
                 lock (lockObj)
                 {
                     if (_videoCapture != null)
@@ -102,14 +104,15 @@ namespace TestServer.Core
         private void DoFlameAnalyze(Mat frame)
         {
             //执行持续5秒以上火焰的分析逻辑
-            //...
-
-            //确认持续5秒以上的火焰,通知试验控制器对象
-            FlameEventArgs flameEvt = new FlameEventArgs();
-            flameEvt.Time = 10;
-            flameEvt.Duration = 5;
-            //调用事件委托
-            OnFlameDetected(flameEvt);
+            if(iCnt++ == 500) {
+                //确认持续5秒以上的火焰,通知试验控制器对象并停止后续检测
+                _videoCapture.Stop();
+                FlameEventArgs flameEvt = new FlameEventArgs();
+                flameEvt.Time = 10;
+                flameEvt.Duration = 5;
+                //调用事件委托
+                FireFlameDetected(flameEvt);
+            }
         }
     }
     /* 定义火焰事件的参数 */

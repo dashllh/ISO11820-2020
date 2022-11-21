@@ -91,18 +91,17 @@ namespace TestServer.Core
         protected string _csvFilePath;
         /* [Recording]状态所需数据结构 */
         // 试验数据缓存(包括实时传感器数据,计算数据以及控制器消息)
-        protected List<SensorDataCatch> _bufSensorData;
-        // 持续火焰现象的视频片段缓存
-        //...
-
+        protected List<SensorDataCatch> _bufSensorData;        
         /* 试验设备操作对象 */
         protected ApparatusManipulator _apparatusManipulator;
-
         /* 视频实时分析对象 */
         protected FlameAnalyzer _flameAnalyzer;
-
         /* 持续火焰视频片段帧缓存对象 */
         protected List<Emgu.CV.Mat> _FrameBuf;
+        /* 指示本次试验过程是否已经检测到持续火焰事件(每次试验只捕捉一次持续火焰事件) */
+        protected bool _bFlameDetected;
+        /* 当前试验过程检测到的火焰持续时间(秒) */
+        protected int _iFlameDurTime;
 
         /* 本次试验的产品数据及试样数据缓存 */
         protected readonly IDbContextFactory<ISO11820DbContext> _contextFactory;
@@ -138,6 +137,10 @@ namespace TestServer.Core
 
             _sensorDataCatch = new SensorDataCatch();
             _caculateDataCatch = new CaculateDataCatch();
+
+            //初始化火焰事件指示变量(默认为没有发生持续火焰)及持续时间
+            _bFlameDetected = false;
+            _iFlameDurTime = 0;
 
             //初始化用于漂移计算的时间序列
             for (int i = 0; i < 600; i++)
@@ -247,9 +250,11 @@ namespace TestServer.Core
             Timer = 0;
             //2022-11-20 向试验设备控制器发送指令,切换加热方式为恒功率输出
             _apparatusManipulator.SwitchToConstPower();
+            //2022-11-21 启动火焰检测
+            _flameAnalyzer.StartAnalyzing();
             //修改试验控制器状态为[Recording]
             Status = MasterStatus.Recording;            
-        }
+        }        
 
         public void StopRecording()
         {

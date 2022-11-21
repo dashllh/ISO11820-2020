@@ -56,7 +56,7 @@ namespace TestServer.Controllers
                 //开启每个控制器的数据采集线程
                 foreach (var master in _testMasters.DictTestMaster.Values)
                 {
-                    master.OnInitialized();
+                    master.OnInitialized();                    
                 }
                 //设置控制器初始化完成标记
                 bMasterInitialized = true;

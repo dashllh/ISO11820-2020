@@ -15,9 +15,9 @@ namespace TestServer.Core
             //设置试验控制器ID - 对应一号试验炉
             MasterId = 0;
             //初始化设备控制器
-            _apparatusManipulator = new ApparatusManipulator("COM1","COM2");
+            _apparatusManipulator = new ApparatusManipulator("COM1", "COM2", 0);
             //初始化视频分析器
-            _flameAnalyzer = new FlameAnalyzer(MasterId,"rtsp://...");
+            _flameAnalyzer = new FlameAnalyzer(MasterId, "rtsp://...");
             //挂载火焰事件处理函数
             _flameAnalyzer.FlameDetected += OnFlameDetected;
         }        
@@ -25,7 +25,10 @@ namespace TestServer.Core
         /* 检测到持续火焰事件时调用的委托函数 */
         private void OnFlameDetected(object sender, FlameEventArgs eventArgs)
         {
-
+            //设置本次试验火焰事件捕捉指示
+            _bFlameDetected = true;
+            //设置本次试验火焰持续时间
+            _iFlameDurTime = eventArgs.Duration;
         }
 
         // 重载传感器数据获取函数
@@ -132,7 +135,16 @@ namespace TestServer.Core
                         Temp2   = _sensorDataCatch.Temp2,    //炉内温度2
                         TempSuf = _sensorDataCatch.TempSuf,  //试样表面温度 
                         TempCen = _sensorDataCatch.TempCen   //试样中心温度
-                    });                    
+                    });    
+                    //如果捕捉到火焰事件,则记录
+                    if(_bFlameDetected) {
+                        //设置火焰捕捉无效(无需继续捕捉)
+                        _bFlameDetected = false;
+                        _testmaster.Flametime = Timer - _iFlameDurTime;
+                        _testmaster.Flameduration = _iFlameDurTime;
+                        //追加客户端消息
+                        data.MasterMessages.Add(DateTime.Now.ToString("HH:mm"), $"检测到持续火焰,持续时间 {_iFlameDurTime} s");
+                    }
                     // 计时到达60Min,无条件终止本次试验
                     if (Timer == 3600)
                     {
@@ -174,6 +186,8 @@ namespace TestServer.Core
                     _iCntDeviation = 0;
                     //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温
                     _apparatusManipulator.SwitchToPID();
+                    //2022-11-21 停止火焰检测
+                    _flameAnalyzer.StopAnalyzing();
                     break;
                 default:
                     break;
