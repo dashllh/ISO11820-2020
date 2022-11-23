@@ -117,7 +117,6 @@ class CtrlView extends HTMLElement {
 
         //2022-11-21 显示试验控制器消息
         //this.#msgOutput.appendNewMsg(model.param.time, model.msg);
-        console.log(model.MasterMessages);
 
         /* 根据控制器当前状态设置控制器显示 */
         switch (model.MasterStatus) {

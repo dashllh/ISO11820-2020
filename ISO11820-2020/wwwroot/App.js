@@ -87,7 +87,7 @@ function SendClientCmd(cmd, param) {
             }
             window.fetch("api/TestMaster/login", option)
                 .then(response => response.json())
-                .then(data => {
+                .then(data => {  //处理登录操作返回的数据
                     if (data.ret === '0') {  //登录成功
                         console.log(data);
                         //设置当前登录用户信息                        
@@ -111,9 +111,24 @@ function SendClientCmd(cmd, param) {
                         // 添加主视图页面组件
                         document.body.appendChild(tbAppToolBar);
                         document.body.appendChild(viewTest);
-                        CurrentViewObject = viewTest;                        
+                        CurrentViewObject = viewTest;  
+                        /* 再次请求获取试验设备最新信息 */
+                        return window.fetch("api/TestMaster/getapparatusinfo");
                     } else {   //登录失败,提示错误信息
                         alert(data.msg);
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {  //处理获取设备信息操作返回的数据
+                    //保存试验设备数据至客户端全局存储
+                    for (var i = 0; i < 4; i++) {
+                        GlobalParam.TestMasters[i].InnerNumber = data[i].innernumber;
+                        GlobalParam.TestMasters[i].Name        = data[i].apparatusname;
+                        GlobalParam.TestMasters[i].PidPort     = data[i].pidport;
+                        GlobalParam.TestMasters[i].PowerPort   = data[i].powerport;
+                        GlobalParam.TestMasters[i].CheckDateF  = data[i].checkdatef.substring(0, 10);
+                        GlobalParam.TestMasters[i].CheckDateT  = data[i].checkdatet.substring(0, 10);
+                        GlobalParam.TestMasters[i].ConstPower  = data[i].constpower;
                     }
                 });            
             break;

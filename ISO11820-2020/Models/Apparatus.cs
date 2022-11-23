@@ -4,27 +4,36 @@ using Microsoft.EntityFrameworkCore;
 
 namespace TestServer.Models
 {
-    [Keyless]
     [Table("apparatus")]
     public partial class Apparatus
     {
-        [Required]
+        [Key]
         [Column("apparatusid")]
-        [StringLength(128)]
+        public int Apparatusid { get; set; }
+        [Required]
+        [Column("innernumber")]
+        [StringLength(50)]
         [Unicode(false)]
-        public string Apparatusid { get; set; }
+        public string Innernumber { get; set; }
         [Required]
         [Column("apparatusname")]
         [StringLength(512)]
         [Unicode(false)]
         public string Apparatusname { get; set; }
-        [Column("checkdate", TypeName = "date")]
-        public DateTime? Checkdate { get; set; }
+        [Column("checkdatef", TypeName = "date")]
+        public DateTime Checkdatef { get; set; }
+        [Column("checkdatet", TypeName = "date")]
+        public DateTime Checkdatet { get; set; }
         [Required]
-        [Column("port")]
-        [StringLength(128)]
+        [Column("pidport")]
+        [StringLength(50)]
         [Unicode(false)]
-        public string Port { get; set; }
+        public string Pidport { get; set; }
+        [Required]
+        [Column("powerport")]
+        [StringLength(50)]
+        [Unicode(false)]
+        public string Powerport { get; set; }
         [Column("constpower")]
         public int Constpower { get; set; }        
     }

@@ -4,6 +4,10 @@ import { SendClientCmd } from "../../../../../../App.js";
 //导入新建试验对话框组件
 import { NewTest } from "../ctrl-newtest/ctrl-newtest.js"
 
+//导入设备参数设置对话框组件
+import { SetParam } from "../ctrl-setparam/ctrl-setparam.js"
+
+
 class MasterToolBar extends HTMLElement {
     /* 属性定义 */
     #id = -1;     //工具栏对象所属的控制器面板ID
@@ -13,8 +17,12 @@ class MasterToolBar extends HTMLElement {
     #btnNewTest = null;
     #btnStartTimer = null;
     #btnStopTimer = null;  
-    //对话框组件对象
+    #btnSetParam = null;
+    /* 对话框组件对象 */
+    //新建试验对话框
     #dlgNewTest = null;
+    //设备参数设置对话框
+    #dlgSetParam = null;
     //按钮显示标签
     #item_newTest = '';
     #item_startTimer = '';
@@ -37,7 +45,10 @@ class MasterToolBar extends HTMLElement {
         this.render();
 
         this.#dlgNewTest = new NewTest(this.#id);
-        this.appendChild(this.#dlgNewTest);        
+        this.appendChild(this.#dlgNewTest); 
+
+        this.#dlgSetParam = new SetParam(this.#id);
+        this.appendChild(this.#dlgSetParam); 
     }
 
     /* 事件监听器函数 */
@@ -55,6 +66,12 @@ class MasterToolBar extends HTMLElement {
     //停止计时
     stopTimer(event) {
 
+    }
+
+    //设备参数设置
+    configParam(event) {
+        //弹出新建试验对话框        
+        this.#dlgSetParam.style.display = 'block';        
     }
 
     /* 重载方法 */
@@ -78,7 +95,12 @@ class MasterToolBar extends HTMLElement {
         if (this.#btnStopTimer === null) {
             this.#btnStopTimer = document.getElementById(`stopTimer${this.#id}`);
             this.#btnStopTimer.addEventListener('click', this.stopTimer.bind(this));
-        }        
+        }       
+        //参数设置
+        if (this.#btnSetParam === null) {
+            this.#btnSetParam = document.getElementById(`configParam${this.#id}`);
+            this.#btnSetParam.addEventListener('click', this.configParam.bind(this));
+        }     
     }
 
     disconnectedCallback() {

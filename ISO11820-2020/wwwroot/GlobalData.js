@@ -8,10 +8,10 @@
 //CurrentView: 客户端当前视图字符名称
 let GlobalParam = {
     "TestMasters": [
-        { "Id": 0, "Mode": 0, "Status": 0, "Id": "", "Name": "", "Port": "", "CheckDate": "", "ConstPower": 0 },
-        { "Id": 1, "Mode": 0, "Status": 0, "Id": "", "Name": "", "Port": "", "CheckDate": "", "ConstPower": 1 },
-        { "Id": 2, "Mode": 0, "Status": 0, "Id": "", "Name": "", "Port": "", "CheckDate": "", "ConstPower": 2 },
-        { "Id": 3, "Mode": 0, "Status": 0, "Id": "", "Name": "", "Port": "", "CheckDate": "", "ConstPower": 3 },
+        { "Id": 0, "Mode": 0, "Status": 0, "InnerNumber": "", "Name": "", "PidPort": "", "PowerPort": "", "CheckDateF": "", "CheckDateT": "", "ConstPower": 0 },
+        { "Id": 1, "Mode": 0, "Status": 0, "InnerNumber": "", "Name": "", "PidPort": "", "PowerPort": "", "CheckDateF": "", "CheckDateT": "", "ConstPower": 1 },
+        { "Id": 2, "Mode": 0, "Status": 0, "InnerNumber": "", "Name": "", "PidPort": "", "PowerPort": "", "CheckDateF": "", "CheckDateT": "", "ConstPower": 2 },
+        { "Id": 3, "Mode": 0, "Status": 0, "InnerNumber": "", "Name": "", "PidPort": "", "PowerPort": "", "CheckDateF": "", "CheckDateT": "", "ConstPower": 3 },
     ],
     "LoginUser": "",
     "LoginUserType": "",

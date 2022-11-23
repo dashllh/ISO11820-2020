@@ -57,10 +57,11 @@ class NewTest extends HTMLElement {
         var curDate = new Date();
         this.#vmNewTest.TestDate         = curDate.getFullYear() + "/" + (curDate.getMonth() + 1) + "/" + curDate.getDate();
         this.#vmNewTest.TestAccord       = "ISO11820-2020";
-        this.#vmNewTest.Operator         = GlobalParam.LoginUser;
-        this.#vmNewTest.ApparatusId      = GlobalParam.TestMasters[this.#id].Id;
+        this.#vmNewTest.Operator = GlobalParam.LoginUser;
+        //设置试验设备信息
+        this.#vmNewTest.ApparatusId      = GlobalParam.TestMasters[this.#id].InnerNumber;
         this.#vmNewTest.ApparatusName    = GlobalParam.TestMasters[this.#id].Name;
-        this.#vmNewTest.ApparatusChkDate = GlobalParam.TestMasters[this.#id].CheckDate;
+        this.#vmNewTest.ApparatusChkDate = GlobalParam.TestMasters[this.#id].CheckDateT;
         this.#vmNewTest.ConstPower       = GlobalParam.TestMasters[this.#id].ConstPower;
 
         document.getElementById(`ambtemp${this.#id}`).value     = this.#vmNewTest.AmbTemp    ;
@@ -91,12 +92,12 @@ class NewTest extends HTMLElement {
         let tmpfloat = ""; //用于缓存用户输入的浮点数的临时变量
         /* 确认输入信息并上传试验控制器 */
         //获取输入信息
-        this.#vmNewTest.AmbTemp = document.getElementById(`ambtemp${this.#id}`).value;
-        this.#vmNewTest.AmbHumi = document.getElementById(`ambhumi${this.#id}`).value;
-        this.#vmNewTest.SmpId = document.getElementById(`smpid${this.#id}`).value;
+        this.#vmNewTest.AmbTemp  = document.getElementById(`ambtemp${this.#id}`).value;
+        this.#vmNewTest.AmbHumi  = document.getElementById(`ambhumi${this.#id}`).value;
+        this.#vmNewTest.SmpId    = document.getElementById(`smpid${this.#id}`).value;
         this.#vmNewTest.SmpSubId = document.getElementById(`smpsubid${this.#id}`).value;
-        this.#vmNewTest.SmpName = document.getElementById(`smpname${this.#id}`).value;
-        this.#vmNewTest.SmpSpec = document.getElementById(`smpspec${this.#id}`).value;
+        this.#vmNewTest.SmpName  = document.getElementById(`smpname${this.#id}`).value;
+        this.#vmNewTest.SmpSpec  = document.getElementById(`smpspec${this.#id}`).value;
         //试样高度
         tmpfloat = document.getElementById(`smpheight${this.#id}`).value;        
         if (!reg_float.test(tmpfloat)) {
@@ -126,14 +127,14 @@ class NewTest extends HTMLElement {
         //试验日期
         var curDate = new Date();
         document.getElementById(`testdate${this.#id}`).value = curDate.getFullYear() + "/" + (curDate.getMonth()+1) + "/" + curDate.getDate();
-        this.#vmNewTest.TestDate = document.getElementById(`testdate${this.#id}`).value;
-        this.#vmNewTest.TestAccord = document.getElementById(`testaccord${this.#id}`).value;
-        this.#vmNewTest.Operator = document.getElementById(`testoperator${this.#id}`).value;
-        this.#vmNewTest.ApparatusId = document.getElementById(`apparatusid${this.#id}`).value;
-        this.#vmNewTest.ApparatusName = document.getElementById(`apparatusname${this.#id}`).value;
+        this.#vmNewTest.TestDate        = document.getElementById(`testdate${this.#id}`).value;
+        this.#vmNewTest.TestAccord      = document.getElementById(`testaccord${this.#id}`).value;
+        this.#vmNewTest.Operator        = document.getElementById(`testoperator${this.#id}`).value;
+        this.#vmNewTest.ApparatusId     = document.getElementById(`apparatusid${this.#id}`).value;
+        this.#vmNewTest.ApparatusName   = document.getElementById(`apparatusname${this.#id}`).value;
         this.#vmNewTest.ApparatusChkDate = document.getElementById(`apparatuschkdate${this.#id}`).value;
-        this.#vmNewTest.ConstPower = document.getElementById(`constpower${this.#id}`).value;
-        this.#vmNewTest.Memo = document.getElementById(`testmemo${this.#id}`).value;
+        this.#vmNewTest.ConstPower      = document.getElementById(`constpower${this.#id}`).value;
+        this.#vmNewTest.Memo            = document.getElementById(`testmemo${this.#id}`).value;
 
         console.log(this.#vmNewTest);
         //验证信息完整新与合法性
@@ -238,13 +239,13 @@ class NewTest extends HTMLElement {
                 <fieldset class="apparatusinfo">
                     <legend>设备信息</legend>
                     <label for="apparatusid${this.#id}" class="data-label">设备编号:</label>
-                    <input type="text" name="apparatusid${this.#id}" id="apparatusid${this.#id}">
+                    <input type="text" name="apparatusid${this.#id}" id="apparatusid${this.#id}" disabled>
                     <label for="apparatusname${this.#id}" class="data-label">设备名称:</label>
-                    <input type="text" name="apparatusname${this.#id}" id="apparatusname${this.#id}">
+                    <input type="text" name="apparatusname${this.#id}" id="apparatusname${this.#id}" disabled>
                     <label for="apparatuschkdate${this.#id}" class="data-label">检定日期:</label>
-                    <input type="text" name="apparatuschkdate${this.#id}" id="apparatuschkdate${this.#id}">
+                    <input type="text" name="apparatuschkdate${this.#id}" id="apparatuschkdate${this.#id}" disabled>
                     <label for="constpower${this.#id}" class="data-label">恒功率值:</label>
-                    <input type="text" name="constpower${this.#id}" id="constpower${this.#id}">
+                    <input type="text" name="constpower${this.#id}" id="constpower${this.#id}" disabled>
                 </fieldset>
                 <!-- 其他信息 -->
                 <fieldset class="otherinfo">

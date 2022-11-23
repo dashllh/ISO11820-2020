@@ -98,6 +98,17 @@ namespace TestServer.Controllers
         //    _testMaster.OnInitialized();
         //}
 
+        /*
+         * 功能: 获取所有试验设备信息
+         */
+        [HttpGet("getapparatusinfo")]
+        public async Task<IList<Apparatus>> GetApparatusInfo()
+        {
+            var ctx = _contextFactory.CreateDbContext();
+            var apparatus = await ctx.Apparatuses.ToListAsync();             
+            return apparatus;
+        }
+
         //测试代码:多台试验控制器的情况
         [HttpGet("startidle/{id}")]
         public void StartIdle(int id)
@@ -297,6 +308,40 @@ namespace TestServer.Controllers
             msg.Cmd = "stopheating";
             msg.Ret = "0";
             msg.Msg = "不燃炉已停止加热。";
+            msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
+
+            return new JsonResult(msg);
+        }
+
+        /*
+         * 功能: 设置试验设备恒功率输出参数
+         * 参数:
+         *       id    - 试验设备编号(同试验控制器编号)
+         *       value - 新的恒功率输出值
+         */
+        [HttpPut("setapparatusparam/{id}")]
+        public async Task<IActionResult> SetApparatusParam([FromRoute] int id, [FromBody] Apparatus data)
+        {
+            //获取数据库中对应记录
+            var ctx = _contextFactory.CreateDbContext();
+            var apparatus = await ctx.Apparatuses.FirstAsync(r => r.Apparatusid == id);
+            //更新数据库中的相应值
+            apparatus.Apparatusid   = data.Apparatusid;
+            apparatus.Innernumber   = data.Innernumber;
+            apparatus.Apparatusname = data.Apparatusname;
+            apparatus.Checkdatef    = data.Checkdatef;
+            apparatus.Checkdatet    = data.Checkdatet;
+            apparatus.Pidport       = data.Pidport;
+            apparatus.Powerport     = data.Powerport;
+            apparatus.Constpower    = data.Constpower;
+            //保存更改
+            await ctx.SaveChangesAsync();
+            //构造返回消息
+            Message msg = new Message();
+            msg.Param = new Dictionary<string, object>();
+            msg.Cmd = "setconstpower";
+            msg.Ret = "0";
+            msg.Msg = $"成功设置{id}号设备恒功率输出值。";
             msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
 
             return new JsonResult(msg);

@@ -55,6 +55,11 @@ namespace TestServer.Models
                 entity.Property(e => e.Sensorid).ValueGeneratedNever();
             });
 
+            modelBuilder.Entity<Apparatus>(entity =>
+            {
+                entity.Property(e => e.Apparatusid).ValueGeneratedNever();
+            });
+
             modelBuilder.Entity<ViewTestInfo>(entity =>
             {
                 entity.ToView("View_TestInfo");

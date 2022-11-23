@@ -41,8 +41,7 @@ namespace TestServer.Core
             _dtPreFlameTime = DateTime.Now;
             _dtCurFlameTime = DateTime.Now;
             //初始化视频控制对象
-            //_videoCapture = new VideoCapture(url);
-            _videoCapture = new VideoCapture("E:\\11.mp4");
+            _videoCapture = new VideoCapture(url);
             _videoCapture.ImageGrabbed += _capture_ImageGrabbed;
         }
 
@@ -69,7 +68,7 @@ namespace TestServer.Core
         {
             try
             {                
-                Mat frame = new Mat(); // 原图                
+                Mat frame = new Mat();      // 原图                
                 Mat sizedFrame = new Mat(); // 改变后的图片
                 lock (lockObj)
                 {
