@@ -3,19 +3,26 @@ using TestServer.Hubs;
 using TestServer.Models;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using TestServer.Global;
+using Microsoft.Office.Interop.Excel;
 
 namespace TestServer.Core
 {
     public class TestMaster1 : TestMaster
     {
-        public TestMaster1(SensorDictionary sensors, IHubContext<NotificationHub> notificationHub,
+        //应用程序全局对象集合
+        private AppGlobal _global;
+
+        public TestMaster1(AppGlobal global,SensorDictionary sensors, IHubContext<NotificationHub> notificationHub,
             IDbContextFactory<ISO11820DbContext> contextFactory)
             : base(sensors, notificationHub, contextFactory)
         {
+            _global = global;
             //设置试验控制器ID - 对应一号试验炉
             MasterId = 0;
             //初始化设备控制器
-            _apparatusManipulator = new ApparatusManipulator("COM1", "COM2", 0);
+            _apparatusManipulator = new ApparatusManipulator(_global.DictApparatus[MasterId].Pidport,
+                _global.DictApparatus[MasterId].Powerport, _global.DictApparatus[MasterId].Constpower);
             //初始化视频分析器
             _flameAnalyzer = new FlameAnalyzer(MasterId, "rtsp://...");
             //挂载火焰事件处理函数

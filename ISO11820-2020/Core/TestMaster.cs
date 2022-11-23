@@ -198,6 +198,14 @@ namespace TestServer.Core
 
         /* 内存清理函数 */
 
+        /*
+         * 功能: 更新恒功率值
+         */
+        public void UpdateConstPower(int value)
+        {
+            _apparatusManipulator.UpdateConstPower(value);
+        }
+
         /* 
          * 功能: 计算10min炉内温度漂移
         */

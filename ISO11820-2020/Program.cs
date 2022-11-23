@@ -26,7 +26,7 @@ builder.Services.AddDbContextFactory<ISO11820DbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("ISO11820")));
 
 //添加应用程序全局对象
-//builder.Services.AddSingleton<AppGlobal>();
+builder.Services.AddSingleton<AppGlobal>();
 
 //注册传感器集合对象
 builder.Services.AddSingleton<SensorDictionary>();

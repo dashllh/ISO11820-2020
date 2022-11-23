@@ -29,11 +29,23 @@ class SetParam extends HTMLElement {
     }
 
     confirmParam(event) {
+        let reg_int = /^[+]?\d+$/;  //正整数正则表达式
+        let iTmpPower;  //用于存储待验证的恒功率值变量
         //获取用户界面输入
-        //...
-
+        this.#vmSetParam.innernumber   = document.getElementById(`txtApparatusNumber${this.#id}`).value;
+        this.#vmSetParam.apparatusname = document.getElementById(`txtApparatusName${this.#id}`).value;
+        this.#vmSetParam.checkdatef    = document.getElementById(`dtCheckDateF${this.#id}`).value;
+        this.#vmSetParam.checkdatet    = document.getElementById(`dtCheckDateT${this.#id}`).value;
+        this.#vmSetParam.pidport       = document.getElementById(`txtPidPort${this.#id}`).value;
+        this.#vmSetParam.powerport     = document.getElementById(`txtPowerPort${this.#id}`).value;        
         //验证输入
-        //...
+        iTmpPower = document.getElementById(`txtConstPower${this.#id}`).value;
+        if (!reg_int.test(iTmpPower)) {
+            document.getElementById(`txtConstPower${this.#id}`).focus();
+            return;
+        } else {
+            this.#vmSetParam.constpower = parseInt(iTmpPower);
+        }
 
         //上传信息
         let option = {
@@ -45,8 +57,18 @@ class SetParam extends HTMLElement {
         }
         fetch(`api/testmaster/setapparatusparam/${this.#id}`, option)
             .then(response => response.json())
-            .then(data => console.log(data));
-
+            .then(data => {
+                //更新成功,同步更新客户端全局设备数据
+                if (data.ret === '0') {
+                    GlobalParam.TestMasters[this.#id].InnerNumber = this.#vmSetParam.innernumber;
+                    GlobalParam.TestMasters[this.#id].Name = this.#vmSetParam.apparatusname;
+                    GlobalParam.TestMasters[this.#id].CheckDateF = this.#vmSetParam.checkdatef;
+                    GlobalParam.TestMasters[this.#id].CheckDateT = this.#vmSetParam.checkdatet;
+                    GlobalParam.TestMasters[this.#id].PidPort = this.#vmSetParam.pidport;
+                    GlobalParam.TestMasters[this.#id].PowerPort = this.#vmSetParam.powerport;
+                    GlobalParam.TestMasters[this.#id].ConstPower = this.#vmSetParam.constpower;
+                }
+            });
         //关闭对话框
         this.style.display = 'none';
     }
@@ -59,6 +81,14 @@ class SetParam extends HTMLElement {
      * 功能: 初始化视图数据模型(ViewModel)
      */
     initViewModel() {
+        document.getElementById(`txtApparatusNumber${this.#id}`).value = GlobalParam.TestMasters[this.#id].InnerNumber;
+        document.getElementById(`txtApparatusName${this.#id}`).value   = GlobalParam.TestMasters[this.#id].Name;
+        document.getElementById(`dtCheckDateF${this.#id}`).value       = GlobalParam.TestMasters[this.#id].CheckDateF;
+        document.getElementById(`dtCheckDateT${this.#id}`).value       = GlobalParam.TestMasters[this.#id].CheckDateT;
+        document.getElementById(`txtPidPort${this.#id}`).value         = GlobalParam.TestMasters[this.#id].PidPort;
+        document.getElementById(`txtPowerPort${this.#id}`).value       = GlobalParam.TestMasters[this.#id].PowerPort;
+        document.getElementById(`txtConstPower${this.#id}`).value      = GlobalParam.TestMasters[this.#id].ConstPower;
+
 
     }
 

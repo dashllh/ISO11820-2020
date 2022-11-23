@@ -70,6 +70,8 @@ class MasterToolBar extends HTMLElement {
 
     //设备参数设置
     configParam(event) {
+        //初始化参数设置对话框界面值
+        this.#dlgSetParam.initViewModel();
         //弹出新建试验对话框        
         this.#dlgSetParam.style.display = 'block';        
     }

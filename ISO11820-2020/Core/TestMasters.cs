@@ -12,7 +12,7 @@
 
         public void addMaster(TestMaster master)
         {
-            DictTestMaster?.Add(DictTestMaster.Count, master);
+            DictTestMaster.Add(DictTestMaster.Count, master);
         }
     }
 }

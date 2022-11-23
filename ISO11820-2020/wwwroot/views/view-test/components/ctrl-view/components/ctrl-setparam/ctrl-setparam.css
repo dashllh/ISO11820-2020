@@ -27,7 +27,8 @@ ctrl-setparam label {
     margin-right: 3px;
 }
 
-ctrl-setparam input[type='text'], input[type='date'] {
+ctrl-setparam input[type='text'],
+ctrl-setparam input[type='date'] {
     width: 100%;
     padding: 3px 3px;
     margin-top: 5px;

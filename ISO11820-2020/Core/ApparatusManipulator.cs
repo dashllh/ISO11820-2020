@@ -56,6 +56,17 @@ namespace TestServer.Core
             }
         }
 
+        /*
+         * 功能: 更新恒功率值
+         */
+        public void UpdateConstPower(int newvalue)
+        {
+            ConstPower = newvalue;
+            //向电力调整器发送更新输出指令
+            if (PowerPort.Connected)
+                PowerPort.WriteSingleRegister(0x0002, ConstPower);
+        }
+
         /* =========定义设备的执行动作函数,这些函数使用设备的通信端口发送控制指令 ========== */
 
         /*

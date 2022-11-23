@@ -22,7 +22,7 @@ namespace TestServer.Controllers
         //试验控制器容器对象
         private TestMasters _testMasters;
         //应用程序全局对象集合
-        //private AppGlobal _global;
+        private AppGlobal _global;
         //数据库上下文对象
         private readonly IDbContextFactory<ISO11820DbContext> _contextFactory;
         //服务器环境对象
@@ -36,11 +36,11 @@ namespace TestServer.Controllers
          *      testMaster3 - 三号试验炉控制器对象(由DI系统提供)
          *      testMaster4 - 四号试验炉控制器对象(由DI系统提供)     
          */
-        public TestMasterController(TestMasters testMasters, TestMaster1 testMaster1,
+        public TestMasterController(AppGlobal global, TestMasters testMasters, TestMaster1 testMaster1,
             TestMaster2 testMaster2, TestMaster3 testMaster3, TestMaster4 testMaster4,
             IDbContextFactory<ISO11820DbContext> contextFactory, IWebHostEnvironment Environment)
         {
-            //_global = global;   
+            _global = global;
             _testMasters = testMasters;
             //初始化数据库上下文对象
             _contextFactory = contextFactory;
@@ -326,7 +326,6 @@ namespace TestServer.Controllers
             var ctx = _contextFactory.CreateDbContext();
             var apparatus = await ctx.Apparatuses.FirstAsync(r => r.Apparatusid == id);
             //更新数据库中的相应值
-            apparatus.Apparatusid   = data.Apparatusid;
             apparatus.Innernumber   = data.Innernumber;
             apparatus.Apparatusname = data.Apparatusname;
             apparatus.Checkdatef    = data.Checkdatef;
@@ -336,6 +335,16 @@ namespace TestServer.Controllers
             apparatus.Constpower    = data.Constpower;
             //保存更改
             await ctx.SaveChangesAsync();
+            //同步更新服务端全局缓存
+            _global.DictApparatus[id].Innernumber   = data.Innernumber;
+            _global.DictApparatus[id].Apparatusname = data.Apparatusname;
+            _global.DictApparatus[id].Checkdatef    = data.Checkdatef;
+            _global.DictApparatus[id].Checkdatet    = data.Checkdatet;
+            _global.DictApparatus[id].Pidport       = data.Pidport;
+            _global.DictApparatus[id].Powerport     = data.Powerport;
+            _global.DictApparatus[id].Constpower    = data.Constpower;
+            //同步更新设备控制器恒功率值
+            _testMasters.DictTestMaster[id].UpdateConstPower(data.Constpower);
             //构造返回消息
             Message msg = new Message();
             msg.Param = new Dictionary<string, object>();
