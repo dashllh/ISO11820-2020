@@ -90,8 +90,7 @@ namespace TestServer.Core
             //调整10Min缓存数据
             y1Data10Min.Enqueue(_sensorDataCatch.Temp1);
             y2Data10Min.Enqueue(_sensorDataCatch.Temp2);
-            if (y1Data10Min.Count == 601)
-            {
+            if (y1Data10Min.Count == 601) {
                 y1Data10Min.Dequeue();
                 y2Data10Min.Dequeue();
                 //刷新计算数据最新值

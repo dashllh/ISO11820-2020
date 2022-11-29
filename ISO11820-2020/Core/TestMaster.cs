@@ -54,18 +54,18 @@ namespace TestServer.Core
     //定义客户端通信(SignalR)缓存对象
     public class SignalRCatch
     {
-        public int Timer { get; set; }        //试验计时器
-        public int MasterId { get; set; }     //试验控制器ID
-        public int MasterMode { get; set; }   //控制器工作模式
+        public int Timer        { get; set; } //试验计时器
+        public int MasterId     { get; set; } //试验控制器ID
+        public int MasterMode   { get; set; } //控制器工作模式
         public int MasterStatus { get; set; } //控制器状态        
         /* 传感器数据项 */
-        public SensorDataCatch sensorDataCatch { get; set; }
+        public SensorDataCatch sensorDataCatch     { get; set; }
         /* 计算数据项 */
         public CaculateDataCatch caculateDataCatch { get; set; }
         /* 试验现象记录数据项(该处需要后续调整完善) */
-        public bool   FlameDetected { get; set; }  = false; //记录是否检测到火焰事件
-        public int    FlameDetectedTime { get; set; } = 0;  //记录首次检测到持续火焰5s的起火时间
-        public int    FlameDuration { get; set; } = 0;      //记录火焰持续燃烧时间
+        public bool   FlameDetected     { get; set; } = false; //记录是否检测到火焰事件
+        public int    FlameDetectedTime { get; set; } = 0;     //记录首次检测到持续火焰5s的起火时间
+        public int    FlameDuration     { get; set; } = 0;     //记录火焰持续燃烧时间
         /* 控制器消息记录数据项 */
         public Dictionary<string,string> MasterMessages { get; set; }
     }

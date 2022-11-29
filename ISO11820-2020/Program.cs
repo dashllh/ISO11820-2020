@@ -17,23 +17,25 @@ WebApplicationOptions options = new()
 
 var builder = WebApplication.CreateBuilder(args);
 
-// 向DI容器注册服务对象
+// 注册SignalR服务对象
 builder.Services.AddSignalR();
+// 注册客户端访问控制器服务对象
 builder.Services.AddControllers();
+// 注册数据库上下文工厂服务对象
 //builder.Services.AddDbContextFactory<TestDBContext>(opt =>
 //    opt.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddDbContextFactory<ISO11820DbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("ISO11820")));
 
-//添加应用程序全局对象
+//添加应用程序全局存储对象
 builder.Services.AddSingleton<AppGlobal>();
-
-//注册传感器集合对象
+//注册试验传感器容器对象
 builder.Services.AddSingleton<SensorDictionary>();
-//注册数据采集服务
+//注册试验传感器数据采集服务
 builder.Services.AddHostedService<DAQService>();
-//注册试验控制器对象
+//注册试验控制器容器对象
 builder.Services.AddSingleton<TestMasters>();
+//注册试验控制器对象
 builder.Services.AddSingleton<TestMaster1>();
 builder.Services.AddSingleton<TestMaster2>();
 builder.Services.AddSingleton<TestMaster3>();

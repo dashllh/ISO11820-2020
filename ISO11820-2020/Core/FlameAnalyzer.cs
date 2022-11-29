@@ -15,7 +15,6 @@ namespace TestServer.Core
         private System.Drawing.Size _newSize;
         //定义火焰事件的委托
         public event EventHandler<FlameEventArgs> FlameDetected;
-
         //测试变量
         private int iCnt;
 
@@ -46,11 +45,12 @@ namespace TestServer.Core
         }
 
         /* 定义接口函数 */
+        //开始执行火焰检测程序
         public void StartAnalyzing()
         {
             _videoCapture.Start();
         }
-
+        //停止执行火焰检测程序
         public void StopAnalyzing()
         {
             _videoCapture.Stop();
