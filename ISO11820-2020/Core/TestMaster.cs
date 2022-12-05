@@ -218,11 +218,11 @@ namespace TestServer.Core
             (double intercept1, double slope1) = Fit.Line(xArray, y1Array); //炉内温度1拟合曲线参数
             (double intercept2, double slope2) = Fit.Line(xArray, y2Array); //炉内温度2拟合曲线参数
             //计算拟合曲线左右断点的对应温度值
-            double y1_0 = slope1 * xArray[0];                   //炉内温度1拟合曲线参数左端点温度值
-            double y1_1 = slope1 * y1Array[y1Array.Length - 1]; //炉内温度1拟合曲线参数右端点温度值
+            //double y1_0 = slope1 * xArray[0];                   //炉内温度1拟合曲线参数左端点温度值
+            //double y1_1 = slope1 * y1Array[y1Array.Length - 1]; //炉内温度1拟合曲线参数右端点温度值
 
-            double y2_0 = slope2 * xArray[0];                   //炉内温度2拟合曲线参数左端点温度值
-            double y2_1 = slope2 * y2Array[y2Array.Length - 1]; //炉内温度2拟合曲线参数右端点温度值
+            //double y2_0 = slope2 * xArray[0];                   //炉内温度2拟合曲线参数左端点温度值
+            //double y2_1 = slope2 * y2Array[y2Array.Length - 1]; //炉内温度2拟合曲线参数右端点温度值
             //计算温度漂移值
             _caculateDataCatch.Temp1Drift10Min = Math.Abs(slope1 * 599);
             _caculateDataCatch.Temp2Drift10Min = Math.Abs(slope2 * 599);

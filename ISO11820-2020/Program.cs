@@ -33,13 +33,13 @@ builder.Services.AddSingleton<AppGlobal>();
 builder.Services.AddSingleton<SensorDictionary>();
 //注册试验传感器数据采集服务
 builder.Services.AddHostedService<DAQService>();
-//注册试验控制器容器对象
-builder.Services.AddSingleton<TestMasters>();
 //注册试验控制器对象
 builder.Services.AddSingleton<TestMaster1>();
 builder.Services.AddSingleton<TestMaster2>();
 builder.Services.AddSingleton<TestMaster3>();
 builder.Services.AddSingleton<TestMaster4>();
+//注册试验控制器容器对象
+builder.Services.AddSingleton<TestMasters>();
 
 //配置Windows日志记录器显示信息
 builder.Services.Configure<EventLogSettings>(config =>

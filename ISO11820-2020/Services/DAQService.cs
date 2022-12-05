@@ -65,7 +65,7 @@ namespace TestServer.Services
             //_serialPort.Open();            
 
             //开启定时任务
-            _timer?.Change(0, 800);
+            _timer.Change(0, 800);
             //_notificationTimer?.Change(0, 1000);
             //记录服务开始日志
             _logger.LogInformation("DAQ service start working...");
@@ -78,7 +78,7 @@ namespace TestServer.Services
             //记录服务停止日志
             _logger.LogInformation("DAQ service is stopping...");
             //停止定时任务
-            _timer?.Change(Timeout.Infinite, 0);
+            _timer.Change(Timeout.Infinite, 0);
             //关闭串口
             _serialPort.Close();
 
@@ -99,16 +99,20 @@ namespace TestServer.Services
                     data = _serialPort.ReadLine();
                     if (data.Length == 57)
                     {
-                        _sensors.Sensors?[0].SetInputValue(double.Parse(data.Substring(1 + 0 * 7, 7)));
-                        _sensors.Sensors?[2].SetInputValue(double.Parse(data.Substring(1 + 1 * 7, 7)));
+                        _sensors.Sensors[0].SetInputValue(double.Parse(data.Substring(1 + 0 * 7, 7)));
+                        _sensors.Sensors[2].SetInputValue(double.Parse(data.Substring(1 + 1 * 7, 7)));
                     }
                 }
                 catch (Exception e)
                 {
                     if (data.Length == 57)
                     {
-                        _sensors.Sensors?[0].SetInputValue(double.Parse(data.Substring(1 + 0 * 7, 7))); //获取通道0数据
-                        _sensors.Sensors?[2].SetInputValue(double.Parse(data.Substring(1 + 1 * 7, 7)));
+                        _sensors.Sensors[0].SetInputValue(double.Parse(data.Substring(1 + 0 * 7, 7))); //获取通道0数据
+                        _sensors.Sensors[2].SetInputValue(double.Parse(data.Substring(1 + 1 * 7, 7)));
+                    } 
+                    else
+                    {
+                        _logger.LogInformation(e.Message);
                     }
                 }
             }
@@ -116,15 +120,17 @@ namespace TestServer.Services
             //测试代码: 模拟传感器采集数据
             Random rd = new Random();
             double value = rd.Next() % 3;
-            _sensors.Sensors?[0].SetInputValue(value + 749);
-            _sensors.Sensors?[2].SetInputValue(value + 750);
+            Random rd2 = new Random();
+            double value2 = rd.Next() % 12;
+            _sensors.Sensors[0].SetInputValue(value + 749);
+            _sensors.Sensors[2].SetInputValue(value2 + 750);
 
         }
         public void Dispose()
         {
             //释放对象内存
-            _timer?.Dispose();
-            _serialPort?.Close();
+            _timer.Dispose();
+            _serialPort.Close();
         }
     }
 }

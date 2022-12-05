@@ -12,6 +12,7 @@ class AppToolBar extends HTMLElement {
     #boolMissionListShow = false;
 
     #objTestView = null;   //试验视图对象
+    #objTestView2 = null;  //试验视图对象(第二组)
     #objReportView = null; //报表视图对象
     #objQueryView = null;  //查询视图对象
 
@@ -48,6 +49,15 @@ class AppToolBar extends HTMLElement {
                 SendClientCmd('changeview','TestView');
             });
         }
+
+        //选择试验视图(第二组)
+        if (this.#objTestView2 === null) {
+            this.#objTestView2 = document.getElementById('_idTbTestView2');
+            this.#objTestView2.addEventListener('click', (event) => {
+                SendClientCmd('changeview', 'TestView2');
+            });
+        }
+
         //选择报表视图
         if (this.#objReportView === null) {
             this.#objReportView = document.getElementById('_idTbReportView');
@@ -76,9 +86,11 @@ class AppToolBar extends HTMLElement {
                 <!-- 功能按钮区域 -->
                 <div class="apptb-btn-view">
                     <input type="radio" name="app-toolbar-item" id="_idTbTestView" checked>
-                    <label for="_idTbTestView">试验控制</label>
+                    <label for="_idTbTestView">试验控制(1-4号炉)</label>
+                    <input type="radio" name="app-toolbar-item" id="_idTbTestView2">
+                    <label for="_idTbTestView2">试验控制(5-8号炉)</label>
                     <input type="radio" name="app-toolbar-item" id="_idTbReportView">
-                    <label for="_idTbReportView">试验生成</label>
+                    <label for="_idTbReportView">报告生成</label>
                     <input type="radio" name="app-toolbar-item" id="_idTbQueryView">
                     <label for="_idTbQueryView">记录查询</label>
                 </div>

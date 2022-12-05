@@ -24,6 +24,7 @@ import { ReportView } from "./views/view-report/view-report.js";
 let viewLogin = null;
 let tbAppToolBar = null;
 let viewTest = null;
+let viewTest2 = null; //第二组试验设备的试验控制视图
 let viewReport = null;
 let viewQuery = null;
 
@@ -45,12 +46,18 @@ let CurrentViewObject = null;
 var connection = new signalR.HubConnectionBuilder().withUrl("/Notify").build();
 connection.on("MasterBroadCast", function (data) { 
     //解析服务器消息
-    const json = JSON.parse(data);    
-    //解析通信数据并刷新试验视图显示    
-    if (viewTest !== null) {        
-        viewTest.updateView(json);
-    }
-    //console.log(GlobalParam);
+    const json = JSON.parse(data);   
+    if (json.MasterId < 4) {  //消息来自第一组试验设备
+        //解析通信数据并刷新试验视图显示    
+        if (viewTest !== null) {
+            viewTest.updateView(json);
+        }
+    } else {  //消息来自第二组试验设备
+        //第二组试验设备视图的界面显示更新
+        if (viewTest2 !== null) {
+            viewTest2.updateView(json);
+        }
+    }   
 });
 connection.start();
 
@@ -100,6 +107,8 @@ function SendClientCmd(cmd, param) {
                         tbAppToolBar = new AppToolBar();
                         // 试验视图
                         viewTest = new TestView();
+                        // 试验视图(第二组)
+                        viewTest2 = new TestView();
                         // 报表视图
                         viewReport = new ReportView();
                         // 查询视图
@@ -153,7 +162,14 @@ function SendClientCmd(cmd, param) {
                     CurrentViewObject = viewTest;
                     GlobalParam.CurrentViewName = 'TestView';
                     console.log('viewTest selected.');
-                } else if (param === 'ReportView') {
+                }
+                else if (param === 'TestView2') {
+                    document.body.appendChild(viewTest2);
+                    CurrentViewObject = viewTest2;
+                    GlobalParam.CurrentViewName = 'TestView2';
+                    console.log('viewTest2 selected.');
+                }
+                else if (param === 'ReportView') {
                     document.body.appendChild(viewReport);
                     CurrentViewObject = viewReport;
                     GlobalParam.CurrentViewName = 'ReportView';
