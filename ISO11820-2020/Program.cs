@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using Microsoft.Extensions.Logging.EventLog;
 using Microsoft.EntityFrameworkCore;
 using TestServer.Services;

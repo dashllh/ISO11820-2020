@@ -27,8 +27,6 @@ namespace TestServer.Services
         private readonly ILogger<DAQService> _logger;
         //数据库上下文对象
         private readonly IDbContextFactory<ISO11820DbContext> _contextFactory;
-        //应用程序全局对象集合
-        //private AppGlobal _global;
         //传感器集合对象
         private SensorDictionary _sensors;
         //用于定时查询传感器实时值的计时器
@@ -43,7 +41,6 @@ namespace TestServer.Services
             _logger = logger;
             _contextFactory = contextFactory;
             _sensors = sensors;
-            //_global = global;
             //初始化串口对象
             _serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
             _serialPort.ReadTimeout = 200;  //设置读超时
@@ -56,20 +53,23 @@ namespace TestServer.Services
         }
         public Task StartAsync(CancellationToken cancellationToken)
         {            
-            //获取采集传感器数据
+            //从数据库加载传感器参数至内存
             var ctx  = _contextFactory.CreateDbContext();
-            //初始化全局对象中的传感器集合对象
             _sensors.Sensors = ctx.Sensors.ToDictionary(X => X.Sensorid);
-
             //打开串口
-            //_serialPort.Open();            
-
-            //开启定时任务
-            _timer.Change(0, 800);
-            //_notificationTimer?.Change(0, 1000);
-            //记录服务开始日志
-            _logger.LogInformation("DAQ service start working...");
-
+            _serialPort.Open();            
+            if(_serialPort.IsOpen)
+            {
+                //开启定时任务
+                _timer.Change(0, 800);
+                //记录服务开始日志
+                _logger.LogInformation("DAQ service start working...");
+            }
+            else
+            {
+                //打开串口失败,记录相应日志
+                _logger.LogInformation("DAQ service starting failed...");
+            }
             return Task.CompletedTask;
         }
 
@@ -81,11 +81,24 @@ namespace TestServer.Services
             _timer.Change(Timeout.Infinite, 0);
             //关闭串口
             _serialPort.Close();
-
+            if (!_serialPort.IsOpen)
+            {
+                //成功关闭串口,记录相应日志
+                _logger.LogInformation("DAQ service serial port closed...");
+            }
+            else
+            {
+                //关闭串口失败,记录相应日志
+                _logger.LogInformation("DAQ service serial port closing failed...");
+            }
             return Task.CompletedTask;
         }
 
-        //定时任务函数
+        /*
+         * 功能: 定时从通信接口获取传感器数据并更新内存缓存(一个通信接口对应一个DoWork采集函数)
+         * 说明:
+         *       不同的试验设备具有不同的传感器、设备接口以及通信协议。       
+         */
         private void DoWork(object state)
         {
             //遍历传感器,更新传感器输出值                        
