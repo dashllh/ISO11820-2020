@@ -55,20 +55,23 @@ namespace TestServer.Services
             //从数据库加载传感器参数至内存
             var ctx  = _contextFactory.CreateDbContext();
             _sensors.Sensors = ctx.Sensors.ToDictionary(X => X.Sensorid);
+
+            //测试代码: 开启定时任务
+            _timer.Change(0, 800);
             //打开串口
-            _serialPort.Open();            
-            if(_serialPort.IsOpen)
-            {
-                //开启定时任务
-                _timer.Change(0, 800);
-                //记录服务开始日志
-                _logger.LogInformation("DAQ service start working...");
-            }
-            else
-            {
-                //打开串口失败,记录相应日志
-                _logger.LogInformation("DAQ service starting failed...");
-            }
+            //_serialPort.Open();            
+            //if(_serialPort.IsOpen)
+            //{
+            //    //开启定时任务
+            //    _timer.Change(0, 800);
+            //    //记录服务开始日志
+            //    _logger.LogInformation("DAQ service start working...");
+            //}
+            //else
+            //{
+            //    //打开串口失败,记录相应日志
+            //    _logger.LogInformation("DAQ service starting failed...");
+            //}
             return Task.CompletedTask;
         }
 

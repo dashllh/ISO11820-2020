@@ -438,7 +438,7 @@ namespace TestServer.Core
                     //取得rawdata页面
                     ExcelWorksheet sheet_rawdata = package.Workbook.Worksheets.ElementAt(1);
                     //将采集数据记录拷贝至试验报表的rawdata页面(含首行标题)
-                    sheet_rawdata.Cells["A1"].LoadFromText(new FileInfo($"{datapath}\\sensordata.csv"), format, null, true);
+                    sheet_rawdata.Cells["A1"].LoadFromText(new FileInfo($"{datapath}\\sensordata.csv"), format, null, true);                    
                     //计算中间结果及试验结果
                     //ExcelWorksheet sheet_calcdata = package.Workbook.Worksheets.ElementAt(2);
                     /* 设置报表首页部分数据 */
@@ -480,8 +480,8 @@ namespace TestServer.Core
                  * (以下函数调用只适用于Windows平台,非Windows平台解决方案待定)
                  */
                 oXL = new Microsoft.Office.Interop.Excel.Application();
-                oXL.Visible = false;
-                oXL.DisplayAlerts = false;
+                oXL.Visible = false;        //设置应用程序窗口不可见
+                oXL.DisplayAlerts = false;  //禁止任何弹窗提示
                 oWBs = oXL.Workbooks;
                 //打开报表文件
                 oWB = oWBs.Open($"{rptpath}\\report.xlsx");
@@ -505,7 +505,6 @@ namespace TestServer.Core
                 var ctx = _contextFactory.CreateDbContext();
                 ctx.Testmasters.Add(_testmaster);
                 await ctx.SaveChangesAsync();
-
                 //保存报表
                 oWB.Save();
                 oSheet.ExportAsFixedFormat2(XlFixedFormatType.xlTypePDF, $"{rptpath}\\report.pdf",
