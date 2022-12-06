@@ -3,7 +3,9 @@ using EasyModbus;
 
 namespace TestServer.Core
 {
-    /* 该类型定义与试验设备通信的相关操作 */
+    /* 
+     * 类型定义: 该类型定义操作试验设备动作部件的基本功能 
+     */
     public class ApparatusManipulator
     {
         //PID控制器通信端口

@@ -15,11 +15,10 @@ namespace TestServer.Services
      * 创建时间: 
      *      2022年6月12日
      * 更新时间: 
-     *      2022年7月17日
+     *      2022年12月6日
      * 功能清单:
-     *      1.初始化试验设备传感器连接(含检查传感器可用状态)
+     *      1. 初始化试验设备传感器连接(含检查传感器可用状态)
      *      2. 以小于1s的时间间隔刷新数据采集传感器最新采集数据
-     *      3. 使用SignalR以1s的时间间隔将最新传感器数据向客户端广播  
      */
     public class DAQService : IHostedService, IDisposable
     {        

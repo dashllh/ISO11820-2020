@@ -70,6 +70,9 @@ namespace TestServer.Core
         public Dictionary<string,string> MasterMessages { get; set; }
     }
 
+    /*
+     * 类型定义: 该类型定义试验控制器的基本属性与功能
+     */
     public class TestMaster : ITestMaster
     {
         /* 控制器内部ID */
