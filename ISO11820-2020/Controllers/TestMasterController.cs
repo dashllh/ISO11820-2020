@@ -214,9 +214,9 @@ namespace TestServer.Controllers
                 testmaster.Phenocode = "0000";
                 testmaster.Memo = data.TestMemo;
 
-                _testMasters.DictTestMaster?[_masterId].SetTestData(testmaster);
+                _testMasters.DictTestMaster[_masterId].SetTestData(testmaster);
                 //设置控制器状态为[Preparing],开始升温
-                _testMasters.DictTestMaster?[id].StartPreparing();
+                _testMasters.DictTestMaster[id].StartPreparing();
 
                 //设置客户端返回消息
                 msg.Ret = "0";

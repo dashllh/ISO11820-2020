@@ -15,6 +15,8 @@ WebApplicationOptions options = new()
 
 var builder = WebApplication.CreateBuilder(args);
 
+/* ================= 向DI容器中注册服务类型 =================== */
+
 // 注册SignalR服务对象
 builder.Services.AddSignalR();
 // 注册客户端访问控制器服务对象
@@ -24,7 +26,6 @@ builder.Services.AddControllers();
 //    opt.UseSqlServer(builder.Configuration.GetConnectionString("Default")));
 builder.Services.AddDbContextFactory<ISO11820DbContext>(opt =>
     opt.UseSqlServer(builder.Configuration.GetConnectionString("ISO11820")));
-
 //添加应用程序全局存储对象
 builder.Services.AddSingleton<AppGlobal>();
 //注册试验传感器容器对象
@@ -42,11 +43,14 @@ builder.Services.AddSingleton<TestMasters>();
 //配置Windows日志记录器显示信息
 builder.Services.Configure<EventLogSettings>(config =>
 {
-    config.LogName = string.Empty;
-    config.SourceName = "DAQService";
+    config.LogName = "ISO11820_Test_Manager";
+    //该属性对应 Windows事件记录日志程序中的 "来源" 查询字段
+    config.SourceName = "ISO11820 Test Manager"; 
 });
 
 var app = builder.Build();
+
+/* ================= 配置HTTP请求管道中间件 =================== */
 
 // Configure the HTTP request pipeline.
 //if (!app.Environment.IsDevelopment())

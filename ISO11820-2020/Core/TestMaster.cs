@@ -1,15 +1,15 @@
-﻿using Microsoft.AspNetCore.SignalR;
-using TestServer.Hubs;
-using TestServer.Models;
+﻿using CsvHelper;
+using Emgu.CV;
 using MathNet.Numerics;
-using CsvHelper;
-using System.Globalization;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Office.Interop.Excel;
 using OfficeOpenXml;
+using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using Emgu.CV;
+using TestServer.Hubs;
+using TestServer.Models;
 
 namespace TestServer.Core
 {
@@ -48,26 +48,26 @@ namespace TestServer.Core
     {
         public double Temp1Drift10Min { get; set; }  //炉内温度2 10Min漂移
         public double Temp2Drift10Min { get; set; }  //炉内温度1 10Min漂移
-        public double TempDriftMean   { get; set; }  //炉内温度1与炉内温度2平均漂移
+        public double TempDriftMean { get; set; }  //炉内温度1与炉内温度2平均漂移
     }
 
     //定义客户端通信(SignalR)缓存对象
     public class SignalRCatch
     {
-        public int Timer        { get; set; } //试验计时器
-        public int MasterId     { get; set; } //试验控制器ID
-        public int MasterMode   { get; set; } //控制器工作模式
+        public int Timer { get; set; } //试验计时器
+        public int MasterId { get; set; } //试验控制器ID
+        public int MasterMode { get; set; } //控制器工作模式
         public int MasterStatus { get; set; } //控制器状态        
         /* 传感器数据项 */
-        public SensorDataCatch sensorDataCatch     { get; set; }
+        public SensorDataCatch sensorDataCatch { get; set; }
         /* 计算数据项 */
         public CaculateDataCatch caculateDataCatch { get; set; }
         /* 试验现象记录数据项(该处需要后续调整完善) */
-        public bool   FlameDetected     { get; set; } = false; //记录是否检测到火焰事件
-        public int    FlameDetectedTime { get; set; } = 0;     //记录首次检测到持续火焰5s的起火时间
-        public int    FlameDuration     { get; set; } = 0;     //记录火焰持续燃烧时间
+        public bool FlameDetected { get; set; } = false; //记录是否检测到火焰事件
+        public int FlameDetectedTime { get; set; } = 0;     //记录首次检测到持续火焰5s的起火时间
+        public int FlameDuration { get; set; } = 0;     //记录火焰持续燃烧时间
         /* 控制器消息记录数据项 */
-        public Dictionary<string,string> MasterMessages { get; set; }
+        public Dictionary<string, string> MasterMessages { get; set; }
     }
 
     /*
@@ -94,7 +94,7 @@ namespace TestServer.Core
         protected string _csvFilePath;
         /* [Recording]状态所需数据结构 */
         // 试验数据缓存(包括实时传感器数据,计算数据以及控制器消息)
-        protected List<SensorDataCatch> _bufSensorData;        
+        protected List<SensorDataCatch> _bufSensorData;
         /* 试验设备操作对象 */
         protected ApparatusManipulator _apparatusManipulator;
         /* 视频实时分析对象 */
@@ -130,7 +130,7 @@ namespace TestServer.Core
         /* 构造函数 */
         public TestMaster(SensorDictionary sensors, IHubContext<NotificationHub> notificationHub,
             IDbContextFactory<ISO11820DbContext> contextFactory)
-        {            
+        {
             _notificationHub = notificationHub;
             _contextFactory = contextFactory;
             _sensors = sensors;
@@ -159,11 +159,11 @@ namespace TestServer.Core
 
             //初始化控制器工作模式及状态
             WorkMode = MasterWorkMode.Standby;
-            Status   = MasterStatus.Idle;
+            Status = MasterStatus.Idle;
         }
 
-
         /* ====================== 实现试验控制器通用接口方法 ================== */
+
         /* 控制器初始化函数 */
         public void OnInitialized()
         {
@@ -213,13 +213,13 @@ namespace TestServer.Core
          * 功能: 计算10min炉内温度漂移
         */
         protected void CaculateDrift10Min()
-        {            
-            double[] xArray  = xData10Min.ToArray();  //时间数据序列
+        {
+            double[] xArray = xData10Min.ToArray();   //时间数据序列
             double[] y1Array = y1Data10Min.ToArray(); //炉内温度1数据序列
             double[] y2Array = y2Data10Min.ToArray(); //炉内温度2数据序列
             //拟合曲线,取得斜率与截距
-            (double intercept1, double slope1) = Fit.Line(xArray, y1Array); //炉内温度1拟合曲线参数
-            (double intercept2, double slope2) = Fit.Line(xArray, y2Array); //炉内温度2拟合曲线参数
+            (_, double slope1) = Fit.Line(xArray, y1Array); //炉内温度1拟合曲线参数
+            (_, double slope2) = Fit.Line(xArray, y2Array); //炉内温度2拟合曲线参数
             //计算拟合曲线左右断点的对应温度值
             //double y1_0 = slope1 * xArray[0];                   //炉内温度1拟合曲线参数左端点温度值
             //double y1_1 = slope1 * y1Array[y1Array.Length - 1]; //炉内温度1拟合曲线参数右端点温度值
@@ -229,7 +229,7 @@ namespace TestServer.Core
             //计算温度漂移值
             _caculateDataCatch.Temp1Drift10Min = Math.Abs(slope1 * 599);
             _caculateDataCatch.Temp2Drift10Min = Math.Abs(slope2 * 599);
-            _caculateDataCatch.TempDriftMean = 
+            _caculateDataCatch.TempDriftMean =
                 (_caculateDataCatch.Temp1Drift10Min + _caculateDataCatch.Temp2Drift10Min) / 2;
         }
 
@@ -264,8 +264,8 @@ namespace TestServer.Core
             //2022-11-21 启动火焰检测
             _flameAnalyzer.StartAnalyzing();
             //修改试验控制器状态为[Recording]
-            Status = MasterStatus.Recording;            
-        }        
+            Status = MasterStatus.Recording;
+        }
 
         public void StopRecording()
         {
@@ -345,7 +345,7 @@ namespace TestServer.Core
                     _iCntStable = 600;
                 }
                 //计算温度漂移条件
-                if ((int)(_caculateDataCatch.Temp1Drift10Min * 10) <= 20 
+                if ((int)(_caculateDataCatch.Temp1Drift10Min * 10) <= 20
                     && (int)(_caculateDataCatch.Temp2Drift10Min * 10) <= 20)
                 {
                     if (_iCntDrift > 0) _iCntDrift--;
@@ -391,10 +391,10 @@ namespace TestServer.Core
         public virtual async Task PostTestProcess()
         {
             /* 申明操作Excel文件的COM对象 */
-            Microsoft.Office.Interop.Excel.Application oXL = null;
-            Microsoft.Office.Interop.Excel.Workbooks oWBs = null;
-            Microsoft.Office.Interop.Excel.Workbook oWB = null;
-            Microsoft.Office.Interop.Excel.Worksheet oSheet = null;
+            Application oXL    = null;
+            Workbooks   oWBs   = null;
+            Workbook    oWB    = null;
+            Worksheet   oSheet = null;
             /* 创建本地存储目录 */
             string prodpath = $"D:\\ISO11820\\{_testmaster.Productid}";
             string smppath = $"{prodpath}\\{_testmaster.Testid}";
@@ -429,8 +429,8 @@ namespace TestServer.Core
                 var format = new ExcelTextFormat()
                 {
                     Delimiter = ',',
-                    EOL = "\r"       // DEFAULT IS "\r\n";
-                                     // format.TextQualifier = '"';
+                    EOL = "\r"    // 修改行尾结束符,默认为 "\r\n" ("\r"为回车符 "\n"为换行符);
+                                  // 字符类型引用符 format.TextQualifier = '"';
                 };
                 //操作Excel文件
                 using (ExcelPackage package = new ExcelPackage(new FileInfo($"D:\\ISO11820\\template_report_{MasterId}.xlsx")))
@@ -438,7 +438,7 @@ namespace TestServer.Core
                     //取得rawdata页面
                     ExcelWorksheet sheet_rawdata = package.Workbook.Worksheets.ElementAt(1);
                     //将采集数据记录拷贝至试验报表的rawdata页面(含首行标题)
-                    sheet_rawdata.Cells["A1"].LoadFromText(new FileInfo($"{datapath}\\sensordata.csv"), format, null, true);                    
+                    sheet_rawdata.Cells["A1"].LoadFromText(new FileInfo($"{datapath}\\sensordata.csv"), format, null, true);
                     //计算中间结果及试验结果
                     //ExcelWorksheet sheet_calcdata = package.Workbook.Worksheets.ElementAt(2);
                     /* 设置报表首页部分数据 */
@@ -476,24 +476,28 @@ namespace TestServer.Core
                     //package.SaveAs($"{rptpath}\\report.xlsx");
                     await package.SaveAsAsync($"{rptpath}\\report.xlsx");
                 }
+
                 /* 使用COM接口操作Excel报表文件,以激活计算公式并回填关键数据项
                  * (以下函数调用只适用于Windows平台,非Windows平台解决方案待定)
                  */
-                oXL = new Microsoft.Office.Interop.Excel.Application();
-                oXL.Visible = false;        //设置应用程序窗口不可见
-                oXL.DisplayAlerts = false;  //禁止任何弹窗提示
+                oXL = new Application()
+                {
+                    Visible = false,       //设置应用程序窗口不可见
+                    DisplayAlerts = false  //禁止任何弹窗提示
+                };
                 oWBs = oXL.Workbooks;
                 //打开报表文件
                 oWB = oWBs.Open($"{rptpath}\\report.xlsx");
                 //选中报表首页
-                oSheet = (Microsoft.Office.Interop.Excel.Worksheet)oWB.Sheets.Item[1];
+                oSheet = (Worksheet)oWB.Sheets.Item[1];
+
                 /* 根据报表计算结果回填本次试验的【结论判定属性】 */
                 //最高温度
-                _testmaster.Maxtf1 = Convert.ToDouble(oSheet.Range["G15"].Value);
+                _testmaster.Maxtf1        = Convert.ToDouble(oSheet.Range["G15"].Value);
                 //最高温度时间
-                _testmaster.Maxtf1Time = Convert.ToInt32(oSheet.Range["J15"].Value);
+                _testmaster.Maxtf1Time    = Convert.ToInt32(oSheet.Range["J15"].Value);
                 //终平衡温度
-                _testmaster.Finaltf1 = Convert.ToDouble(oSheet.Range["M15"].Value);
+                _testmaster.Finaltf1      = Convert.ToDouble(oSheet.Range["M15"].Value);
                 //终温时间
                 _testmaster.Totaltesttime = Convert.ToInt32(oSheet.Range["B23"].Value);
                 //温升
@@ -520,9 +524,9 @@ namespace TestServer.Core
                 Marshal.FinalReleaseComObject(oWBs);
                 Marshal.FinalReleaseComObject(oXL);
                 oSheet = null;
-                oWB = null;
-                oWBs = null;
-                oXL = null;
+                oWB    = null;
+                oWBs   = null;
+                oXL    = null;
                 //垃圾回收,确保Excel进程被彻底清理
                 GC.Collect();
                 GC.WaitForPendingFinalizers();
@@ -536,7 +540,7 @@ namespace TestServer.Core
         /* ======================= ISO11820 独有的函数 ================ */
         /* 取得当前试验控制器对应的传感器数据当前值 */
         protected virtual void FetchSensorData()
-        {            
+        {
         }
 
         /*
@@ -544,13 +548,13 @@ namespace TestServer.Core
          * 参数:
          *      mass - 样品残余质量
          */
-        public void SetPostTestData(int flametime,int flamedur,double mass)
+        public void SetPostTestData(int flametime, int flamedur, double mass)
         {
             _testmaster.Flametime = flametime;
             _testmaster.Flameduration = flamedur;
             _testmaster.Postweight = mass;
-        }       
-        
+        }
+
         /* ========== 视频处理函数 ========= */
 
         /*
@@ -560,9 +564,8 @@ namespace TestServer.Core
          */
         protected void OutputFlameVideo(string filepath)
         {
-            System.Drawing.Size size = new System.Drawing.Size(640,480);
-            VideoWriter writer = new VideoWriter(filepath, VideoWriter.Fourcc('X', 'V', 'I', 'D'),
-                size,true);
+            System.Drawing.Size size = new(640, 480);
+            VideoWriter writer = new(filepath, VideoWriter.Fourcc('X', 'V', 'I', 'D'), size, true);
             foreach (var frame in _FrameBuf)
             {
                 writer.Write(frame);

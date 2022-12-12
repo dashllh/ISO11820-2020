@@ -139,7 +139,6 @@ namespace TestServer.Services
             double value2 = rd.Next() % 12;
             _sensors.Sensors[0].SetInputValue(value + 749);
             _sensors.Sensors[2].SetInputValue(value2 + 750);
-
         }
         public void Dispose()
         {
