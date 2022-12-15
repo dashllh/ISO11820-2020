@@ -411,6 +411,7 @@ namespace TestServer.Core
                 Directory.CreateDirectory(datapath);
                 //本次试验报表目录
                 Directory.CreateDirectory(rptpath);
+
                 /* 保存本次试验数据文件 */
                 //传感器采集数据
                 using (var writer = new StreamWriter($"{datapath}\\sensordata.csv", false))
@@ -442,7 +443,7 @@ namespace TestServer.Core
                     //计算中间结果及试验结果
                     //ExcelWorksheet sheet_calcdata = package.Workbook.Worksheets.ElementAt(2);
                     /* 设置报表首页部分数据 */
-                    //取得报表首页页面
+                    //取得报表首页页面(页面索引从 0 开始)
                     ExcelWorksheet sheet_main = package.Workbook.Worksheets.ElementAt(0);
                     //实验室温度
                     sheet_main.Cells["B5"].Value = _testmaster.Ambtemp;
@@ -488,7 +489,7 @@ namespace TestServer.Core
                 oWBs = oXL.Workbooks;
                 //打开报表文件
                 oWB = oWBs.Open($"{rptpath}\\report.xlsx");
-                //选中报表首页
+                //选中报表首页(页面索引从 1 开始)
                 oSheet = (Worksheet)oWB.Sheets.Item[1];
 
                 /* 根据报表计算结果回填本次试验的【结论判定属性】 */
@@ -514,26 +515,47 @@ namespace TestServer.Core
                 oSheet.ExportAsFixedFormat2(XlFixedFormatType.xlTypePDF, $"{rptpath}\\report.pdf",
                     Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value,
                     false, Missing.Value, Missing.Value);
-                //关闭报表文件
-                oWB.Close(false);
-                oWBs.Close();
-                oXL.Quit();
-                //释放COM组件对象
-                Marshal.FinalReleaseComObject(oSheet);
-                Marshal.FinalReleaseComObject(oWB);
-                Marshal.FinalReleaseComObject(oWBs);
-                Marshal.FinalReleaseComObject(oXL);
-                oSheet = null;
-                oWB    = null;
-                oWBs   = null;
-                oXL    = null;
-                //垃圾回收,确保Excel进程被彻底清理
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
             }
             catch (Exception)
             {
                 throw;
+            }
+            finally
+            {
+                if(oSheet != null)
+                {
+                    //释放COM组件对象
+                    while (Marshal.FinalReleaseComObject(oSheet) != 0) { }
+                    oSheet = null;
+                }
+                if (oWB != null)
+                {
+                    //关闭当前工作簿
+                    oWB.Close(XlSaveAction.xlSaveChanges);
+                    //释放COM组件对象
+                    while (Marshal.FinalReleaseComObject(oWB) != 0) { }
+                    oWB = null;
+                }
+                if (oWBs != null)
+                {
+                    //关闭所有工作簿
+                    oWBs.Close();
+                    //释放COM组件对象
+                    while (Marshal.FinalReleaseComObject(oWBs) != 0) { }
+                    oWBs = null;
+                }                
+                if (oXL != null)
+                {
+                    //退出Excel应用程序
+                    oXL.Quit();
+                    oXL.Application.Quit();
+                    //释放COM组件对象
+                    while (Marshal.FinalReleaseComObject(oXL) != 0) { }
+                    oXL = null;
+                }
+                //垃圾回收,确保Excel进程被彻底清理
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
             }
         }
 
