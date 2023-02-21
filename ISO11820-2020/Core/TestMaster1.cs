@@ -4,7 +4,6 @@ using TestServer.Models;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using TestServer.Global;
-using Microsoft.Office.Interop.Excel;
 
 namespace TestServer.Core
 {
@@ -24,9 +23,9 @@ namespace TestServer.Core
             _apparatusManipulator = new ApparatusManipulator(_global.DictApparatus[MasterId].Pidport,
                 _global.DictApparatus[MasterId].Powerport, _global.DictApparatus[MasterId].Constpower);
             //初始化视频分析器
-            _flameAnalyzer = new FlameAnalyzer(MasterId, "rtsp://...");
+            //_flameAnalyzer = new FlameAnalyzer(MasterId, "rtsp://...");
             //挂载火焰事件处理函数
-            _flameAnalyzer.FlameDetected += OnFlameDetected;
+            //_flameAnalyzer.FlameDetected += OnFlameDetected;
         }        
 
         /* 检测到持续火焰事件时调用的委托函数 */
@@ -162,7 +161,7 @@ namespace TestServer.Core
                         data.MasterMessages.Add(DateTime.Now.ToString("HH:mm"), "本次试验已完成");                        
                     }
                     // 在试验标准要求的时间点判断是否满足试验终止条件
-                    if (Timer == 1800 || Timer == 2100 || Timer == 2400
+                    if (Timer == 60 || Timer == 2100 || Timer == 2400
                         || Timer == 2700 || Timer == 3000 || Timer == 3300)
                     {
                         //判断试验终止条件是否满足                        
@@ -193,7 +192,7 @@ namespace TestServer.Core
                     //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温
                     _apparatusManipulator.SwitchToPID();
                     //2022-11-21 停止火焰检测
-                    _flameAnalyzer.StopAnalyzing();
+                    //_flameAnalyzer.StopAnalyzing();
                     break;
                 default:
                     break;

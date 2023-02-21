@@ -1,7 +1,6 @@
 ﻿using TestServer.Models;
 using TestServer.Core;
 using Microsoft.EntityFrameworkCore.Internal;
-using Microsoft.Office.Interop.Excel;
 using Microsoft.EntityFrameworkCore;
 
 namespace TestServer.Global

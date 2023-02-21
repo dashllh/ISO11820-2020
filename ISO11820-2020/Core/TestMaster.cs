@@ -3,13 +3,16 @@ using Emgu.CV;
 using MathNet.Numerics;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Office.Interop.Excel;
 using OfficeOpenXml;
 using System.Globalization;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using TestServer.Hubs;
 using TestServer.Models;
+using DevExpress.Spreadsheet;
+using Emgu.CV.ML;
+using DevExpress.XtraPrinting;
+using OfficeOpenXml.FormulaParsing;
 
 namespace TestServer.Core
 {
@@ -262,7 +265,7 @@ namespace TestServer.Core
             //2022-11-20 向试验设备控制器发送指令,切换加热方式为恒功率输出
             _apparatusManipulator.SwitchToConstPower();
             //2022-11-21 启动火焰检测
-            _flameAnalyzer.StartAnalyzing();
+            //_flameAnalyzer.StartAnalyzing();
             //修改试验控制器状态为[Recording]
             Status = MasterStatus.Recording;
         }
@@ -388,13 +391,183 @@ namespace TestServer.Core
         }
 
         /* 试验完成后期数据处理函数 */
+        //public virtual async Task PostTestProcess()
+        //{
+        //    /* 申明操作Excel文件的COM对象 */
+        //    Application oXL    = null;
+        //    Workbooks   oWBs   = null;
+        //    Workbook    oWB    = null;
+        //    Worksheet   oSheet = null;
+        //    /* 创建本地存储目录 */
+        //    string prodpath = $"D:\\ISO11820\\{_testmaster.Productid}";
+        //    string smppath = $"{prodpath}\\{_testmaster.Testid}";
+        //    string datapath = $"{smppath}\\data";
+        //    string rptpath = $"{smppath}\\report";
+        //    try
+        //    {
+        //        /* 创建本次试验结果文件的存储目录 */
+        //        //试验样品根目录
+        //        Directory.CreateDirectory(prodpath);
+        //        //本次试验根目录
+        //        Directory.CreateDirectory(smppath);
+        //        //本次试验原始数据目录
+        //        Directory.CreateDirectory(datapath);
+        //        //本次试验报表目录
+        //        Directory.CreateDirectory(rptpath);
+
+        //        /* 保存本次试验数据文件 */
+        //        //传感器采集数据
+        //        using (var writer = new StreamWriter($"{datapath}\\sensordata.csv", false))
+        //        using (var csvwriter = new CsvWriter(writer, CultureInfo.InvariantCulture))
+        //        {
+        //            //写入数据内容
+        //            await csvwriter.WriteRecordsAsync(_bufSensorData);
+        //        }
+        //        //其他数据文件(比如视频记录等)
+        //        OutputFlameVideo($"{datapath}\\flamevideo.avi");
+
+        //        /* 生成本次试验的报表 */
+        //        //设置EPPlus license版本为非商用版本
+        //        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+        //        //设置CSV文件格式
+        //        var format = new ExcelTextFormat()
+        //        {
+        //            Delimiter = ',',
+        //            EOL = "\r"    // 修改行尾结束符,默认为 "\r\n" ("\r"为回车符 "\n"为换行符);
+        //                          // 字符类型引用符 format.TextQualifier = '"';
+        //        };
+        //        //操作Excel文件
+        //        using (ExcelPackage package = new ExcelPackage(new FileInfo($"D:\\ISO11820\\template_report_{MasterId}.xlsx")))
+        //        {
+        //            //取得rawdata页面
+        //            ExcelWorksheet sheet_rawdata = package.Workbook.Worksheets.ElementAt(1);
+        //            //将采集数据记录拷贝至试验报表的rawdata页面(含首行标题)
+        //            sheet_rawdata.Cells["A1"].LoadFromText(new FileInfo($"{datapath}\\sensordata.csv"), format, null, true);
+        //            //计算中间结果及试验结果
+        //            //ExcelWorksheet sheet_calcdata = package.Workbook.Worksheets.ElementAt(2);
+        //            /* 设置报表首页部分数据 */
+        //            //取得报表首页页面(页面索引从 0 开始)
+        //            ExcelWorksheet sheet_main = package.Workbook.Worksheets.ElementAt(0);
+        //            //实验室温度
+        //            sheet_main.Cells["B5"].Value = _testmaster.Ambtemp;
+        //            //环境湿度
+        //            sheet_main.Cells["E5"].Value = _testmaster.Ambhumi;
+        //            //试验日期
+        //            sheet_main.Cells["H5"].Value = _testmaster.Testdate.ToString("d");
+        //            //检验人员
+        //            sheet_main.Cells["K5"].Value = _testmaster.Operator;
+        //            //产品名称
+        //            sheet_main.Cells["B6"].Value = _productMaster.Productname;
+        //            //规格型号
+        //            sheet_main.Cells["B7"].Value = _productMaster.Specific;
+        //            //样品编号
+        //            sheet_main.Cells["K6"].Value = _productMaster.Productid + "-" + _testmaster.Testid;
+        //            //报告编号
+        //            sheet_main.Cells["K7"].Value = _productMaster.Productid;
+        //            //试样直径
+        //            sheet_main.Cells["B15"].Value = _productMaster.Diameter;
+        //            //试样高度
+        //            sheet_main.Cells["C15"].Value = _productMaster.Height;
+        //            //试样试验前质量
+        //            sheet_main.Cells["D15"].Value = _testmaster.Preweight;
+        //            //试样残余质量
+        //            sheet_main.Cells["E15"].Value = _testmaster.Postweight;
+        //            //火焰起始时间
+        //            sheet_main.Cells["H23"].Value = _testmaster.Flametime;
+        //            //火焰持续时间
+        //            sheet_main.Cells["I23"].Value = _testmaster.Flameduration;
+        //            //保存本次试验报表
+        //            //package.SaveAs($"{rptpath}\\report.xlsx");
+        //            await package.SaveAsAsync($"{rptpath}\\report.xlsx");
+        //        }
+
+        //        /* 使用COM接口操作Excel报表文件,以激活计算公式并回填关键数据项
+        //         * (以下函数调用只适用于Windows平台,非Windows平台解决方案待定)
+        //         */
+        //        oXL = new Application()
+        //        {
+        //            Visible = false,       //设置应用程序窗口不可见
+        //            DisplayAlerts = false  //禁止任何弹窗提示
+        //        };
+        //        oWBs = oXL.Workbooks;
+        //        //打开报表文件
+        //        oWB = oWBs.Open($"{rptpath}\\report.xlsx");
+        //        //选中报表首页(页面索引从 1 开始)
+        //        oSheet = (Worksheet)oWB.Sheets.Item[1];
+
+        //        /* 根据报表计算结果回填本次试验的【结论判定属性】 */
+        //        //最高温度
+        //        _testmaster.Maxtf1        = Convert.ToDouble(oSheet.Range["G15"].Value);
+        //        //最高温度时间
+        //        _testmaster.Maxtf1Time    = Convert.ToInt32(oSheet.Range["J15"].Value);
+        //        //终平衡温度
+        //        _testmaster.Finaltf1      = Convert.ToDouble(oSheet.Range["M15"].Value);
+        //        //终温时间
+        //        _testmaster.Totaltesttime = Convert.ToInt32(oSheet.Range["B23"].Value);
+        //        //温升
+        //        //...                
+        //        //其他关键属性
+        //        //...
+
+        //        //保存本次试验数据至试验数据库
+        //        var ctx = _contextFactory.CreateDbContext();
+        //        ctx.Testmasters.Add(_testmaster);
+        //        await ctx.SaveChangesAsync();
+        //        //保存报表
+        //        oWB.Save();
+        //        oSheet.ExportAsFixedFormat2(XlFixedFormatType.xlTypePDF, $"{rptpath}\\report.pdf",
+        //            Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value,
+        //            false, Missing.Value, Missing.Value);
+        //    }
+        //    catch (Exception)
+        //    {
+        //        throw;
+        //    }
+        //    finally
+        //    {
+        //        if(oSheet != null)
+        //        {
+        //            //释放COM组件对象
+        //            while (Marshal.FinalReleaseComObject(oSheet) != 0) { }
+        //            oSheet = null;
+        //        }
+        //        if (oWB != null)
+        //        {
+        //            //关闭当前工作簿
+        //            oWB.Close(XlSaveAction.xlSaveChanges);
+        //            //释放COM组件对象
+        //            while (Marshal.FinalReleaseComObject(oWB) != 0) { }
+        //            oWB = null;
+        //        }
+        //        if (oWBs != null)
+        //        {
+        //            //关闭所有工作簿
+        //            oWBs.Close();
+        //            //释放COM组件对象
+        //            while (Marshal.FinalReleaseComObject(oWBs) != 0) { }
+        //            oWBs = null;
+        //        }                
+        //        if (oXL != null)
+        //        {
+        //            //退出Excel应用程序
+        //            oXL.Quit();
+        //            oXL.Application.Quit();
+        //            //释放COM组件对象
+        //            while (Marshal.FinalReleaseComObject(oXL) != 0) { }
+        //            oXL = null;
+        //        }
+        //        //垃圾回收,确保Excel进程被彻底清理
+        //        GC.Collect();
+        //        GC.WaitForPendingFinalizers();
+        //    }
+        //}
+
+        /*
+         * 功能: 新版本试验计时结束后数据处理函数,
+         *       使用DevExpress Office API操作Excel文件
+         */
         public virtual async Task PostTestProcess()
         {
-            /* 申明操作Excel文件的COM对象 */
-            Application oXL    = null;
-            Workbooks   oWBs   = null;
-            Workbook    oWB    = null;
-            Worksheet   oSheet = null;
             /* 创建本地存储目录 */
             string prodpath = $"D:\\ISO11820\\{_testmaster.Productid}";
             string smppath = $"{prodpath}\\{_testmaster.Testid}";
@@ -421,11 +594,13 @@ namespace TestServer.Core
                     await csvwriter.WriteRecordsAsync(_bufSensorData);
                 }
                 //其他数据文件(比如视频记录等)
-                OutputFlameVideo($"{datapath}\\flamevideo.avi");
+                //OutputFlameVideo($"{datapath}\\flamevideo.avi");
 
                 /* 生成本次试验的报表 */
                 //设置EPPlus license版本为非商用版本
                 ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+                //var calculateOptions = new ExcelCalculationOption();
+                //calculateOptions.AllowCircularReferences = true;
                 //设置CSV文件格式
                 var format = new ExcelTextFormat()
                 {
@@ -435,13 +610,11 @@ namespace TestServer.Core
                 };
                 //操作Excel文件
                 using (ExcelPackage package = new ExcelPackage(new FileInfo($"D:\\ISO11820\\template_report_{MasterId}.xlsx")))
-                {
+                {    
                     //取得rawdata页面
                     ExcelWorksheet sheet_rawdata = package.Workbook.Worksheets.ElementAt(1);
                     //将采集数据记录拷贝至试验报表的rawdata页面(含首行标题)
-                    sheet_rawdata.Cells["A1"].LoadFromText(new FileInfo($"{datapath}\\sensordata.csv"), format, null, true);
-                    //计算中间结果及试验结果
-                    //ExcelWorksheet sheet_calcdata = package.Workbook.Worksheets.ElementAt(2);
+                    sheet_rawdata.Cells["A1"].LoadFromText(new FileInfo($"{datapath}\\sensordata.csv"), format, null, true);                    
                     /* 设置报表首页部分数据 */
                     //取得报表首页页面(页面索引从 0 开始)
                     ExcelWorksheet sheet_main = package.Workbook.Worksheets.ElementAt(0);
@@ -473,89 +646,56 @@ namespace TestServer.Core
                     sheet_main.Cells["H23"].Value = _testmaster.Flametime;
                     //火焰持续时间
                     sheet_main.Cells["I23"].Value = _testmaster.Flameduration;
+
+                    // 计算报表中所有公式                    
+                    //package.Workbook.Calculate(calculateOptions);
+
                     //保存本次试验报表
                     //package.SaveAs($"{rptpath}\\report.xlsx");
                     await package.SaveAsAsync($"{rptpath}\\report.xlsx");
                 }
 
-                /* 使用COM接口操作Excel报表文件,以激活计算公式并回填关键数据项
-                 * (以下函数调用只适用于Windows平台,非Windows平台解决方案待定)
-                 */
-                oXL = new Application()
+                /* 使用DevExpress Office API打开报表文件、执行公式计算并回填关键数据项 */
+                using (DevExpress.Spreadsheet.Workbook workbook = new())
                 {
-                    Visible = false,       //设置应用程序窗口不可见
-                    DisplayAlerts = false  //禁止任何弹窗提示
-                };
-                oWBs = oXL.Workbooks;
-                //打开报表文件
-                oWB = oWBs.Open($"{rptpath}\\report.xlsx");
-                //选中报表首页(页面索引从 1 开始)
-                oSheet = (Worksheet)oWB.Sheets.Item[1];
+                    // 加载报表文件
+                    workbook.LoadDocument($"{rptpath}\\report.xlsx", DocumentFormat.Xlsx);
+                    // 计算报表中所有公式
+                    workbook.CalculateFull();
+                    // 取得报表首页Sheet对象(Sheet索引从0开始)
+                    DevExpress.Spreadsheet.Worksheet worksheet = workbook.Worksheets[0];
+                    /* 根据报表计算结果回填本次试验的【结论判定属性】 */
+                    //最高温度
+                    _testmaster.Maxtf1 = worksheet.Cells["G15"].Value.NumericValue;
+                    //最高温度时间
+                    _testmaster.Maxtf1Time = Convert.ToInt32(worksheet.Cells["J15"].Value.NumericValue);
+                    //终平衡温度
+                    _testmaster.Finaltf1 = worksheet.Cells["M15"].Value.NumericValue;
+                    //终温时间
+                    _testmaster.Totaltesttime = Convert.ToInt32(worksheet.Cells["B23"].Value.NumericValue);
+                    //温升
+                    //...                
+                    //其他关键属性
+                    //...
 
-                /* 根据报表计算结果回填本次试验的【结论判定属性】 */
-                //最高温度
-                _testmaster.Maxtf1        = Convert.ToDouble(oSheet.Range["G15"].Value);
-                //最高温度时间
-                _testmaster.Maxtf1Time    = Convert.ToInt32(oSheet.Range["J15"].Value);
-                //终平衡温度
-                _testmaster.Finaltf1      = Convert.ToDouble(oSheet.Range["M15"].Value);
-                //终温时间
-                _testmaster.Totaltesttime = Convert.ToInt32(oSheet.Range["B23"].Value);
-                //温升
-                //...                
-                //其他关键属性
-                //...
+                    // 保存报表
+                    //workbook.SaveDocument($"{rptpath}\\report.xlsx", DocumentFormat.OpenXml);
+                    // 导出报表首页为PDF格式
+                    PdfExportOptions options = new PdfExportOptions();
+                    options.DocumentOptions.Author = "李西黎";
+                    workbook.ExportToPdf($"{rptpath}\\report.pdf", options, "main");
+                }
 
                 //保存本次试验数据至试验数据库
                 var ctx = _contextFactory.CreateDbContext();
                 ctx.Testmasters.Add(_testmaster);
-                await ctx.SaveChangesAsync();
-                //保存报表
-                oWB.Save();
-                oSheet.ExportAsFixedFormat2(XlFixedFormatType.xlTypePDF, $"{rptpath}\\report.pdf",
-                    Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value,
-                    false, Missing.Value, Missing.Value);
+                await ctx.SaveChangesAsync();                
             }
-            catch (Exception)
+            catch (Exception e)
             {
+                // 输出异常日志
+                // ...
                 throw;
-            }
-            finally
-            {
-                if(oSheet != null)
-                {
-                    //释放COM组件对象
-                    while (Marshal.FinalReleaseComObject(oSheet) != 0) { }
-                    oSheet = null;
-                }
-                if (oWB != null)
-                {
-                    //关闭当前工作簿
-                    oWB.Close(XlSaveAction.xlSaveChanges);
-                    //释放COM组件对象
-                    while (Marshal.FinalReleaseComObject(oWB) != 0) { }
-                    oWB = null;
-                }
-                if (oWBs != null)
-                {
-                    //关闭所有工作簿
-                    oWBs.Close();
-                    //释放COM组件对象
-                    while (Marshal.FinalReleaseComObject(oWBs) != 0) { }
-                    oWBs = null;
-                }                
-                if (oXL != null)
-                {
-                    //退出Excel应用程序
-                    oXL.Quit();
-                    oXL.Application.Quit();
-                    //释放COM组件对象
-                    while (Marshal.FinalReleaseComObject(oXL) != 0) { }
-                    oXL = null;
-                }
-                //垃圾回收,确保Excel进程被彻底清理
-                GC.Collect();
-                GC.WaitForPendingFinalizers();
             }
         }
 

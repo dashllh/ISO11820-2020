@@ -6,10 +6,11 @@ using TestServer.Global;
 using Microsoft.EntityFrameworkCore;
 using ISO11820_2020.Models;
 using OfficeOpenXml;
-using Microsoft.Office.Interop.Excel;
 using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
+using DevExpress.XtraPrinting;
+using DevExpress.Spreadsheet;
 
 namespace TestServer.Controllers
 {
@@ -409,12 +410,7 @@ namespace TestServer.Controllers
          */
         [HttpPost("getfinalreport")]
         public async Task<IActionResult> GetFinalReport([FromBody] FinalReportData postdata)
-        {
-            /* 申明操作Excel文件的COM对象 */
-            Microsoft.Office.Interop.Excel.Application oXL = null;
-            Microsoft.Office.Interop.Excel.Workbooks oWBs = null;
-            Microsoft.Office.Interop.Excel.Workbook oWB = null;
-            Microsoft.Office.Interop.Excel.Worksheet oSheet = null;
+        {            
             /* 更新数据库中对应样品编号的试验明细数据的残余质量 */
             var ctx = _contextFactory.CreateDbContext();
             var records = await ctx.Testmasters.Where(x => x.Productid == postdata.Details[0].Productid).ToListAsync();
@@ -544,36 +540,17 @@ namespace TestServer.Controllers
                 //另存为汇总报表
                 await package.SaveAsAsync($"D:\\ISO11820\\{postdata.Details[0].Productid}\\final_report.xlsx");
             }
-            /* 使用COM接口另存为PDF格式 */
-            /* (以下函数调用只适用于Windows平台,非Windows平台解决方案待定) */
-            oXL = new Microsoft.Office.Interop.Excel.Application();
-            oXL.Visible = false;
-            oXL.DisplayAlerts = false;
-            oWBs = oXL.Workbooks;
-            //打开报表文件
-            oWB = oWBs.Open($"D:\\ISO11820\\{postdata.Details[0].Productid}\\final_report.xlsx");
-            //选中报表首页
-            oSheet = (Microsoft.Office.Interop.Excel.Worksheet)oWB.Sheets.Item[1];
-            //另存报表为PDF格式
-            oSheet.ExportAsFixedFormat2(XlFixedFormatType.xlTypePDF, $"D:\\ISO11820\\{postdata.Details[0].Productid}\\final_report.pdf",
-                Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value,
-                false, Missing.Value, Missing.Value);
-            //关闭报表文件
-            oWB.Close(false);
-            oWBs.Close();
-            oXL.Quit();
-            //释放COM组件对象
-            Marshal.FinalReleaseComObject(oSheet);
-            Marshal.FinalReleaseComObject(oWB);
-            Marshal.FinalReleaseComObject(oWBs);
-            Marshal.FinalReleaseComObject(oXL);
-            oSheet = null;
-            oWB = null;
-            oWBs = null;
-            oXL = null;
-            //垃圾回收,确保Excel进程被彻底清理
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
+            /* 使用DevExpress Office API另存为PDF格式 */            
+            using (DevExpress.Spreadsheet.Workbook workbook = new())
+            {
+                // 加载报表文件
+                workbook.LoadDocument($"D:\\ISO11820\\{postdata.Details[0].Productid}\\final_report.xlsx", DocumentFormat.Xlsx);
+                                
+                // 导出报表首页为PDF格式
+                PdfExportOptions options = new PdfExportOptions();
+                options.DocumentOptions.Author = "李西黎";
+                workbook.ExportToPdf($"D:\\ISO11820\\{postdata.Details[0].Productid}\\final_report.pdf", options, "main");
+            }                  
 
             //复制报表文件至客户端下载文件夹
             string path = _Environment.WebRootPath + $"\\finalreports\\{postdata.Details[0].Productid}";
@@ -592,7 +569,6 @@ namespace TestServer.Controllers
             return new JsonResult(msg);
         }
     }    
-
 
     /* =========== 定义用于Action方法调用时的数据绑定的类型 ========== */
     //用户登录所需的信息类型
