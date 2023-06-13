@@ -1,0 +1,71 @@
+/* 定义系统登录视图样式 */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {    
+    height: 100vh;
+    background: linear-gradient(160deg, #4260e7, #EFEFEF);
+    overflow: hidden;
+}
+/* 登录框整体居中属性 */
+.center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 350px;
+    transform: translate(-50%, -50%);
+    background-color: #EFEFEF;
+    border-radius: 5px;
+    box-shadow: 5px 5px 5px rgba(90, 90, 90, 0.6);
+}
+/* 登录框标题文字属性 */
+.center h2 {
+    margin-bottom: 25px;
+    padding: 10px 0;
+    text-align: center;    
+    color: #4260e7;
+    border-bottom: 2px solid rgb(233, 189, 96);
+}
+/* 登录框布局属性 */
+.login-form {
+    display: grid;
+    place-items: center;
+}
+
+.login-form input {
+    height: 35px;
+    width: 80%;
+    margin: 0 15px;
+    border: 1px solid silver;
+    border-radius: 3px;
+    font-size: 18px;
+    outline: none;
+    transition: all 0.5s;
+}
+
+.login-form input:hover {
+    border-color: rgba(19, 106, 194, 0.8);
+}
+
+.login-form input[type='password'] {
+    margin-top: 10px;
+}
+
+.login-form input[type='submit'] {
+    margin-top: 20px;
+    margin-bottom: 20px;
+    height: 40px;
+    background-color: rgb(61, 93, 236);
+    cursor: pointer;
+    color: white;
+}
+
+/* 错误提示属性 */
+.usernameerror,
+.passwderror {
+    color: red;
+    display: none;
+}

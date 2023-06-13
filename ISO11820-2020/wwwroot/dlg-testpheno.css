@@ -1,0 +1,25 @@
+/* 设置参数设置对话框属性 */
+.dlg-testpheno {
+    padding: 10px;
+    overflow: hidden;
+}
+
+.pheno-flame {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 10px;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+}
+
+.postweight {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    row-gap: 10px;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+}

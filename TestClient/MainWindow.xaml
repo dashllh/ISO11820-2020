@@ -8,8 +8,9 @@
         mc:Ignorable="d"
         Title="建筑材料不燃性试验系统 版本3.0"
         WindowState="Maximized"
+        WindowStyle="None"
         Closed="Window_Closed">
     <Grid>
-        <wv2:WebView2 x:Name="wvContent" Source="https://localhost:7241/index.html"></wv2:WebView2>
+        <wv2:WebView2 x:Name="wvContent" Source="https://localhost:7241/login.html"></wv2:WebView2>
     </Grid>
 </Window>

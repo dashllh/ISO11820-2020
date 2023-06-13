@@ -1,0 +1,172 @@
+/* 试验报表视图属性 */
+
+.rptview-container {
+    /* margin: 5px;
+    padding: 5px;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.4); */
+    display: grid;
+    gap: 10px;
+}
+
+.rptview-r1 {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr 1fr 2fr 2fr 1fr 2fr 1fr 2fr;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+    background-color: white;
+    padding: 15px 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+}
+
+.rptview-r2 {
+    display: grid;
+    background-color: white;
+    padding: 15px 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+}
+
+.rptview-r3 {
+    background-color: white;
+    padding: 15px 10px;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.4);
+}
+
+/* 以下属性来自旧版ISO-1182试验报表视图属性 */
+
+.detail {
+    display: block;
+    width: 98%;
+    margin: 8px auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+.detail table {
+    width: 100%;
+    border-collapse: collapse;
+    border-radius: 3px;
+    font-size: 13px;
+}
+
+.detail th {
+    position: sticky;
+    top: 0;
+    font-weight: normal;
+    background-color: #4260e7;
+    color: white;
+}
+
+/* 设置表格边角属性 */
+.detail th:first-child {
+    border-left: none;
+    border-top-left-radius: 3px;
+}
+
+.detail th:last-child {
+    border-right: none;
+    border-top-right-radius: 3px;
+}
+
+.detail table tr:last-child td:first-child {
+    border-bottom-left-radius: 3px;
+}
+
+.detail table tr:last-child td:last-child {
+    border-bottom-right-radius: 3px;
+}
+
+.detail table th,
+td {
+    border-left: 1px solid #DDDDDD;
+    border-right: 1px solid #DDDDDD;
+    border-bottom: 1px solid #DDDDDD;
+    text-align: center;
+    padding: 3px 6px;
+}
+
+.detail table a {
+    padding: 5px;
+    color: white;
+    background-color: #4260e7;
+    border-radius: 2px;
+    font-size: 12px;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.detail table a:hover {
+    background-color: rgb(231, 184, 97);
+}
+
+.detail tbody tr:hover {
+    background-color: #DDDDDD;
+    cursor: pointer;
+}
+
+.criteria #txtProductId {
+    width: 120px;
+}
+
+.criteria #txtProductName {
+    width: 320px;
+}
+
+/* 定义指标项是否达标的显示属性 */
+.fullfilled {
+    font-weight: 600;
+    color: forestgreen;
+}
+
+.non-fullfilled {
+    font-weight: 600;
+    color: red;
+}
+
+/* 残余质量错误属性 */
+.postweight-err {
+    border: 2px solid red;
+}
+
+/* 报表浏览区域属性 */
+.pdfviewer-border {
+    border: 1px solid silver;
+    border-radius: 5px;
+}
+
+.pdfviewer-nonborder {
+    border: none;
+}
+
+.reportviewer {
+    width: 98%;
+    height: 640px;
+    margin: 5px auto;
+    border-radius: 5px;
+}
+
+.loader {
+    pointer-events: none;
+    margin: 0 auto;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 3px solid transparent;
+    border-top-color: white;
+    animation: loading 1s ease infinite;
+}
+
+@keyframes loading {
+    0% {
+        transform: rotate(0turn);
+    }
+
+    100% {
+        transform: rotate(1turn);
+    }
+}

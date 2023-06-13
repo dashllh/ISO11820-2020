@@ -1,0 +1,87 @@
+/* 新建试验对话框显示属性 */
+
+#dlgNewTest0,
+#dlgNewTest1,
+#dlgNewTest2,
+#dlgNewTest3 {
+    display: grid;
+}
+
+/* 对话框容器布局 */
+.dlg-newtest-container {
+    padding: 10px;
+    /* display: grid;
+    grid-template-columns: 1.4fr 0.8fr;
+    justify-items: stretch;
+    justify-content: space-around;
+    align-items: stretch;
+    align-content: space-around; */
+    overflow: hidden;
+}
+
+/* 环境信息栏布局 */
+.dlg-newtest-ambinfo {
+    width: 60%;
+    height: 80px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+}
+
+/* 试验信息栏布局 */
+.dlg-newtest-testinfo {
+    position: relative;
+    left: 62%;
+    top: -85px;
+    width: 37%;
+    display: grid;
+    grid-template-columns: 0.6fr 1fr;
+    row-gap: 10px;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+}
+
+/* 试样信息栏布局 */
+.dlg-newtest-specimaninfo {
+    position: relative;
+    top: -156px;
+    width: 60%;
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    row-gap: 10px;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+}
+
+/* 试验设备信息栏布局 */
+.dlg-newtest-apparatusinfo {
+    position: relative;
+    left: 62%;
+    top: -276px;
+    width: 37%;
+    display: grid;
+    grid-template-columns: 0.6fr 1fr;
+    row-gap: 10px;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+}
+
+/* 其他信息栏布局 */
+.dlg-newtest-otherinfo {
+    position: relative;    
+    top: -352px;
+    width: 60%;
+    display: grid;
+    justify-items: stretch;
+    align-items: center;
+    align-content: space-around;
+}

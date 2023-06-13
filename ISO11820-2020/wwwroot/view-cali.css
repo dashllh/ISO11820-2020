@@ -1,0 +1,110 @@
+/* 系统校准视图样式 */
+
+.caliview-container {
+    overflow: hidden;
+    display: grid;
+    grid-template-rows: 1fr 1fr;
+    gap: 15px;
+    align-items: stretch;
+    align-content: space-around;
+    /* border: 1px lightgray solid;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.5); */
+}
+
+.caliview-r1,
+.caliview-r2 {
+    margin: 0 5px;
+    padding: 18px 25px;
+    display: grid;
+    grid-template-columns: 1fr 2fr 2fr;
+    gap: 25px;
+    border: 1px white solid;
+    background-color: white;
+    border-radius: 5px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+}
+
+.caliview-r1-c1,
+.caliview-r2-c1 {
+    display: grid;    
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    justify-items: stretch;
+    justify-content: space-around;
+    align-items: center;
+    align-content: center;
+}
+
+.caliview-r1-c2 {
+    padding: 20px 0px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    gap: 1px;
+    justify-items: stretch;
+    justify-content: stretch;
+    align-items: stretch;
+    align-content: stretch;
+}
+
+.caliview-r1-c2 div {
+    display: grid;
+    place-items: center;
+    background-color: white;
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1.3em;
+    font-weight: 600;
+}
+
+.caliview-r1-c2 .header {
+    background-color: #4260e7;
+    color: white;
+}
+
+.caliview-r1-c2 .cell {
+    font-size: 2em;
+    background-color: black;
+    color: rgb(255, 255, 18);
+}
+
+.caliview-r2-c2 {
+    display: grid;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+}
+
+.caliview-r1-c3 {
+    display: grid;
+    grid-template-columns: 0.4fr 1fr 0.4fr 1fr;
+    gap: 10px;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+}
+
+.caliview-r2-c3 {
+    display: grid;
+    grid-template-columns: 0.4fr 1fr 0.4fr 1fr;
+    gap: 10px;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+}
+
+.caliview-rtchart {
+    grid-column: 1 / span 2;
+    padding: 5px;
+    height: 200px;
+    border-radius: 3px;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+    /* display: grid;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around; */
+}

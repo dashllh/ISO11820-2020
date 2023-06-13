@@ -1,0 +1,25 @@
+/* 参数设置对话框属性 */
+.dlg-setparam {
+    padding: 10px;
+    overflow: hidden;
+}
+
+.param-apparatus {
+    display: grid;
+    grid-template-columns: 0.5fr 1fr 0.5fr 1fr;
+    row-gap: 10px;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+}
+
+.param-communication {
+    display: grid;
+    grid-template-columns: 0.5fr 1fr 0.5fr 1fr;
+    row-gap: 10px;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+}

@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ISO1182试验控制系统客户端 版本 3.0</title>
+
+    <!-- 导入JQuery库 -->
+    <script src="libs/jquery-easyui-1.10.16/jquery.min.js"></script>
+    <!-- 导入JQuery EasyUI库 -->
+    <script src="libs/jquery-easyui-1.10.16/jquery.easyui.min.js"></script>
+    <!-- 导入EasyUI样式文件 -->
+    <!-- <link rel="stylesheet" href="./jquery-easyui-1.10.8/themes/default/easyui.css"> -->
+    <link rel="stylesheet" href="libs/jquery-easyui-1.10.16/themes/bootstrap/easyui.css">
+    <!-- 导入EasyUI图标文件 -->
+    <link rel="stylesheet" href="libs/jquery-easyui-1.10.16/themes/icon.css">
+    <link rel="stylesheet" href="libs/jquery-easyui-1.10.16/themes/myicon.css">
+    <!-- 导入web components组件及样式 -->
+    <script type="module" src="./components/rt-itemv/rt-itemv.js"></script>
+    <link rel="stylesheet" href="./components/rt-itemv/rt-itemv.css">
+    <script type="module" src="./components/rt-item/rt-item.js"></script>
+    <link rel="stylesheet" href="./components/rt-item/rt-item.css">
+    <!-- 导入客户端全局样式文件 -->
+    <link rel="stylesheet" href="global.css">
+    <!-- 导入新建试验对话框样式文件 -->
+    <link rel="stylesheet" href="./dlg-newtext.css">
+    <!-- 导入试验记录对话框样式文件 -->
+    <link rel="stylesheet" href="./dlg-testpheno.css">
+    <!-- 导入参数设置对话框样式文件 -->
+    <link rel="stylesheet" href="./dlg-setparam.css">
+    <!-- 导入系统校准视图样式文件 -->
+    <link rel="stylesheet" href="./view-cali.css">
+    <!-- 导入试验报表视图样式文件 -->
+    <link rel="stylesheet" href="./view-rpt.css">
+</head>
+
+<body class="easyui-layout">
+    <!-- 主窗体标题栏 -->
+    <div data-options="region:'north'"
+        style="border: none;width: 100%;height: 60px;border-bottom: 2px rgb(233, 189, 96) solid;">
+        <div class="apptitle">
+            <div class="brand">
+                建筑材料不燃性试验系统 版本 3.0
+            </div>
+            <div class="sysbuttons">
+                <div class="easyui-linkbutton" data-options="iconCls:'icon-information',width:85">
+                    关于
+                </div>
+                <div class="easyui-linkbutton" data-options="iconCls:'icon-quit',width:85">
+                    退出
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 主视图Tab控件 -->
+    <div data-options="region:'center'">
+        <div class="easyui-tabs" data-options="tabWidth:100,pill:true,fit:true">
+            <!-- 样品试验视图 -->
+            <div title="样品试验" data-options="iconCls:'icon-archive'"
+                style="background-color: rgba(0, 0, 0, 0.3);padding:10px;">
+                <div class="testview-container">
+                    <!-- 一号炉操作面板 -->
+                    <div class="pnl-master">
+                        <div class="easyui-panel" data-options="fit:true" style="border: none;">
+                            <!-- 一号炉命令按钮 -->
+                            <div class="commands">
+                                <a id="btnNewTest0" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-file'">新建试验</a>
+                                <a id="btnStartRecord0" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-timer'">开始计时</a>
+                                <a id="btnStopRecord0" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-stop'">停止计时</a>
+                                <a id="btnSetPheno0" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-checklist'">试验记录</a>
+                                <a id="btnSetParam0" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-set'">参数设置</a>
+                                <a id="btnPowerOn0" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-heat'">开始加热</a>
+                                <a id="btnPowerOff0" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-powerswitch'">停止加热</a>
+                                <img id="imgIndicator0" src="./libs/jquery-easyui-1.10.16/themes/images/16/heat.png"
+                                    style="margin: 8px 10px;float: right;">
+                            </div>
+                            <!-- 一号炉信号显示区域 -->
+                            <div class="view-master">
+                                <!-- 实时值 -->
+                                <rt-item label="计时" unit="(s)" round=0 class="timer"
+                                    data-bind-master0="timer"></rt-item>
+                                <rt-item label="炉内温度1" unit="(℃)" round=1 class="temp1"
+                                    data-bind-master0="tf1"></rt-item>
+                                <rt-item label="炉内温度2" unit="(℃)" round=1 class="temp2"
+                                    data-bind-master0="tf2"></rt-item>
+                                <rt-item label="表面温度" unit="(℃)" round=1 class="tempsuf"
+                                    data-bind-master0="ts"></rt-item>
+                                <rt-item label="中心温度" unit="(℃)" round=1 class="tempcen"
+                                    data-bind-master0="tc"></rt-item>
+                                <rt-item label="温度漂移" unit="(℃)" round=1 class="tempdrift"
+                                    data-bind-master0="driftmean"></rt-item>
+                                <!-- 温度图表 -->
+                                <div class="tempchart">
+                                    <canvas id="chartTemp0"></canvas>
+                                </div>
+                                <!-- 系统消息 -->
+                                <div class="message">
+                                    <div class="easyui-tabs"
+                                        data-options="tabWidth:110,tabPosition:'bottom',fit:true,border:true">
+                                        <div title="系统消息" data-options="iconCls:'icon-message'" style="padding:5px">
+                                            <table id="idTbMessage0" class="easyui-datagrid" style="width:100%;height:150px;"
+                                                data-options="singleSelect:true,collapsible:true,fitColumns:true,border:true">
+                                                <thead>
+                                                    <tr>
+                                                        <th data-options="field:'time',align:'center',width:'20%'">
+                                                            时间</th>
+                                                        <th data-options="field:'content',align:'center',width:'80%'">
+                                                            消息内容</th>
+                                                    </tr>
+                                                </thead>
+                                            </table>
+                                        </div>
+                                        <div title="实时数据" data-options="iconCls:'icon-list'" style="padding:5px">
+                                            <table id="idTbSensor0" class="easyui-datagrid" style="width:100%;height:150px;"
+                                                data-options="singleSelect:true,collapsible:true,fitColumns:true,border:true">
+                                                <thead>
+                                                    <tr>
+                                                        <th data-options="field:'timer',align:'center',width:'15%'">
+                                                            计时</th>
+                                                        <th data-options="field:'temp1',align:'center',width:'17%'">
+                                                            炉内温度1(℃)</th>
+                                                        <th data-options="field:'temp2',align:'center',width:'17%'">
+                                                            炉内温度2(℃)</th>
+                                                        <th data-options="field:'tempsuf',align:'center',width:'17%'">
+                                                            表面温度(℃)</th>
+                                                        <th data-options="field:'tempcen',align:'center',width:'17%'">
+                                                            中心温度(℃)</th>
+                                                        <th data-options="field:'tempdrift',align:'center',width:'17%'">
+                                                            温度漂移(℃)</th>
+                                                    </tr>
+                                                </thead>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- 一号炉操作面板(结束) -->
+                    <!-- 二号炉操作面板 -->
+                    <div class="pnl-master">
+                        <div class="easyui-panel" data-options="fit:true" style="border: none;">
+                            <!-- 二号炉命令按钮 -->
+                            <div class="commands">
+                                <a id="btnNewTest1" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-file'">新建试验</a>
+                                <a id="btnStartRecord1" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-timer'">开始计时</a>
+                                <a id="btnStopRecord1" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-stop'">停止计时</a>
+                                <a id="btnSetPheno1" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-checklist'">试验记录</a>
+                                <a id="btnSetParam1" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-set'">参数设置</a>
+                                <a id="btnPowerOn1" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-heat'">开始加热</a>
+                                <a id="btnPowerOff1" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-powerswitch'">停止加热</a>
+                                <img id="imgIndicator1"
+                                    src="./libs/jquery-easyui-1.10.16/themes/images/16/greencircle.png"
+                                    style="margin: 8px 10px;float: right;">
+                            </div>
+                            <!-- 二号炉信号显示区域 -->
+                            <div class="view-master">
+                                <!-- 实时值 -->
+                                <rt-item label="计时" unit="(s)" round=0 class="timer"></rt-item>
+                                <rt-item label="炉内温度1" unit="(℃)" round=1 class="temp1"></rt-item>
+                                <rt-item label="炉内温度2" unit="(℃)" round=1 class="temp2"></rt-item>
+                                <rt-item label="表面温度" unit="(℃)" round=1 class="tempsuf"></rt-item>
+                                <rt-item label="中心温度" unit="(℃)" round=1 class="tempcen"></rt-item>
+                                <rt-item label="温度漂移" unit="(℃)" round=1 class="tempdrift"></rt-item>
+                                <!-- 温度图表 -->
+                                <div class="tempchart">
+                                    <canvas id="chartTemp1"></canvas>
+                                </div>
+                                <!-- 系统消息 -->
+                                <div class="message">
+                                    <div class="easyui-tabs"
+                                        data-options="tabWidth:110,tabPosition:'bottom',fit:true,border:true">
+                                        <div title="系统消息" data-options="iconCls:'icon-message'" style="padding:5px">
+                                            <table id="idTbMessage1" class="easyui-datagrid" style="width:100%;height:150px;"
+                                                data-options="singleSelect:true,collapsible:true,fitColumns:true,border:true">
+                                                <thead>
+                                                    <tr>
+                                                        <th data-options="field:'time',align:'center',width:'20%'">
+                                                            时间</th>
+                                                        <th data-options="field:'content',align:'center',width:'80%'">
+                                                            消息内容</th>
+                                                    </tr>
+                                                </thead>
+                                            </table>
+                                        </div>
+                                        <div title="实时数据" data-options="iconCls:'icon-list'" style="padding:5px">
+                                            <table id="idTbSensor1" class="easyui-datagrid" style="width:100%;height:150px;"
+                                                data-options="singleSelect:true,collapsible:true,fitColumns:true,border:true">
+                                                <thead>
+                                                    <tr>
+                                                        <th data-options="field:'timer',align:'center',width:'15%'">
+                                                            计时</th>
+                                                        <th data-options="field:'temp1',align:'center',width:'17%'">
+                                                            炉内温度1(℃)</th>
+                                                        <th data-options="field:'temp2',align:'center',width:'17%'">
+                                                            炉内温度2(℃)</th>
+                                                        <th data-options="field:'tempsuf',align:'center',width:'17%'">
+                                                            表面温度(℃)</th>
+                                                        <th data-options="field:'tempcen',align:'center',width:'17%'">
+                                                            中心温度(℃)</th>
+                                                        <th data-options="field:'tempdrift',align:'center',width:'17%'">
+                                                            温度漂移(℃)</th>
+                                                    </tr>
+                                                </thead>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- 二号炉操作面板(结束) -->
+                    <!-- 三号炉操作面板 -->
+                    <div class="pnl-master">
+                        <div class="easyui-panel" data-options="fit:true" style="border: none;">
+                            <!-- 三号炉命令按钮 -->
+                            <div class="commands">
+                                <a id="btnNewTest2" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-file'">新建试验</a>
+                                <a id="btnStartRecord2" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-timer'">开始计时</a>
+                                <a id="btnStopRecord2" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-stop'">停止计时</a>
+                                <a id="btnSetPheno2" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-checklist'">试验记录</a>
+                                <a id="btnSetParam2" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-set'">参数设置</a>
+                                <a id="btnPowerOn2" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-heat'">开始加热</a>
+                                <a id="btnPowerOff2" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-powerswitch'">停止加热</a>
+                                <img id="imgIndicator2" src="./libs/jquery-easyui-1.10.16/themes/images/16/heat.png"
+                                    style="margin: 8px 10px;float: right;">
+                            </div>
+                            <!-- 三号炉信号显示区域 -->
+                            <div class="view-master">
+                                <!-- 实时值 -->
+                                <rt-item label="计时" unit="(s)" round=0 class="timer"></rt-item>
+                                <rt-item label="炉内温度1" unit="(℃)" round=1 class="temp1"></rt-item>
+                                <rt-item label="炉内温度2" unit="(℃)" round=1 class="temp2"></rt-item>
+                                <rt-item label="表面温度" unit="(℃)" round=1 class="tempsuf"></rt-item>
+                                <rt-item label="中心温度" unit="(℃)" round=1 class="tempcen"></rt-item>
+                                <rt-item label="温度漂移" unit="(℃)" round=1 class="tempdrift"></rt-item>
+                                <!-- 温度图表 -->
+                                <div class="tempchart">
+                                    <canvas id="chartTemp2"></canvas>
+                                </div>
+                                <!-- 系统消息 -->
+                                <div class="message">
+                                    <div class="easyui-tabs"
+                                        data-options="tabWidth:110,tabPosition:'bottom',fit:true,border:true">
+                                        <div title="系统消息" data-options="iconCls:'icon-message'" style="padding:5px">
+                                            <table id="idTbMessage2" class="easyui-datagrid" style="width:100%;height:150px;"
+                                                data-options="singleSelect:true,collapsible:true,fitColumns:true,border:true">
+                                                <thead>
+                                                    <tr>
+                                                        <th data-options="field:'time',align:'center',width:'20%'">
+                                                            时间</th>
+                                                        <th data-options="field:'content',align:'center',width:'80%'">
+                                                            消息内容</th>
+                                                    </tr>
+                                                </thead>
+                                            </table>
+                                        </div>
+                                        <div title="实时数据" data-options="iconCls:'icon-list'" style="padding:5px">
+                                            <table id="idTbSensor2" class="easyui-datagrid" style="width:100%;height:150px;"
+                                                data-options="singleSelect:true,collapsible:true,fitColumns:true,border:true">
+                                                <thead>
+                                                    <tr>
+                                                        <th data-options="field:'timer',align:'center',width:'15%'">
+                                                            计时</th>
+                                                        <th data-options="field:'temp1',align:'center',width:'17%'">
+                                                            炉内温度1(℃)</th>
+                                                        <th data-options="field:'temp2',align:'center',width:'17%'">
+                                                            炉内温度2(℃)</th>
+                                                        <th data-options="field:'tempsuf',align:'center',width:'17%'">
+                                                            表面温度(℃)</th>
+                                                        <th data-options="field:'tempcen',align:'center',width:'17%'">
+                                                            中心温度(℃)</th>
+                                                        <th data-options="field:'tempdrift',align:'center',width:'17%'">
+                                                            温度漂移(℃)</th>
+                                                    </tr>
+                                                </thead>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- 三号炉操作面板(结束) -->
+                    <!-- 四号炉操作面板 -->
+                    <div class="pnl-master">
+                        <div class="easyui-panel" data-options="fit:true" style="border: none;">
+                            <!-- 四号炉命令按钮 -->
+                            <div class="commands">
+                                <a id="btnNewTest3" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-file'">新建试验</a>
+                                <a id="btnStartRecord3" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-timer'">开始计时</a>
+                                <a id="btnStopRecord3" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-stop'">停止计时</a>
+                                <a id="btnSetPheno3" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-checklist'">试验记录</a>
+                                <a id="btnSetParam3" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-set'">参数设置</a>
+                                <a id="btnPowerOn3" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-heat'">开始加热</a>
+                                <a id="btnPowerOff3" class="easyui-linkbutton"
+                                    data-options="plain:true,iconCls:'icon-powerswitch'">停止加热</a>
+                                <img id="imgIndicator3" src="./libs/jquery-easyui-1.10.16/themes/images/16/heat.png"
+                                    style="margin: 8px 10px;float: right;">
+                            </div>
+                            <!-- 四号炉信号显示区域 -->
+                            <div class="view-master">
+                                <!-- 实时值 -->
+                                <rt-item label="计时" unit="(s)" round=0 class="timer"></rt-item>
+                                <rt-item label="炉内温度1" unit="(℃)" round=1 class="temp1"></rt-item>
+                                <rt-item label="炉内温度2" unit="(℃)" round=1 class="temp2"></rt-item>
+                                <rt-item label="表面温度" unit="(℃)" round=1 class="tempsuf"></rt-item>
+                                <rt-item label="中心温度" unit="(℃)" round=1 class="tempcen"></rt-item>
+                                <rt-item label="温度漂移" unit="(℃)" round=1 class="tempdrift"></rt-item>
+                                <!-- 温度图表 -->
+                                <div class="tempchart">
+                                    <canvas id="chartTemp3"></canvas>
+                                </div>
+                                <!-- 系统消息 -->
+                                <div class="message">
+                                    <div class="easyui-tabs"
+                                        data-options="tabWidth:110,tabPosition:'bottom',fit:true,border:true">
+                                        <div title="系统消息" data-options="iconCls:'icon-message'" style="padding:5px">
+                                            <table id="idTbMessage3" class="easyui-datagrid" style="width:100%;height:150px;"
+                                                data-options="singleSelect:true,collapsible:true,fitColumns:true,border:true">
+                                                <thead>
+                                                    <tr>
+                                                        <th data-options="field:'time',align:'center',width:'20%'">
+                                                            时间</th>
+                                                        <th data-options="field:'content',align:'center',width:'80%'">
+                                                            消息内容</th>
+                                                    </tr>
+                                                </thead>
+                                            </table>
+                                        </div>
+                                        <div title="实时数据" data-options="iconCls:'icon-list'" style="padding:5px">
+                                            <table id="idTbSensor3" class="easyui-datagrid" style="width:100%;height:150px;"
+                                                data-options="singleSelect:true,collapsible:true,fitColumns:true,border:true">
+                                                <thead>
+                                                    <tr>
+                                                        <th data-options="field:'timer',align:'center',width:'15%'">
+                                                            计时</th>
+                                                        <th data-options="field:'temp1',align:'center',width:'17%'">
+                                                            炉内温度1(℃)</th>
+                                                        <th data-options="field:'temp2',align:'center',width:'17%'">
+                                                            炉内温度2(℃)</th>
+                                                        <th data-options="field:'tempsuf',align:'center',width:'17%'">
+                                                            表面温度(℃)</th>
+                                                        <th data-options="field:'tempcen',align:'center',width:'17%'">
+                                                            中心温度(℃)</th>
+                                                        <th data-options="field:'tempdrift',align:'center',width:'17%'">
+                                                            温度漂移(℃)</th>
+                                                    </tr>
+                                                </thead>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div> <!-- 四号炉操作面板(结束) -->
+                </div> <!-- 样品试验视图主容器(结束) -->
+            </div> <!-- 样品试验视图Tab(结束) -->
+            <!-- 系统校准视图 -->
+            <div title="系统校准" data-options="iconCls:'icon-newcali-large',fit:true"
+                style="background-color: rgba(0, 0, 0, 0.3);padding:10px;display: grid;align-items: start;">
+                <div class="caliview-container">
+                    <div class="caliview-r1">
+                        <div class="caliview-r1-c1">
+                            <div class="caliview-rtchart">
+                                <canvas id="caliRealTimeChart_R1"></canvas>
+                            </div>
+                            <rt-item label="校温热电偶温度" unit="(℃)" round=1 style="grid-column: 1 / span 2;"></rt-item>
+                            <!-- 炉壁点位选择器 -->
+                            <label for="" style="justify-self: center;">炉壁点位:</label>
+                            <select name="surfacepoints">
+                                <optgroup label="A平面(+30mm)">
+                                    <option value="a0">A-1&nbsp;(0°)</option>
+                                    <option value="a1">A-2&nbsp;(120°)</option>
+                                    <option value="a2">A-3&nbsp;(240°)</option>
+                                </optgroup>
+                                <optgroup label="B平面(0mm)">
+                                    <option value="b0">B-1&nbsp;(0°)</option>
+                                    <option value="b1">B-2&nbsp;(120°)</option>
+                                    <option value="b2">B-3&nbsp;(240°)</option>
+                                </optgroup>
+                                <optgroup label="C平面(-30mm)">
+                                    <option value="c0">C-1&nbsp;(0°)</option>
+                                    <option value="c1">C-2&nbsp;(120°)</option>
+                                    <option value="c2">C-3&nbsp;(240°)</option>
+                                </optgroup>
+                            </select>
+                            <a id="btnCaliFetch" class="easyui-linkbutton"
+                                data-options="iconCls:'icon-checklist'">&nbsp;&nbsp;&nbsp;记录</a>
+                            <a id="btnCaculateCaliResult" class="easyui-linkbutton"
+                                data-options="iconCls:'icon-calculator'">&nbsp;&nbsp;&nbsp;计算</a>
+                        </div> <!-- 第一行第一列(结束) -->
+                        <div class="caliview-r1-c2">
+                            <!-- 第一行 -->
+                            <div class="header">
+                                <p>点位&nbsp;/&nbsp;温度&nbsp;(℃)</p>
+                            </div>
+                            <div class="header">
+                                <p>A&nbsp;平面(30mm)</p>
+                            </div>
+                            <div class="header">
+                                <p>B&nbsp;平面(0mm)</p>
+                            </div>
+                            <div class="header">
+                                <p>C&nbsp;平面(-30mm)</p>
+                            </div>
+                            <!-- 第二行 -->
+                            <div class="header">
+                                <p>第一点&nbsp;(0°)</p>
+                            </div>
+                            <div class="cell">
+                                <p>100</p>
+                            </div>
+                            <div class="cell">
+                                <p>100</p>
+                            </div>
+                            <div class="cell">
+                                <p>100</p>
+                            </div>
+                            <!-- 第三行 -->
+                            <div class="header">
+                                <p>第二点&nbsp;(120°)</p>
+                            </div>
+                            <div class="cell">
+                                <p>100</p>
+                            </div>
+                            <div class="cell">
+                                <p>100</p>
+                            </div>
+                            <div class="cell">
+                                <p>100</p>
+                            </div>
+                            <!-- 第四行 -->
+                            <div class="header">
+                                <p>第三点&nbsp;(240°)</p>
+                            </div>
+                            <div class="cell">
+                                <p>100</p>
+                            </div>
+                            <div class="cell">
+                                <p>100</p>
+                            </div>
+                            <div class="cell">
+                                <p>100</p>
+                            </div>
+                        </div> <!-- 第一行第二列(结束) -->
+                        <div class="caliview-r1-c3">
+                            <!-- 计算项目显示区域 -->
+                            <label for="">T.avg:</label>
+                            <input type="text">
+                            <div></div>
+                            <div></div>
+                            <label for="">T.avg.axis1:</label>
+                            <input type="text">
+                            <label for="">T.avg.levela:</label>
+                            <input type="text">
+                            <label for="">T.avg.axis2:</label>
+                            <input type="text">
+                            <label for="">T.avg.levelb:</label>
+                            <input type="text">
+                            <label for="">T.avg.axis3:</label>
+                            <input type="text">
+                            <label for="">T.avg.levelc:</label>
+                            <input type="text">
+                            <label for="">T.dev.axis1:</label>
+                            <input type="text">
+                            <label for="">T.dev.levela:</label>
+                            <input type="text">
+                            <label for="">T.dev.axis2:</label>
+                            <input type="text">
+                            <label for="">T.dev.levelb:</label>
+                            <input type="text">
+                            <label for="">T.dev.axis3:</label>
+                            <input type="text">
+                            <label for="">T.dev.levelc:</label>
+                            <input type="text">
+                            <label for="">T.avg.dev.axis:</label>
+                            <input type="text">
+                            <label for="">T.avg.dev.level:</label>
+                            <input type="text">
+                        </div> <!-- 第一行第三列(结束) -->
+                    </div>
+                    <div class="caliview-r2">
+                        <div class="caliview-r2-c1">
+                            <div class="caliview-rtchart">
+                                <canvas id="caliRealTimeChart_R2"></canvas>
+                            </div>
+                            <rt-item label="校温热电偶温度" unit="(℃)" round=1 style="grid-column: 1 / span 2;"></rt-item>
+                            <!-- 中心点位选择器 -->
+                            <label for="" style="justify-self: center;">中心点位:</label>
+                            <select name="centerpoints">
+                                <option value="pos145">145(mm)</option>
+                                <option value="pos135">135(mm)</option>
+                                <option value="pos125">125(mm)</option>
+                                <option value="pos115">115(mm)</option>
+                                <option value="pos105">105(mm)</option>
+                                <option value="pos95">&nbsp;&nbsp;95(mm)</option>
+                                <option value="pos85">&nbsp;&nbsp;85(mm)</option>
+                                <option value="pos75">&nbsp;&nbsp;75(mm)</option>
+                                <option value="pos65">&nbsp;&nbsp;65(mm)</option>
+                                <option value="pos55">&nbsp;&nbsp;55(mm)</option>
+                                <option value="pos45">&nbsp;&nbsp;45(mm)</option>
+                                <option value="pos35">&nbsp;&nbsp;35(mm)</option>
+                                <option value="pos25">&nbsp;&nbsp;25(mm)</option>
+                                <option value="pos15">&nbsp;&nbsp;15(mm)</option>
+                                <option value="pos5">&nbsp;&nbsp;&nbsp;&nbsp;5(mm)</option>
+                                </optgroup>
+                            </select>
+                            <a id="btnCaliFetchCenter" class="easyui-linkbutton" data-options="iconCls:'icon-checklist'"
+                                style="grid-column: 2;">&nbsp;&nbsp;&nbsp;记录</a>
+                        </div> <!-- 第二行第一列(结束) -->
+                        <div class="caliview-r2-c2">
+                            <canvas id="caliTempChart"></canvas>
+                        </div> <!-- 第二行第二列(结束) -->
+                        <div class="caliview-r2-c3">
+                            <label for="">145(mm):</label>
+                            <input type="text">
+                            <label for="">135(mm):</label>
+                            <input type="text">
+                            <label for="">125(mm):</label>
+                            <input type="text">
+                            <label for="">115(mm):</label>
+                            <input type="text">
+                            <label for="">105(mm):</label>
+                            <input type="text">
+                            <label for="">95(mm):</label>
+                            <input type="text">
+                            <label for="">85(mm):</label>
+                            <input type="text">
+                            <label for="">75(mm):</label>
+                            <input type="text">
+                            <label for="">65(mm):</label>
+                            <input type="text">
+                            <label for="">55(mm):</label>
+                            <input type="text">
+                            <label for="">45(mm):</label>
+                            <input type="text">
+                            <label for="">35(mm):</label>
+                            <input type="text">
+                            <label for="">25(mm):</label>
+                            <input type="text">
+                            <label for="">15(mm):</label>
+                            <input type="text">
+                            <label for="">5(mm):</label>
+                            <input type="text">
+                        </div> <!-- 第二行第三列(结束) -->
+                    </div> <!-- 校准视图容器第二行(结束) -->
+                </div> <!-- 系统校准视图主容器(结束) -->
+            </div> <!-- 系统校准视图Tab(结束) -->
+            <!-- 试验报表视图 -->
+            <div title="试验报告" data-options="iconCls:'icon-copy'"
+                style="background-color: rgba(0, 0, 0, 0.3);padding:10px">
+                <!-- 试验报表视图主容器 -->
+                <div class="rptview-container">
+                    <!-- 试验报表视图第一行 -->
+                    <div class="rptview-r1">
+                        <label for="">样品编号:</label>
+                        <input id="txtProdId" type="text">
+                        <a id="btnRptViewSearch" class="easyui-linkbutton" data-options="iconCls:'icon-search'">检索</a>
+                        <label for="">产品名称:</label>
+                        <input type="text" style="grid-column: 5 /span 2;">
+                        <label for="">试验日期:</label>
+                        <input type="text">
+                        <label for="">检验人员:</label>
+                        <input type="text">
+                    </div> <!-- 试验报表视图第一行(结束) -->
+                    <!-- 试验报表视图第二行 -->
+                    <div class="rptview-r2" style="display: none;">
+                        <!-- 试验信息明细列表 -->
+                        <div class="detail">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th><input id="chkSelectAll" type="checkbox"><label for="chkSelectAll"
+                                                style="cursor: pointer;">全选</label></th>
+                                        <th>试验编号</th>
+                                        <th>温升TF1(℃)</th>
+                                        <th>温升TF2(℃)</th>
+                                        <th>失重率(%)</th>
+                                        <th>火焰发生时间(s)</th>
+                                        <th>火焰持续时间(s)</th>
+                                        <th>烧前质量(g)</th>
+                                        <th>烧后质量(g)</th>
+                                        <th>最高温度TF1(℃)</th>
+                                        <th>最高温度TF2(℃)</th>
+                                        <th>终平衡温度TF1(℃)</th>
+                                        <th>终平衡温度TF2(℃)</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tblDetail">
+                                </tbody>
+                            </table>
+                        </div> <!-- 试验信息明细列表(结束) -->
+                        <a id="btnGenerateRpt" class="easyui-linkbutton" data-options="iconCls:'icon-copy'"
+                            style="justify-self:center;">生成报表</a>
+                    </div> <!-- 试验报表视图第二行(结束) -->
+                    <!-- 试验报表视图第三行 -->
+                    <div class="rptview-r3" style="display: none;">
+                        <div class="reportviewer">
+                            <iframe id="pdfviewer" class="pdfviewer-nonborder" width="100%" height="640px">
+                            </iframe>
+                        </div>
+                    </div> <!-- 试验报表视图第三行(结束) -->
+                </div> <!-- 试验报表主容器(结束) -->
+            </div> <!-- 试验报表视图(结束) -->
+            <div title="记录查询" data-options="iconCls:'icon-search'" style="padding:10px">
+                <p>记录查询</p>
+            </div>
+        </div>
+    </div>
+    <!-- ================= 新建试验对话框 ================ -->
+    <!-- 新建试验对话框(一号炉) -->
+    <div id="newtest-buttons-0">
+        <a id="btnSubmitNewTest0" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">确定</a>
+        <a id="btnCancelNewTest0" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">取消</a>
+    </div>
+    <div id="dlgNewTest0" class="easyui-dialog" style="width:40%;height:470px;"
+        data-options="title:'&nbsp;一号炉 - 新建试验',left:'50px',top:'150px',closed:true,iconCls:'icon-file',buttons:'#newtest-buttons-0'">
+        <div class="dlg-newtest-container">
+            <!-- 环境信息 -->
+            <fieldset class="dlg-newtest-ambinfo">
+                <legend>环境信息</legend>
+                <!-- 环境温度 -->
+                <label for="txtAmbTemp0">环境温度(℃):</label>
+                <input id="txtAmbTemp0" type="text" data-bind-master0="ambtemp" pattern="[+]?\d+(\.\d+)?"
+                    style="width: 95px;text-align: center;">
+                <!-- 环境湿度 -->
+                <label for="txtAmbHumi0">环境湿度(%):</label>
+                <input id="txtAmbHumi0" type="text" data-bind-master0="ambhumi" pattern="[+]?\d+(\.\d+)?"
+                    style="width: 95px;text-align: center;">
+            </fieldset>
+            <!-- 试验信息 -->
+            <fieldset class="dlg-newtest-testinfo">
+                <legend>试验信息</legend>
+                <!-- 试验日期 -->
+                <label for="txtTestDate0">试验日期:</label>
+                <input id="txtTestDate0" type="text" data-bind-master0="testdate">
+                <!-- 试验依据 -->
+                <label for="txtTestAccord0">试验依据:</label>
+                <input id="txtTestAccord0" type="text" data-bind-master0="testaccord" disabled>
+                <!-- 试验人员 -->
+                <label for="txtOperator0">试验人员:</label>
+                <input id="txtOperator0" type="text" data-bind-master0="operator">
+            </fieldset>
+            <!-- 试样信息 -->
+            <fieldset class="dlg-newtest-specimaninfo">
+                <legend>试样信息</legend>
+                <!-- 试样编号 -->
+                <label for="txtSpecimanId0">试样编号:</label>
+                <input id="txtSpecimanId0" type="text" data-bind-master0="specimanid" style="grid-column: 2 / span 2;">
+                <!-- 样品标识号 -->
+                <label for="txtTestId0">样品标识号:</label>
+                <input id="txtTestId0" type="text" data-bind-master0="testid" style="grid-column: 5 / span 2;">
+                <!-- 产品名称 -->
+                <label for="txtProdName0">产品名称:</label>
+                <input id="txtProdName0" type="text" data-bind-master0="prodname" style="grid-column: 2 / span 5;">
+                <!-- 规格型号 -->
+                <label for="txtProdSpec0">规格型号:</label>
+                <input id="txtProdSpec0" type="text" data-bind-master0="prodspec" style="grid-column: 2 / span 5;">
+                <!-- 高度 -->
+                <label for="txtProdHeight0">高度(mm):</label>
+                <input id="txtProdHeight0" type="text" data-bind-master0="prodheight" pattern="[+]?\d+(\.\d+)?"
+                    style="text-align: center;">
+                <!-- 直径 -->
+                <label for="txtProdDiameter0">直径(mm):</label>
+                <input id="txtProdDiameter0" type="text" data-bind-master0="proddiameter" pattern="[+]?\d+(\.\d+)?"
+                    style="text-align: center;">
+                <!-- 质量 -->
+                <label for="txtProdWeight0">质量(g):</label>
+                <input id="txtProdWeight0" type="text" data-bind-master0="prodweight" pattern="[+]?\d+(\.\d+)?"
+                    style="text-align: center;">
+            </fieldset>
+            <!-- 设备信息 -->
+            <fieldset class="dlg-newtest-apparatusinfo">
+                <legend>设备信息</legend>
+                <!-- 设备编号 -->
+                <label for="txtApparatusId0">设备编号:</label>
+                <input id="txtApparatusId0" type="text" data-bind-master0="apparatusid" disabled>
+                <!-- 设备名称 -->
+                <label for="txtApparatusName0">设备名称:</label>
+                <input id="txtApparatusName0" type="text" data-bind-master0="apparatusname" disabled>
+                <!-- 检定日期 -->
+                <label for="txtCheckDate0">检定日期:</label>
+                <input id="txtCheckDate0" type="text" data-bind-master0="checkdate" disabled>
+                <!-- 恒功率值 -->
+                <label for="txtConstPower0">恒功率值(%):</label>
+                <input id="txtConstPower0" type="text" data-bind-master0="constpower" disabled>
+            </fieldset>
+            <!-- 其他信息 -->
+            <fieldset class="dlg-newtest-otherinfo">
+                <legend>试验备注</legend>
+                <input id="txtTestMemo0" type="text" data-bind-master0="testmemo">
+            </fieldset>
+        </div>
+    </div>
+    <!-- 新建试验对话框(二号炉) -->
+    <div id="dlgNewTest1" class="easyui-dialog" data-options="title:'新建试验',modal:true,closed:true">
+        新建试验对话框
+    </div>
+    <!-- 新建试验对话框(三号炉) -->
+    <div id="dlgNewTest2" class="easyui-dialog" data-options="title:'新建试验',modal:true,closed:true">
+        新建试验对话框
+    </div>
+    <!-- 新建试验对话框(四号炉) -->
+    <div id="dlgNewTest3" class="easyui-dialog" data-options="title:'新建试验',modal:true,closed:true">
+        新建试验对话框
+    </div>
+    <!-- ================= 新建试验对话框(结束) ================ -->
+
+    <!-- ================= 试验记录对话框 ================ -->
+    <!-- 一号炉 -->
+    <div id="setpheno-buttons-0">
+        <a id="btnSubmitPheno0" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">确定</a>
+        <a id="btnCancelPheno0" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">取消</a>
+    </div>
+    <div id="dlgSetPheno0" class="easyui-dialog" style="width:13%;height:310px;"
+        data-options="title:'&nbsp;一号炉 - 试验记录',left:'300px',top:'150px',iconCls:'icon-checklist',closed:true,buttons:'#setpheno-buttons-0'">
+        <div class="dlg-testpheno">
+            <fieldset class="pheno-flame">
+                <legend
+                    style="display: grid; grid-template-columns: 1fr 2fr;align-items: center;justify-content: space-around;">
+                    <input type="checkbox" id="chkFlame0">
+                    <label for="chkFlame0" style="line-height: 25px;">持续火焰</label>
+                </legend>
+                <!-- 发生时间 -->
+                <label for="txtFlameTime0">发生时间(s):</label>
+                <input id="txtFlameTime0" type="text" class="input-numeric" data-bind-master0="flametime" disabled>
+                <!-- 持续时间 -->
+                <label for="txtDurationTime0">持续时间(s):</label>
+                <input id="txtDurationTime0" type="text" class="input-numeric" data-bind-master0="flameduration"
+                    disabled>
+            </fieldset>
+            <fieldset class="postweight">
+                <legend>试件质量</legend>
+                <!-- 残余质量 -->
+                <label for="txtPostWeight0">残余质量(g):</label>
+                <input id="txtPostWeight0" type="text" class="input-numeric">
+            </fieldset>
+        </div>
+    </div>
+    <!-- 二号炉 -->
+
+    <!-- 三号炉 -->
+
+    <!-- 四号炉 -->
+
+    <!-- ================= 试验记录对话框(结束) ================ -->
+
+    <!-- ================= 参数设置对话框 ================ -->
+
+    <!-- 一号炉 -->
+    <div id="setparam-buttons-0">
+        <a id="btnSubmitSetParam0" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">确定</a>
+        <a id="btnCancelSetParam0" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">取消</a>
+    </div>
+    <div id="dlgSetParam0" class="easyui-dialog" style="width:30%;height:305px;"
+        data-options="title:'&nbsp;一号炉 - 参数设置',left:'380px',top:'150px',iconCls:'icon-set',closed:true,buttons:'#setparam-buttons-0'">
+        <div class="dlg-setparam">
+            <fieldset class="param-apparatus">
+                <legend>设备参数</legend>
+                <!-- 设备编号 -->
+                <label for="txtApparatusId_SetParam0">设备编号:</label>
+                <input id="txtApparatusId_SetParam0" type="text">
+                <!-- 设备名称 -->
+                <label for="txtApparatusName_SetParam0">设备名称:</label>
+                <input id="txtApparatusName_SetParam0" type="text">
+                <!-- 检定日期(起始) -->
+                <label for="txtCheckDateF_SetParam0">检定日期:</label>
+                <input id="txtCheckDateF_SetParam0" type="date">
+                <!-- 检定日期(终止) -->
+                <label for="txtCheckDateT_SetParam0">至:</label>
+                <input id="txtCheckDateT_SetParam0" type="date">
+            </fieldset>
+            <fieldset class="param-communication">
+                <legend>通信参数</legend>
+                <!-- Pid端口 -->
+                <label for="txtPidPort0">PID端口:</label>
+                <input id="txtPidPort0" type="text">
+                <!-- 恒功率值 -->
+                <label for="txtConstPower_SetParam0">恒功率值:</label>
+                <input id="txtConstPower_SetParam0" type="text">
+            </fieldset>
+        </div>
+    </div>
+
+    <!-- ================= 参数设置对话框(结束) ================ -->
+</body>
+<footer>
+    <!-- 导入客户端初始化文件 -->
+    <script type="module" src="app.js"></script>
+    <!-- 导入Chart.js库 -->
+    <script src="./libs/chartjs/chart.umd.js"></script>
+    <!-- 导入SignalR客户端库 -->
+    <script src="./libs/signalr/signalr.min.js"></script>
+</footer>
+
+</html>

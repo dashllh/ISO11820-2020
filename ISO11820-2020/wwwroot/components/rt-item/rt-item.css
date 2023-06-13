@@ -1,0 +1,32 @@
+/* 实时值显示组件样式定义(横向布局) */
+.rt-item {
+    display: grid;
+    grid-template-columns: 1fr 0.8fr;
+    justify-items: stretch;
+    align-items: stretch;
+    align-content: center;
+    margin: 3px;
+    text-align: center;
+    border: 1px solid silver;
+    border-radius: 5px;
+    box-shadow: 0px 0px 3px rgba(120, 120, 120, 0.6);
+}
+
+.rt-item .header {
+    padding: 5px 7px;
+    font-family: sans-serif;
+    font-size: 1.1em;
+    border-radius: 3px 0 0 3px;
+    background-color: #4260e7;
+    color: white;
+}
+
+.rt-item .value {
+    font-family: Arial;
+    font-size: 1.6em;
+    font-weight: bold;
+    border-radius: 0 3px 3px 0;
+    padding-top: 3px;
+    background-color: black;
+    color: yellow;
+}

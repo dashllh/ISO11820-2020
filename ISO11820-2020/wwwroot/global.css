@@ -1,0 +1,202 @@
+/* 设置应用程序全局属性 */
+body {
+    margin: 0;
+    user-select: none;
+}
+
+/* =========== 对话框布局通用属性设置 =========== */
+fieldset {
+    border: 1px lightgray solid;
+    border-radius: 3px;
+    margin: 5px;
+    padding: 1em;
+}
+
+fieldset label,
+fieldset legend,
+fieldset legend label {
+    color: rgba(0, 0, 0, 0.8);
+}
+
+/* label {
+    text-align: end;
+    border: 1px red solid;
+} */
+
+textarea {
+    resize: none;
+    line-height: 22px;
+}
+
+input[type='text'],
+input[type='date'],
+textarea {
+    width: 100%;
+    border: 1px lightgray solid;
+    border-radius: 3px;
+    min-height: 25px;
+    padding: 6px;
+    font-size: 14px;
+}
+
+select {
+    outline: none;
+    border: 1px rgba(0, 0, 0, 0.3) solid;
+    border-radius: 3px;
+    padding: 4px 2px;
+    font-size: 14px;
+    line-height: 25px;
+}
+
+/* 数字类型输入字段居中显示 */
+.input-numeric {
+    text-align: center;
+}
+
+/* 文本输入框获取焦点后的显示属性 */
+input[type='text']:focus,
+input[type='date']:focus,
+textarea:focus {
+    outline: none;
+    border: 1px rgba(66, 96, 231, 0.6) solid;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3);
+}
+
+/* 文本输入框内容不符合pattern属性要求时(invalid) */
+input:invalid {
+    background-color: lightpink;
+}
+
+/* 无效按钮属性 */
+.disabledbutton {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* =========== 对话框布局通用属性设置(结束) =========== */
+
+/* =========== 主界面标题栏样式 =========== */
+/* 主题栏整体 */
+.apptitle {
+    margin: 0;
+    display: grid;
+    grid-template-columns: 1.5fr 0.2fr;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-around;
+    background-color: #4260e7;
+}
+
+/* 主题栏-系统名称 */
+.brand {
+    margin: 10px;
+    font-size: 2.4em;
+    font-weight: 600;
+    color: white;
+}
+
+/* 主题栏 - 命令按钮 */
+.sysbuttons {
+    margin-right: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    justify-items: center;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-between;
+}
+
+/* =========== 主界面标题栏样式(结束) =========== */
+
+/* =========== 试验视图样式 ========== */
+
+/* 视图容器样式(四分屏) */
+.testview-container {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr 1fr;
+    justify-items: stretch;
+    justify-content: space-around;
+    align-items: center;
+    align-content: space-between;
+}
+
+/* 单个控制面板样式 */
+.pnl-master {
+    margin: 6px;
+    box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.4);
+    border-radius: 5px;
+    /* border: 1px red solid; */
+}
+
+/* 单个控制面板命令按钮栏样式 */
+.commands {
+    padding: 3px;
+    /* border-bottom: 1px rgba(105, 105, 105, 0.2) solid; */
+}
+
+/* 单个控制面板显示区域样式 */
+.view-master {
+    display: grid;
+    grid-template:
+        "timer      tempchart"
+        "temp1      tempchart"
+        "temp2      tempchart"
+        "tempsuf    tempchart"
+        "tempcen    tempchart"
+        "tempdrift  tempchart"
+        "message    message";
+    grid-template-columns: 2fr 5fr;
+    grid-template-rows: 1fr 1fr 1fr 1fr 1fr 1fr 210px;
+}
+
+/* 实时值-试验计时 样式 */
+.timer {
+    grid-area: timer;
+}
+
+/* 实时值-炉内温度1 样式 */
+.temp1 {
+    grid-area: temp1;
+}
+
+/* 实时值-炉内温度2 样式 */
+.temp2 {
+    grid-area: temp2;
+}
+
+/* 实时值-表面温度 样式 */
+.tempsuf {
+    grid-area: tempsuf;
+}
+
+/* 实时值-中心温度 样式 */
+.tempcen {
+    grid-area: tempcen;
+}
+
+/* 实时值-温度漂移 样式 */
+.tempdrift {
+    grid-area: tempdrift;
+}
+
+/* 实时值-温度图表 样式 */
+.tempchart {
+    margin: 5px 8px;
+    height: 210px;
+    grid-area: tempchart;
+    border-radius: 3px;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+}
+
+/* 实时值-系统消息 样式 */
+.message {
+    grid-area: message;
+}
+
+/* =========== 试验视图样式(结束) ========== */
+
+/* =========== 报表打印视图样式 ========== */
+/* =========== 报表打印视图样式(结束) ========== */

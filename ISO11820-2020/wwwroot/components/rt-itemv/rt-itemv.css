@@ -1,0 +1,29 @@
+/* 实时值组件样式(纵向布局) */
+.rt-itemv {
+    margin: 3px;
+    max-width: 120px;
+    max-height: 80px;
+    text-align: center;
+    border: 1px solid silver;
+    border-radius: 3px;
+    box-shadow: 0px 0px 5px rgba(120, 120, 120, 0.6);
+  }
+  
+  .rt-itemv .header {
+    padding:4% 0;
+    font-family: sans-serif;
+    font-size: 1.1em;
+    border-radius: 3px 3px 0 0;
+    background-color: #4260e7;
+    color:white;
+  }
+  
+  .rt-itemv .value {  
+    padding: 4% 0;
+    font-family: Arial;
+    font-size: 2.1em;
+    font-weight: bold;
+    border-radius: 0 0 3px 3px;
+    background-color: black;
+    color: yellow;
+  }

@@ -150,7 +150,7 @@ namespace TestServer.Controllers
             var ctx = _contextFactory.CreateDbContext();
             var user = await ctx.Operators.Where(x => x.Username == data.UserName && x.Pwd == data.Password)
                 .FirstOrDefaultAsync();
-            if (user != null) {                
+            if (user != null) {
                 msg.Ret = "0";
                 msg.Msg = "登录成功。";
                 msg.Param.Add("user", user.Username);
