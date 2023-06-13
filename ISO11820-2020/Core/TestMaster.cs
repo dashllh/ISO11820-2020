@@ -207,7 +207,7 @@ namespace TestServer.Core
         /*
          * 功能: 更新恒功率值
          */
-        public void UpdateConstPower(int value)
+        public void UpdateConstPower(Int16 value)
         {
             _apparatusManipulator.UpdateConstPower(value);
         }

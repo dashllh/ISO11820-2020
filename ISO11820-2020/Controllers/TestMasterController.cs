@@ -367,7 +367,7 @@ namespace TestServer.Controllers
             _global.DictApparatus[id].Powerport     = data.Powerport;
             _global.DictApparatus[id].Constpower    = data.Constpower;
             //同步更新设备控制器恒功率值
-            _testMasters.DictTestMaster[id].UpdateConstPower(data.Constpower);
+            _testMasters.DictTestMaster[id].UpdateConstPower(Convert.ToInt16(data.Constpower));
             //构造返回消息
             Message msg = new Message();
             msg.Param = new Dictionary<string, object>();
