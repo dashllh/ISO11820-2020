@@ -166,6 +166,30 @@ namespace TestServer.Controllers
         /* 样品试验操作相关接口函数定义 */
 
         /*
+         * 功能: 开始升温
+         * 参数:
+         *       id:int - 试验控制器ID
+         */
+        [HttpGet("startheating/{id}")]
+        public async Task<IActionResult> StartHeating(int id)
+        {
+            int _masterId = id;
+
+            //设置控制器状态为[Preparing],开始升温
+            await _testMasters.DictTestMaster[_masterId].StartHeatingAsync();
+
+            Message msg = new Message();
+            msg.Param = new Dictionary<string, object>();
+            msg.Cmd = "startheating";
+            //设置客户端返回消息
+            msg.Ret = "0";
+            msg.Msg = "启动加热成功。";
+            msg.Param.Add("masterid", _masterId);
+
+            return new JsonResult(msg);
+        }
+
+        /*
          * 功能: 新建试验 
          * 参数:
          *      id:int    - 试验控制器ID
@@ -215,9 +239,7 @@ namespace TestServer.Controllers
                 testmaster.Phenocode = "0000";
                 testmaster.Memo = data.TestMemo;
 
-                _testMasters.DictTestMaster[_masterId].SetTestData(testmaster);
-                //设置控制器状态为[Preparing],开始升温
-                _testMasters.DictTestMaster[id].StartPreparing();
+                _testMasters.DictTestMaster[_masterId].SetTestData(testmaster);                
 
                 //设置客户端返回消息
                 msg.Ret = "0";

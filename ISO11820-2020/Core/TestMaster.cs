@@ -283,12 +283,24 @@ namespace TestServer.Core
         /*
          * 功能: 设置控制器开始升温(执行控制单元指令切换)
          */
-        public void StartPreparing()
+        //public void StartPreparing()
+        //{
+        //    //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温
+        //    _apparatusManipulator.SwitchToPID();
+        //    //修改试验控制器状态为[Preparing],根据具体试验任务确定
+        //    Status = MasterStatus.Preparing;
+        //}
+
+        /*
+         * 功能: 启动不燃炉加热
+         */
+        public async Task<int> StartHeatingAsync()
         {
-            //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温
-            _apparatusManipulator.SwitchToPID();
-            //修改试验控制器状态为[Preparing],根据具体试验任务确定
+            // 向试验设备控制器发送指令,启动试验炉加热
+            await Task.Run(() => _apparatusManipulator.StartHeating());
+            // 设置控制器状态为[Preparing]
             Status = MasterStatus.Preparing;
+            return 0;
         }
 
         /*
@@ -324,7 +336,7 @@ namespace TestServer.Core
         }
 
         /*
-         * 功能: 判断试验条件是否满足
+         * 功能: 判断试验条件是否满足(执行标准ISO 11820)
          */
         public virtual bool CheckStartCriteria()
         {
