@@ -13,6 +13,7 @@ using DevExpress.Spreadsheet;
 using Emgu.CV.ML;
 using DevExpress.XtraPrinting;
 using OfficeOpenXml.FormulaParsing;
+using ISO11820_2020.Models;
 
 namespace TestServer.Core
 {
@@ -70,7 +71,7 @@ namespace TestServer.Core
         public int FlameDetectedTime { get; set; } = 0;     //记录首次检测到持续火焰5s的起火时间
         public int FlameDuration { get; set; } = 0;     //记录火焰持续燃烧时间
         /* 控制器消息记录数据项 */
-        public Dictionary<string, string> MasterMessages { get; set; }
+        public List<MasterMessage> MasterMessages { get; set; }
     }
 
     /*
@@ -316,12 +317,32 @@ namespace TestServer.Core
 
         public virtual void SetProductData(Productmaster prodmaster)
         {
-            throw new NotImplementedException();
+            _productMaster = prodmaster;
+        }
+
+        public virtual Productmaster GetProductData()
+        {
+            return _productMaster;
+        }
+
+        public virtual void ResetProductData()
+        {
+            _productMaster = null;
         }
 
         public virtual void SetTestData(Testmaster testmaster)
         {
-            throw new NotImplementedException();
+            _testmaster = testmaster;
+        }
+
+        public virtual Testmaster GetTestData()
+        {
+            return _testmaster;
+        }
+
+        public virtual void ResetTestData() 
+        {
+            _testmaster = null; 
         }
 
         /*
@@ -384,12 +405,12 @@ namespace TestServer.Core
                 }
 
                 //判断是否达到试验初始条件并修改控制器状态            
-                //return (_iCntStable == 0 && _iCntDrift == 0 && _iCntDeviation == 0) ? true : false;
+                return (_iCntStable == 0 && _iCntDrift == 0 && _iCntDeviation == 0) ? true : false;
             }
             //未满10Min的情况,默认返回false
-            //return false;
+            return false;
 
-            return (_iCntStable == 0 && _iCntDrift == 0 && _iCntDeviation == 0) ? true : false;
+            //return (_iCntStable == 0 && _iCntDrift == 0 && _iCntDeviation == 0) ? true : false;
         }
 
         /*
@@ -722,8 +743,9 @@ namespace TestServer.Core
          * 参数:
          *      mass - 样品残余质量
          */
-        public void SetPostTestData(int flametime, int flamedur, double mass)
+        public void SetPostTestData(string phenocode,int flametime, int flamedur, double mass)
         {
+            _testmaster.Phenocode = phenocode;
             _testmaster.Flametime = flametime;
             _testmaster.Flameduration = flamedur;
             _testmaster.Postweight = mass;

@@ -4,6 +4,8 @@ using TestServer.Models;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using TestServer.Global;
+using DevExpress.Office.Utils;
+using ISO11820_2020.Models;
 
 namespace TestServer.Core
 {
@@ -11,7 +13,6 @@ namespace TestServer.Core
     {
         //应用程序全局对象集合
         private AppGlobal _global;
-
         public TestMaster1(AppGlobal global,SensorDictionary sensors, IHubContext<NotificationHub> notificationHub,
             IDbContextFactory<ISO11820DbContext> contextFactory)
             : base(sensors, notificationHub, contextFactory)
@@ -49,14 +50,14 @@ namespace TestServer.Core
         }
 
         //重载设置试验数据的父函数
-        public override void SetProductData(Productmaster prodmaster)
-        {
-            _productMaster = prodmaster;
-        }
-        public override void SetTestData(Testmaster testmaster)
-        {
-            _testmaster = testmaster;
-        }        
+        //public override void SetProductData(Productmaster prodmaster)
+        //{
+        //    _productMaster = prodmaster;
+        //}
+        //public override void SetTestData(Testmaster testmaster)
+        //{
+        //    _testmaster = testmaster;
+        //}
 
         //重载[Idle]状态驱动函数,广播属于一号炉的温度传感器数据
         protected override void DoIdle()
@@ -104,7 +105,7 @@ namespace TestServer.Core
                 Timer             = 0,                  //计时器
                 sensorDataCatch   = _sensorDataCatch,   //传感器数据
                 caculateDataCatch = _caculateDataCatch, //计算数据                
-                MasterMessages    = new Dictionary<string, string>() //消息对象
+                MasterMessages    = new List<MasterMessage>() //消息对象
             };
 
             /* 根据控制器状态驱动试验逻辑 */
@@ -140,15 +141,22 @@ namespace TestServer.Core
                         Temp2   = _sensorDataCatch.Temp2,    //炉内温度2
                         TempSuf = _sensorDataCatch.TempSuf,  //试样表面温度 
                         TempCen = _sensorDataCatch.TempCen   //试样中心温度
-                    });    
+                    });
                     //如果捕捉到火焰事件,则记录
-                    if(_bFlameDetected) {
+                    if (_bFlameDetected)
+                    {
                         //设置火焰捕捉无效(无需继续捕捉)
                         _bFlameDetected = false;
                         _testmaster.Flametime = Timer - _iFlameDurTime;
                         _testmaster.Flameduration = _iFlameDurTime;
                         //追加客户端消息
-                        data.MasterMessages.Add(DateTime.Now.ToString("HH:mm"), $"检测到持续火焰,持续时间 {_iFlameDurTime} s");
+                        data.MasterMessages.Add(new MasterMessage()
+                        {
+                            Time = DateTime.Now.ToString("HH:mm:ss"),
+                            Message = $"检测到持续火焰,持续时间 {_iFlameDurTime} s",
+                            FlameTime = Timer,
+                            FlameDuration = _iFlameDurTime
+                        });
                     }
                     // 计时到达60Min,无条件终止本次试验
                     if (Timer == 3600)
@@ -158,10 +166,14 @@ namespace TestServer.Core
                         //更新控制器状态
                         Status = MasterStatus.Complete;
                         //设置客户端消息: 本次试验已完成
-                        data.MasterMessages.Add(DateTime.Now.ToString("HH:mm"), "本次试验已完成");                        
+                        data.MasterMessages.Add(new MasterMessage()
+                        {
+                            Time = DateTime.Now.ToString("HH:mm:ss"),
+                            Message = "本次试验已完成。"
+                        });                       
                     }
                     // 在试验标准要求的时间点判断是否满足试验终止条件
-                    if (Timer == 60 || Timer == 2100 || Timer == 2400
+                    if (Timer == 600 || Timer == 2100 || Timer == 2400
                         || Timer == 2700 || Timer == 3000 || Timer == 3300)
                     {
                         //判断试验终止条件是否满足                        
@@ -172,7 +184,11 @@ namespace TestServer.Core
                             //更新控制器状态
                             Status = MasterStatus.Complete;
                             //设置客户端消息: 本次试验已完成
-                            data.MasterMessages.Add(DateTime.Now.ToString("HH:mm"), "本次试验已完成。");
+                            data.MasterMessages.Add(new MasterMessage()
+                            {
+                                Time = DateTime.Now.ToString("HH:mm:ss"),
+                                Message = "本次试验已完成。"
+                            });
                         }
                     }
                     //增加计时器
@@ -192,7 +208,7 @@ namespace TestServer.Core
                     //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温
                     _apparatusManipulator.SwitchToPID();
                     //2022-11-21 停止火焰检测
-                    //_flameAnalyzer.StopAnalyzing();
+                    //_flameAnalyzer.StopAnalyzing();                    
                     break;
                 default:
                     break;

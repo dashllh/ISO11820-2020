@@ -3,6 +3,7 @@ using TestServer.Hubs;
 using TestServer.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using ISO11820_2020.Models;
 
 namespace TestServer.Core
 {
@@ -64,7 +65,7 @@ namespace TestServer.Core
                 Timer             = 0,                  //计时器
                 sensorDataCatch   = _sensorDataCatch,   //传感器数据
                 caculateDataCatch = _caculateDataCatch, //计算数据                
-                MasterMessages    = new Dictionary<string, string>() //消息对象
+                MasterMessages    = new List<MasterMessage>() //消息对象
             };
 
             /* 根据控制器状态驱动试验逻辑 */
@@ -109,7 +110,11 @@ namespace TestServer.Core
                         //更新控制器状态
                         Status = MasterStatus.Complete;
                         //设置客户端消息: 本次试验已完成
-                        data.MasterMessages.Add(DateTime.Now.ToString("HH:mm"), "本次试验已完成");
+                        data.MasterMessages.Add(new MasterMessage()
+                        {
+                            Time = DateTime.Now.ToString("HH:mm:ss"),
+                            Message = "本次试验已完成。"
+                        });
                     }
                     // 在试验标准要求的时间点判断是否满足试验终止条件
                     if (Timer == 1800 || Timer == 2100 || Timer == 2400
@@ -123,7 +128,11 @@ namespace TestServer.Core
                             //更新控制器状态
                             Status = MasterStatus.Complete;
                             //设置客户端消息: 本次试验已完成
-                            data.MasterMessages.Add(DateTime.Now.ToString("HH:mm"), "本次试验已完成。");
+                            data.MasterMessages.Add(new MasterMessage()
+                            {
+                                Time = DateTime.Now.ToString("HH:mm:ss"),
+                                Message = "本次试验已完成。"
+                            });
                         }
                     }
                     //增加计时器

@@ -53,11 +53,35 @@ namespace TestServer.Core
         public void SetProductData(Productmaster prodmaster);
 
         /*
+         * 功能: 获取本次试样样品的产品信息
+         * 返回:
+         *      本次试验样品的产品数据缓存对象
+         */
+        public Productmaster GetProductData();
+
+        /*
+         * 功能: 重置本次试样样品的产品信息
+         */
+        public void ResetProductData();
+
+        /*
          * 功能: 设置本次试验数据缓存对象
          * 参数:
          *       testdata - 本次试验数据缓存对象
          */
         public void SetTestData(Testmaster testmaster);
+
+        /*
+         * 功能: 获取本次试验数据缓存对象
+         * 返回:
+         *      本次试验数据缓存对象
+         */
+        public Testmaster GetTestData();
+
+        /*
+         * 功能: 重置本次试验数据缓存对象
+         */
+        public void ResetTestData();
 
         /* 试验结束后期处理(保存本次试验数据,视频记录等操作) */
         public Task PostTestProcess();

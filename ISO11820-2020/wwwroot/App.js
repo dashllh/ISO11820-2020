@@ -1,6 +1,33 @@
 //#region 通用公共函数定义
 
 /*
+ * 功能: 四舍五入
+ * 参数:
+ *      data - 原始数据
+ *      bit  - 要保留的小数位数
+ * 返回:
+ *      四舍五入后的结果数值 
+*/
+function getRound(data, bit) {
+    var ret = undefined;
+    switch (bit) {
+        case 0:
+            ret = Math.round(data);
+            break;
+        case 1:
+            ret = Math.round((data + Number.EPSILON) * 10) / 10;
+            break;
+        case 2:
+            ret = Math.round((data + Number.EPSILON) * 100) / 100;
+            break;
+        case 3:
+            ret = Math.round((data + Number.EPSILON) * 1000) / 1000;
+            break;
+    }
+    return ret;
+}
+
+/*
  * 功能:替换字符串中指定位置的字符 
  * 参数:
  *      str - 源字符串
@@ -14,10 +41,97 @@ function setCharAt(str, index, chr) {
     return str.substring(0, index) + chr + str.substring(index + 1);
 }
 
+/* 功能: 新增一条试验控制器系统消息 
+ * 参数:
+ *      idx     - 试验控制器索引
+ *      data    - 服务端API返回的消息对象
+*/
+function appendSysMsg(idx, data) {
+    $(`#idTbMessage${idx}`).datagrid('insertRow', {
+        index: 0,
+        row: {
+            time: data.param.time,
+            content: data.msg
+        }
+    });
+}
+
+/* 功能: 新增一条试验控制器系统消息 
+ * 参数:
+ *      idx     - 试验控制器索引
+ *      data    - signalR返回的消息对象
+*/
+function appendSysMsgFromSigR(idx, data) {
+    $(`#idTbMessage${idx}`).datagrid('insertRow', {
+        index: 0,
+        row: {
+            time: data.Time,
+            content: data.Message
+        }
+    });
+}
+
+/* 功能: 新增一条传感器实时数据并同步更新温度曲线数据
+ * 参数:
+ *       idx  - 试验控制器索引
+ *       data - signalR实时数据对象
+ */
+function appendSensorData(idx, data) {
+    // 新增传感器列表数据
+    $(`#idTbSensor${idx}`).datagrid('insertRow', {
+        index: 0,
+        row: {
+            timer: data.Timer,
+            temp1: data.sensorDataCatch.Temp1,
+            temp2: data.sensorDataCatch.Temp2,
+            tempsuf: data.sensorDataCatch.TempSuf,
+            tempcen: data.sensorDataCatch.TempCen,
+            tempdrift: Math.round((data.caculateDataCatch.TempDriftMean + Number.EPSILON) * 10) / 10
+        }
+    });
+    // 如果计时超过60秒,则移除列表数据末尾行
+    if (data.Timer > 60) {
+        var rows = $(`#idTbSensor${idx}`).datagrid('getRows');
+        $(`#idTbSensor${idx}`).datagrid('deleteRow', rows.length - 1);
+    }
+    // 新增曲线数据
+    _charts[idx].config.data.labels.push(data.Timer);
+    _charts[idx].config.data.datasets[0].data.push(data.sensorDataCatch.Temp1);
+    _charts[idx].config.data.datasets[1].data.push(data.sensorDataCatch.Temp2);
+    _charts[idx].config.data.datasets[2].data.push(data.sensorDataCatch.TempSuf);
+    _charts[idx].config.data.datasets[3].data.push(data.sensorDataCatch.TempCen);
+    _charts[idx].target.update();
+    // 如果计时超过10分钟,则移除图表头部数据点
+    if (data.Timer > 600) {
+        _charts[idx].config.data.labels.shift();
+        _charts[idx].config.data.datasets[0].data.shift();
+        _charts[idx].config.data.datasets[1].data.shift();
+        _charts[idx].config.data.datasets[2].data.shift();
+        _charts[idx].config.data.datasets[3].data.shift();
+    }
+}
+
+/* 功能: 重置试验控制器面板显示
+ * 参数:
+ *       idx  - 试验控制器索引
+ */
+function resetMasterPanel(idx) {
+    // 清空传感器列表显示
+    $(`#idTbSensor${idx}`).datagrid('loadData', []);
+    // 清空温度曲线
+    _charts[idx].config.data.labels = [];
+    _charts[idx].config.data.datasets[0].data = [];
+    _charts[idx].config.data.datasets[1].data = [];
+    _charts[idx].config.data.datasets[2].data = [];
+    _charts[idx].config.data.datasets[3].data = [];
+    _charts[idx].target.update();
+}
+
 //#endregion
 
 //#region 用于与服务器端通信的客户端应用主数据模型(四个试验控制器独立数据模型)
 
+// 一号炉
 let dmMaster0 = {
     // 环境
     ambtemp: 25,       // 环境温度
@@ -25,7 +139,10 @@ let dmMaster0 = {
     // 设备
     apparatusid: '',   // 设备编号
     apparatusname: '', // 设备名称
-    checkdate: '',     // 检定日期
+    checkdatef: '',    // 检定日期(起始)
+    checkdatet: '',    // 检定日期(终止)
+    pidport: '',       // PID控制端口
+    powerport: 'COM3',  // 恒功率值控制端口
     constpower: 0,     // 最新的恒功率输出值
     status: '',        // 当前状态
     mode: '',          // 当前工作模式
@@ -47,6 +164,7 @@ let dmMaster0 = {
     pheno: '0000',      // 现象编码
     flametime: 0,       // 火焰发生时间
     flameduration: 0,   // 火焰持续时间
+    postweight: 0,      // 试样残余质量
     // 传感器
     tf1: 0,            // 炉内温度1
     tf2: 0,            // 炉内温度2
@@ -57,89 +175,58 @@ let dmMaster0 = {
     drift2: 0.0,       // 炉内温度2的10分钟漂移值
     driftmean: 0.0     // 炉内温度1与炉内温度2的10分钟平均漂移值
 }
+// 二号炉
+let dmMaster1 = {}
+// 三号炉
+let dmMaster2 = {}
+// 四号炉
+let dmMaster3 = {}
 
-//#endregion
+// 校准视图数据模型
+let dmCalibration = {
+    tempcali: 0.0,
+    tempa1: 0.0,
+    tempa2: 0.0,
+    tempa3: 0.0,
+    tempb1: 0.0,
+    tempb2: 0.0,
+    tempb3: 0.0,
+    tempc1: 0.0,
+    tempc2: 0.0,
+    tempc3: 0.0,
+    t_avg: 0.0,
+    t_avg_axis1: 0.0,
+    t_avg_axis2: 0.0,
+    t_avg_axis3: 0.0,
+    t_dev_axis1: 0.0,
+    t_dev_axis2: 0.0,
+    t_dev_axis3: 0.0,
+    t_avg_dev_axis: 0.0,
+    t_avg_levela: 0.0,
+    t_avg_levelb: 0.0,
+    t_avg_levelc: 0.0,
+    t_dev_levela: 0.0,
+    t_dev_levelb: 0.0,
+    t_dev_levelc: 0.0,
+    t_avg_dev_level: 0.0,
 
-//#region 样品试验视图对话框相关数据及功能代码
+    temp5: 0.0,
+    temp15: 0.0,
+    temp25: 0.0,
+    temp35: 0.0,
+    temp45: 0.0,
+    temp55: 0.0,
+    temp65: 0.0,
+    temp75: 0.0,
+    temp85: 0.0,
+    temp95: 0.0,
+    temp105: 0.0,
+    temp115: 0.0,
+    temp125: 0.0,
+    temp135: 0.0,
+    temp145: 0.0,
+}
 
-/* ============= 新建试验对话框 =============*/
-// 一号炉新建试验对话框ViewModel
-let vmNewTest0 = {
-    ambtemp: 0.0,// 环境温度
-    ambhumi: 0.0,// 环境湿度
-    prodname: '',// 产品名称
-    prodspec: '',// 产品规格型号
-    prodheight: 0.0,// 产品高度
-    proddiameter: 0.0,// 产品直径
-    prodweight: 0.0,// 产品质量
-    specimanid: '',// 试样编号
-    testid: '',// 试验编号(样品标识号)
-    testdate: '',// 试验日期
-    testaccord: '',// 检验依据
-    testmemo: '',// 试验备注
-    operator: '',// 试验人员
-    apparatusid: '',// 设备编号
-    apparatusname: '',// 设备名称
-    checkdate: ''// 设备检定日期
-
-}
-// 二号炉新建试验对话框ViewModel
-let vmNewTest1 = {
-    ambtemp: 0.0,// 环境温度
-    ambhumi: 0.0,// 环境湿度
-    prodname: '',// 产品名称
-    prodspec: '',// 产品规格型号
-    prodheight: 0.0,// 产品高度
-    proddiameter: 0.0,// 产品直径
-    prodweight: 0.0,// 产品质量
-    specimanid: '',// 试样编号
-    testid: '',// 试验编号(样品标识号)
-    testdate: '',// 试验日期
-    testaccord: '',// 检验依据
-    operator: '',// 试验人员
-    apparatusid: '',// 设备编号
-    apparatusname: '',// 设备名称
-    checkdate: '',// 设备检定日期
-    testmemo: ''// 试验备注
-}
-// 三号炉新建试验对话框ViewModel
-let vmNewTest2 = {
-    ambtemp: 0.0,// 环境温度
-    ambhumi: 0.0,// 环境湿度
-    prodname: '',// 产品名称
-    prodspec: '',// 产品规格型号
-    prodheight: 0.0,// 产品高度
-    proddiameter: 0.0,// 产品直径
-    prodweight: 0.0,// 产品质量
-    specimanid: '',// 试样编号
-    testid: '',// 试验编号(样品标识号)
-    testdate: '',// 试验日期
-    testaccord: '',// 检验依据
-    operator: '',// 试验人员
-    apparatusid: '',// 设备编号
-    apparatusname: '',// 设备名称
-    checkdate: '',// 设备检定日期
-    testmemo: ''// 试验备注
-}
-// 四号炉新建试验对话框ViewModel
-let vmNewTest3 = {
-    ambtemp: 0.0,// 环境温度
-    ambhumi: 0.0,// 环境湿度
-    prodname: '',// 产品名称
-    prodspec: '',// 产品规格型号
-    prodheight: 0.0,// 产品高度
-    proddiameter: 0.0,// 产品直径
-    prodweight: 0.0,// 产品质量
-    specimanid: '',// 试样编号
-    testid: '',// 试验编号(样品标识号)
-    testdate: '',// 试验日期
-    testaccord: '',// 检验依据
-    operator: '',// 试验人员
-    apparatusid: '',// 设备编号
-    apparatusname: '',// 设备名称
-    checkdate: '',// 设备检定日期
-    testmemo: ''// 试验备注
-}
 //#endregion
 
 //#region 样品试验视图温度图表数据及功能代码
@@ -326,21 +413,31 @@ document.getElementById('btnSubmitNewTest0').addEventListener('click', (event) =
             Operator: dmMaster0.operator,
             ApparatusId: dmMaster0.apparatusid,
             ApparatusName: dmMaster0.apparatusname,
-            ApparatusChkDate: dmMaster0.checkdate,
+            ApparatusChkDate: dmMaster0.checkdatet,
             ConstPower: dmMaster0.constpower,
-            Memo: dmMaster0.testmemo
+            TestMemo: dmMaster0.testmemo
         })
     }
     fetch('api/testmaster/newtest/0', option)
         .then(response => response.json())
-        .then(data => console.log(data));
+        .then(data => appendSysMsg(0, data));
+    // 关闭对话框
+    $('#dlgNewTest0').dialog('close');
 });
 
-// 【开始计时】工具栏按钮
-// ...
+// 【开始记录】工具栏按钮
+document.getElementById('btnStartRecord0').addEventListener('click', (event) => {
+    window.fetch(`api/testmaster/starttimer/0`)
+        .then(response => response.json())
+        .then(data => appendSysMsg(0, data));
+});
 
-// 【停止计时】工具栏按钮
-// ...
+// 【停止记录】工具栏按钮
+document.getElementById('btnStopRecord0').addEventListener('click', (event) => {
+    window.fetch(`api/testmaster/stoptimer/0`)
+        .then(response => response.json())
+        .then(data => appendSysMsg(0, data));
+});
 
 // 【试验记录】工具栏按钮
 document.getElementById('btnSetPheno0').addEventListener('click', (event) => {
@@ -351,7 +448,26 @@ document.getElementById('btnCancelPheno0').addEventListener('click', (event) => 
     $('#dlgSetPheno0').dialog('close');
 });
 // 试验记录对话框【确定】按钮
-// ...
+document.getElementById('btnSubmitPheno0').addEventListener('click', (event) => {
+    //上传信息
+    let option = {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            pheno: dmProxy_Master0.pheno,
+            flametime: dmProxy_Master0.flametime,
+            flamedur: dmProxy_Master0.flameduration,
+            postweight: dmProxy_Master0.postweight
+        })
+    }
+    fetch(`api/testmaster/setpostdata/0`, option)
+        .then(response => response.json())
+        .then(data => appendSysMsg(0, data));
+    // 关闭对话框
+    $('#dlgSetPheno0').dialog('close');
+});
 
 // 【参数设置】工具栏按钮
 document.getElementById('btnSetParam0').addEventListener('click', (event) => {
@@ -362,33 +478,79 @@ document.getElementById('btnCancelSetParam0').addEventListener('click', (event) 
     $('#dlgSetParam0').dialog('close');
 });
 // 参数设置对话框【确定】按钮
-// ...
+document.getElementById('btnSubmitSetParam0').addEventListener('click', (event) => {
+    //上传信息
+    let option = {
+        method: "PUT",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            innernumber: dmProxy_Master0.apparatusid,
+            apparatusname: dmProxy_Master0.apparatusname,
+            checkdatef: dmProxy_Master0.checkdatef,
+            checkdatet: dmProxy_Master0.checkdatet,
+            pidport: dmProxy_Master0.pidport,
+            powerport: dmProxy_Master0.powerport,
+            constpower: dmProxy_Master0.constpower
+        })
+    }
+    fetch(`api/testmaster/setapparatusparam/0`, option)
+        .then(response => response.json())
+        .then(data => appendSysMsg(0, data));
+    // 关闭对话框
+    $('#dlgSetParam0').dialog('close');
+});
 
+// 【开始加热】工具栏按钮
+document.getElementById('btnPowerOn0').addEventListener('click', (event) => {
+    fetch(`api/testmaster/startheating/0`)
+        .then(response => response.json())
+        .then(data => {
+            // 启动加热程序成功,设置加热状态指示为[加热中]
+            if (data.ret === "0") {
+                document.getElementById(`imgIndicator0`).src = "./libs/jquery-easyui-1.10.16/themes/images/16/heat.png";
+            }
+            appendSysMsg(0, data);
+        });
+});
 
 // 【停止加热】工具栏按钮
-// ...
+document.getElementById('btnPowerOff0').addEventListener('click', (event) => {
+    fetch(`api/testmaster/stopheating/0`)
+        .then(response => response.json())
+        .then(data => {
+            // 停止加热成功,设置加热指示为空白
+            if (data.ret === "0") {
+                document.getElementById(`imgIndicator0`).src = "";
+            }
+            appendSysMsg(0, data);
+        });
+});
 
 // 试验现象 - 持续火焰checkbox
 document.getElementById('chkFlame0').addEventListener('change', (event) => {
     document.getElementById('txtFlameTime0').disabled = !document.getElementById('chkFlame0').checked;
     document.getElementById('txtDurationTime0').disabled = !document.getElementById('chkFlame0').checked;
+    // 设置现象编码
     dmProxy_Master0.pheno = setCharAt(dmProxy_Master0.pheno, 0, document.getElementById('chkFlame0').checked ? '1' : '0');
 });
 
 //#endregion
 
-//#region 一号试验控制器相关数据绑定
+//#region 试验控制器相关数据绑定
 
+// 一号炉
 // 实现数据模型到界面的绑定
 let dmhandler_master0 = {
     set: function (target, property, value) {
         if (property in target) {
             target[property] = value;
             // 同步更新界面绑定该值的元素
-            const item = document.querySelector(`[data-bind-master0=${property}]`);
-            if (item !== null) {
+            const items = document.querySelectorAll(`[data-bind-master0=${property}]`);
+            items.forEach(item => {
                 item.value = value;
-            }
+            });
             return true;
         }
         // target没有对应的属性,返回false
@@ -396,7 +558,6 @@ let dmhandler_master0 = {
     }
 }
 let dmProxy_Master0 = new Proxy(dmMaster0, dmhandler_master0);
-
 // 实现界面到数据模型的绑定
 const items_dlg_newtest0 = document.querySelectorAll("[data-bind-master0]");
 items_dlg_newtest0.forEach((item) => {
@@ -405,31 +566,123 @@ items_dlg_newtest0.forEach((item) => {
     // 实时更新数据模型的值
     item.addEventListener('input', (event) => {
         dmMaster0[propName] = item.value;
-        console.log(dmMaster0);
     });
-});
+}); // 一号炉(结束)
 
-// 测试代码:测试数据绑定
-dmProxy_Master0.ambtemp = 25;
-dmProxy_Master0.ambhumi = 55;
-dmProxy_Master0.timer = 0;
-dmProxy_Master0.tf1 = 8888;
-dmProxy_Master0.tf2 = 8888;
-dmProxy_Master0.ts = 8888;
-dmProxy_Master0.tc = 8888;
-dmProxy_Master0.driftmean = 8888;
+// 二号炉
+// 实现数据模型到界面的绑定
+let dmhandler_master1 = {
+    set: function (target, property, value) {
+        if (property in target) {
+            target[property] = value;
+            // 同步更新界面绑定该值的元素
+            const items = document.querySelectorAll(`[data-bind-master1=${property}]`);
+            items.forEach(item => {
+                item.value = value;
+            });
+            return true;
+        }
+        // target没有对应的属性,返回false
+        return false;
+    }
+}
+let dmProxy_Master1 = new Proxy(dmMaster1, dmhandler_master1);
+// 实现界面到数据模型的绑定
+const items_dlg_newtest1 = document.querySelectorAll("[data-bind-master1]");
+items_dlg_newtest1.forEach((item) => {
+    // 获取当前input元素绑定的ViewModel属性
+    const propName = item.dataset.bindMaster1;
+    // 实时更新数据模型的值
+    item.addEventListener('input', (event) => {
+        dmMaster1[propName] = item.value;
+    });
+}); // 二号炉(结束)
 
-dmProxy_Master0.apparatusid = "1014";
-dmProxy_Master0.apparatusname = "建筑材料不燃性试验装置";
-dmProxy_Master0.checkdate = "2023年12月12日";
-dmProxy_Master0.constpower = 15;
-dmProxy_Master0.testaccord = "ISO 1182-2020";
-dmProxy_Master0.operator = "刘小马";
-dmProxy_Master0.testdate = "2023年6月12日";
+// 三号炉
+// 实现数据模型到界面的绑定
+let dmhandler_master2 = {
+    set: function (target, property, value) {
+        if (property in target) {
+            target[property] = value;
+            // 同步更新界面绑定该值的元素
+            const items = document.querySelectorAll(`[data-bind-master2=${property}]`);
+            items.forEach(item => {
+                item.value = value;
+            });
+            return true;
+        }
+        // target没有对应的属性,返回false
+        return false;
+    }
+}
+let dmProxy_Master2 = new Proxy(dmMaster2, dmhandler_master2);
+// 实现界面到数据模型的绑定
+const items_dlg_newtest2 = document.querySelectorAll("[data-bind-master2]");
+items_dlg_newtest2.forEach((item) => {
+    // 获取当前input元素绑定的ViewModel属性
+    const propName = item.dataset.bindMaster2;
+    // 实时更新数据模型的值
+    item.addEventListener('input', (event) => {
+        dmMaster2[propName] = item.value;
+    });
+}); // 三号炉(结束)
+
+// 四号炉
+// 实现数据模型到界面的绑定
+let dmhandler_master3 = {
+    set: function (target, property, value) {
+        if (property in target) {
+            target[property] = value;
+            // 同步更新界面绑定该值的元素
+            const items = document.querySelectorAll(`[data-bind-master3=${property}]`);
+            items.forEach(item => {
+                item.value = value;
+            });
+            return true;
+        }
+        // target没有对应的属性,返回false
+        return false;
+    }
+}
+let dmProxy_Master3 = new Proxy(dmMaster3, dmhandler_master0);
+// 实现界面到数据模型的绑定
+const items_dlg_newtest3 = document.querySelectorAll("[data-bind-master3]");
+items_dlg_newtest3.forEach((item) => {
+    // 获取当前input元素绑定的ViewModel属性
+    const propName = item.dataset.bindMaster3;
+    // 实时更新数据模型的值
+    item.addEventListener('input', (event) => {
+        dmMaster3[propName] = item.value;
+    });
+}); // 四号炉(结束)
+
+let dmProxy_Master = [dmProxy_Master0, dmProxy_Master1, dmProxy_Master2, dmProxy_Master3];
 
 //#endregion
 
 //#region 系统校准视图数据及功能代码
+
+// 视图数据模型绑定(模型->界面)
+let dmhandler_cali = {
+    set: function (target, property, value) {
+        if (property in target) {
+            target[property] = value;
+            // 同步更新界面绑定该值的元素
+            const items = document.querySelectorAll(`[data-bind-cali=${property}]`);
+            items.forEach(item => {
+                if (item.value === undefined) {
+                    item.innerText = value;
+                } else {
+                    item.value = value;
+                }
+            });
+            return true;
+        }
+        // target没有对应的属性,返回false
+        return false;
+    }
+}
+let dmProxy_Cali = new Proxy(dmCalibration, dmhandler_cali);
 
 // 温度校准曲线数据
 let config_caliview_chart = {
@@ -475,7 +728,7 @@ let config_caliview_chart = {
     }
 }
 // 初始化温度图表
-new Chart(document.getElementById('caliTempChart'), config_caliview_chart);
+let chart_CentorPos = new Chart(document.getElementById('caliTempChart'), config_caliview_chart);
 
 // 炉壁点位校准 - 校温热电偶实时曲线图
 // 图表配置
@@ -510,7 +763,6 @@ let config_rtchart_r1 = {
 }
 new Chart(document.getElementById('caliRealTimeChart_R1'), config_rtchart_r1);
 
-
 // 中心点位校准 - 校温热电偶实时曲线图
 let config_rtchart_r2 = {
     type: 'line',
@@ -544,6 +796,193 @@ let config_rtchart_r2 = {
 }
 new Chart(document.getElementById('caliRealTimeChart_R2'), config_rtchart_r2);
 
+// 初始化客户端到校准热电偶信号的SignalR连接
+var sigRCon_Cali = new signalR.HubConnectionBuilder()
+    .withUrl("/Calibration")
+    .configureLogging(signalR.LogLevel.Information)
+    .build();
+// 注册服务端实时消息处理函数
+sigRCon_Cali.on("CaliBroadCast", function (data) {
+    // 解析服务器消息
+    dmProxy_Cali.tempcali = data;
+});
+
+// 注册三个平面点位点位校准【记录】按钮点击事件
+document.getElementById('btnCaliFetch').addEventListener('click', (event) => {
+    switch (document.getElementById('pos_level').value) {
+        case 'a1':
+            dmProxy_Cali.tempa1 = dmProxy_Cali.tempcali;
+            break;
+        case 'a2':
+            dmProxy_Cali.tempa2 = dmProxy_Cali.tempcali;
+            break;
+        case 'a3':
+            dmProxy_Cali.tempa3 = dmProxy_Cali.tempcali;
+            break;
+        case 'b1':
+            dmProxy_Cali.tempb1 = dmProxy_Cali.tempcali;
+            break;
+        case 'b2':
+            dmProxy_Cali.tempb2 = dmProxy_Cali.tempcali;
+            break;
+        case 'b3':
+            dmProxy_Cali.tempb3 = dmProxy_Cali.tempcali;
+            break;
+        case 'c1':
+            dmProxy_Cali.tempc1 = dmProxy_Cali.tempcali;
+            break;
+        case 'c2':
+            dmProxy_Cali.tempc2 = dmProxy_Cali.tempcali;
+            break;
+        case 'c3':
+            dmProxy_Cali.tempc3 = dmProxy_Cali.tempcali;
+            break;
+    }
+});
+// 注册三个平面点位点位校准【计算】按钮点击事件
+document.getElementById('btnCaculateCaliResult').addEventListener('click', (event) => {
+
+});
+
+// 注册炉芯中轴点位校准【记录】按钮点击事件
+document.getElementById('btnCaliFetchCenter').addEventListener('click', (event) => {
+    // 根据点位当前选项设置对应数据模型的值并增加校准曲线对应点位值
+    switch (document.getElementById('pos_axis').value) {
+        case '5':
+            dmProxy_Cali.temp5 = dmProxy_Cali.tempcali;
+            // 增加图表对应点位
+            config_caliview_chart.data.datasets[1].data.push({ y: 5, x: dmProxy_Cali.temp5 });
+            chart_CentorPos.update();
+            break;
+        case '15':
+            dmProxy_Cali.temp15 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 15, x: dmProxy_Cali.temp15 });
+            chart_CentorPos.update();
+            break;
+        case '25':
+            dmProxy_Cali.temp25 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 25, x: dmProxy_Cali.temp25 });
+            chart_CentorPos.update();
+            break;
+        case '35':
+            dmProxy_Cali.temp35 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 35, x: dmProxy_Cali.temp35 });
+            chart_CentorPos.update();
+            break;
+        case '45':
+            dmProxy_Cali.temp45 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 45, x: dmProxy_Cali.temp45 });
+            chart_CentorPos.update();
+            break;
+        case '55':
+            dmProxy_Cali.temp55 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 55, x: dmProxy_Cali.temp55 });
+            chart_CentorPos.update();
+            break;
+        case '65':
+            dmProxy_Cali.temp65 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 65, x: dmProxy_Cali.temp65 });
+            chart_CentorPos.update();
+            break;
+        case '75':
+            dmProxy_Cali.temp75 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 75, x: dmProxy_Cali.temp75 });
+            chart_CentorPos.update();
+            break;
+        case '85':
+            dmProxy_Cali.temp85 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 85, x: dmProxy_Cali.temp85 });
+            chart_CentorPos.update();
+            break;
+        case '95':
+            dmProxy_Cali.temp95 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 95, x: dmProxy_Cali.temp95 });
+            chart_CentorPos.update();
+            break;
+        case '105':
+            dmProxy_Cali.temp105 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 105, x: dmProxy_Cali.temp105 });
+            chart_CentorPos.update();
+            break;
+        case '115':
+            dmProxy_Cali.temp115 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 115, x: dmProxy_Cali.temp115 });
+            chart_CentorPos.update();
+            break;
+        case '125':
+            dmProxy_Cali.temp125 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 125, x: dmProxy_Cali.temp125 });
+            chart_CentorPos.update();
+            break;
+        case '135':
+            dmProxy_Cali.temp135 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 135, x: dmProxy_Cali.temp135 });
+            chart_CentorPos.update();
+            break;
+        case '145':
+            dmProxy_Cali.temp145 = dmProxy_Cali.tempcali;
+            config_caliview_chart.data.datasets[1].data.push({ y: 145, x: dmProxy_Cali.temp145 });
+            chart_CentorPos.update();
+            break;
+    }
+});
+
+// 注册【计算】按钮点击事件
+document.getElementById('btnCaculateCaliResult').addEventListener('click', (event) => {
+    // 计算t_avg
+    dmProxy_Cali.t_avg = getRound((dmProxy_Cali.tempa1 + dmProxy_Cali.tempa2 + dmProxy_Cali.tempa3 + dmProxy_Cali.tempb1 + dmProxy_Cali.tempb2 + dmProxy_Cali.tempb3 + dmProxy_Cali.tempc1 + dmProxy_Cali.tempc2 + dmProxy_Cali.tempc3) / 9, 1);
+    // t_avg_axis1
+    dmProxy_Cali.t_avg_axis1 = getRound((dmProxy_Cali.tempa1 + dmProxy_Cali.tempb1 + dmProxy_Cali.tempc1) / 3, 1);
+    // t_avg_axis2
+    dmProxy_Cali.t_avg_axis2 = getRound((dmProxy_Cali.tempa2 + dmProxy_Cali.tempb2 + dmProxy_Cali.tempc2) / 3, 1);
+    // t_avg_axis3
+    dmProxy_Cali.t_avg_axis3 = getRound((dmProxy_Cali.tempa3 + dmProxy_Cali.tempb3 + dmProxy_Cali.tempc3) / 3, 1);
+    // t_dev_axis1
+    dmProxy_Cali.t_dev_axis1 = getRound(100 * (Math.abs(dmProxy_Cali.t_avg - dmProxy_Cali.t_avg_axis1) / dmProxy_Cali.t_avg), 2);
+    // t_dev_axis2
+    dmProxy_Cali.t_dev_axis2 = getRound(100 * (Math.abs(dmProxy_Cali.t_avg - dmProxy_Cali.t_avg_axis2) / dmProxy_Cali.t_avg), 2);
+    // t_dev_axis3
+    dmProxy_Cali.t_dev_axis3 = getRound(100 * (Math.abs(dmProxy_Cali.t_avg - dmProxy_Cali.t_avg_axis3) / dmProxy_Cali.t_avg), 2);
+    // t_avg_dev_axis
+    dmProxy_Cali.t_avg_dev_axis = getRound((dmProxy_Cali.t_dev_axis1 + dmProxy_Cali.t_dev_axis2 + dmProxy_Cali.t_dev_axis3) / 3, 1);
+    // t_avg_levela
+    dmProxy_Cali.t_avg_levela = getRound((dmProxy_Cali.tempa1 + dmProxy_Cali.tempa2 + dmProxy_Cali.tempa3) / 3, 1);
+    // t_avg_levelb
+    dmProxy_Cali.t_avg_levelb = getRound((dmProxy_Cali.tempb1 + dmProxy_Cali.tempb2 + dmProxy_Cali.tempb3) / 3, 1);
+    // t_avg_levelc
+    dmProxy_Cali.t_avg_levelc = getRound((dmProxy_Cali.tempc1 + dmProxy_Cali.tempc2 + dmProxy_Cali.tempc3) / 3, 1);
+    // t_dev_levela
+    dmProxy_Cali.t_dev_levela = getRound(100 * (Math.abs(dmProxy_Cali.t_avg - dmProxy_Cali.t_avg_levela) / dmProxy_Cali.t_avg), 2);
+    // t_dev_levelb
+    dmProxy_Cali.t_dev_levelb = getRound(100 * (Math.abs(dmProxy_Cali.t_avg - dmProxy_Cali.t_avg_levelb) / dmProxy_Cali.t_avg), 2);
+    // t_dev_levelc
+    dmProxy_Cali.t_dev_levelc = getRound(100 * (Math.abs(dmProxy_Cali.t_avg - dmProxy_Cali.t_avg_levelc) / dmProxy_Cali.t_avg), 2);
+    // t_avg_dev_level
+    dmProxy_Cali.t_avg_dev_level = getRound((dmProxy_Cali.t_dev_levela + dmProxy_Cali.t_dev_levelb + dmProxy_Cali.t_dev_levelc) / 3, 2);
+});
+
+// 注册【重置】按钮点击事件
+document.getElementById('btnCaliFetchCenter_Reset').addEventListener('click', (event) => {
+    // 重置中心点位数据模型的值
+    dmProxy_Cali.temp5 = '';
+    dmProxy_Cali.temp15 = '';
+    dmProxy_Cali.temp25 = '';
+    dmProxy_Cali.temp35 = '';
+    dmProxy_Cali.temp45 = '';
+    dmProxy_Cali.temp55 = '';
+    dmProxy_Cali.temp65 = '';
+    dmProxy_Cali.temp75 = '';
+    dmProxy_Cali.temp85 = '';
+    dmProxy_Cali.temp95 = '';
+    dmProxy_Cali.temp105 = '';
+    dmProxy_Cali.temp115 = '';
+    dmProxy_Cali.temp125 = '';
+    dmProxy_Cali.temp135 = '';
+    dmProxy_Cali.temp145 = '';
+    // 清空校准曲线记录值记录
+    config_caliview_chart.data.datasets[1].data = [];
+    chart_CentorPos.update();
+});
 
 //#endregion
 
@@ -559,16 +998,119 @@ let objTable = document.getElementById("tblDetail");
 let btnSearch = document.getElementById("btnRptViewSearch");
 // 初始化生成报表按钮对象
 let btnGenerateRpt = document.getElementById("btnGenerateRpt");
+// 初始化报表显示对象
+let objPdfViewer = document.getElementById("pdfviewer");
+/*
+ * 功能: 检查一条试验明细数据的残余质量值
+ * 参数:
+ *       preweight:float - 烧前质量
+ *       value:string    - 残余质量
+ * 返回:
+ *       true  - 输入字符合法且值符合指定条件
+ *       false - 输入字符不合法或值不符合指定条件
+ */
+function checkPostWeightValue(preweight, value) {
+    if (!reg_float.test(value)) { //输入字符不合法            
+        return false;
+    } else { //输入字符合法,但值不满足条件(残余质量 应大于0 且 不大于烧前质量)
+        let fValue = parseFloat(value);
+        if (Math.floor(fValue * 1000) <= 0 || parseInt(fValue * 1000) > parseInt(preweight * 1000)) {
+            return false;
+        } else {  //输入字符合法且值满足条件
+            return true;
+        }
+    }
+}
+
 // 注册检索按钮事件
 btnSearch.addEventListener('click', (event) => {
     // 检索指定编号的试验记录明细
-    // loadTestDetailFromSmpId(document.getElementById("txtProdId").value);
+    loadTestDetailFromSmpId(document.getElementById("txtProdId").value);
     // 若存在试验明细记录,则显示明细列表
     document.querySelector('.rptview-r2').style.display = 'grid';
 });
-// 注册生成报表按钮点击事件
+// 注册明细行点击事件,以实现点击某一行而改变checkbox选中状态
+document.getElementById("tblDetail").addEventListener("click", ({ target }) => {
+    // 过滤掉点击文本框的情况
+    if (target.nodeName === "INPUT") return;
+    // 取得点击行的tr元素对象
+    const tr = target.closest("tr");
+    if (tr) {
+        // 取得本行的checkbox对象
+        const checkbox = tr.querySelector("input[type='checkbox']");
+        if (checkbox) {
+            // 修改checkbox的选中状态
+            checkbox.checked = !checkbox.checked;
+        }
+    }
+});
+//添加试验明细"全选"事件监听
+const chkSelectAll = document.getElementById("chkSelectAll");
+chkSelectAll.addEventListener('change', (event) => {
+    let items = document.getElementById("tblDetail").querySelectorAll("input[type='checkbox']");
+    if (chkSelectAll.checked) {
+        items.forEach(item => {
+            item.checked = true;
+        });
+    } else {
+        items.forEach(item => {
+            item.checked = false;
+        });
+    }
+});
+// 添加生成汇总报告按钮点击事件
 btnGenerateRpt.addEventListener('click', (event) => {
-    document.querySelector('.rptview-r3').style.display = 'grid';
+    //验证所有明细行的残余质量录入情况(输入值应大于0 且 满足浮点数格式)
+    let weights = document.getElementById("tblDetail").querySelectorAll("input[type='text']");
+    let bExist = false; //用于记录是否存在不满足要求的录入项(true:存在|false:不存在),初始默认为不存在
+    for (let i = 0; i < weights.length; i++) {
+        //从当前输入框对象Id获取对应数据项在当前明细数据缓存中的索引值(参见第256行)
+        let idx = parseInt(weights[i].id.substring(13));
+        if (!checkPostWeightValue(CurrentDetails[idx].preweight, weights[i].value)) {
+            weights[i].style = "border:1px solid red;";
+            bExist = true;
+        } else {
+            weights[i].style = "";
+        }
+    }
+    //如果存在一项输入不满足要求则退出本次处理
+    if (bExist) {
+        return;
+    }
+    //验证是否刚好选择了5项试验明细
+    let items = document.getElementById("tblDetail").querySelectorAll("input[type='checkbox']:checked");
+    if (items.length !== 5) {
+        $.messager.alert('信息提示', '请选择五项试验记录。', 'info');
+        return;
+    }
+    //构造数据结构用于上传
+    let updata = {
+        indexes: [],
+        details: []
+    }
+    items.forEach(item => updata.indexes.push(item.value));
+    updata.details = CurrentDetails;
+    //构造HTTP请求表头
+    let option = {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(updata)
+    }
+    //设置按钮显示效果
+    btnGenerateRpt.classList.add("disabledbutton");
+    fetch("api/testmaster/getfinalreport", option)
+        .then(response => response.json())
+        .then(data => {
+            //在客户端打开报表文件
+            btnGenerateRpt.classList.remove("disabledbutton");
+            objPdfViewer.src = data.param.downloadpath;
+            objPdfViewer.classList.remove("pdfviewer-nonborder");
+            objPdfViewer.classList.add("pdfviewer-border");
+            // 设置报表浏览区域可见
+            document.querySelector('.rptview-r3').style.display = 'grid';
+        });
 });
 
 /* 功能: 增加一行试验明细 
@@ -627,10 +1169,20 @@ function appendNewDetail(data, index) {
     Cell12.textContent = data.finaltf2;
 }
 
+/* 清空当前明细(保留首行) */
+function clearDetails() {
+    var i;
+    var totallen = objTable.rows.length;
+    for (i = totallen - 1; i >= 0; i--) {
+        objTable.deleteRow(i);
+    }
+    CurrentDetails = [];
+}
+
 /* 加载试验明细 */
 function loadTestDetails(data) {
     //清空先前的试验明细
-    this.clearDetails();
+    clearDetails();
     //清空先前的报告显示
     let objPdfViewer = document.getElementById("pdfviewer");
     objPdfViewer.src = "";
@@ -641,8 +1193,10 @@ function loadTestDetails(data) {
         document.getElementById("txtProductName").value = "";
         return;
     }
-    //更新样品名称显示
+    //更新样品名称,试验日期,试验人员显示
     document.getElementById("txtProductName").value = data[0].productname;
+    document.getElementById("txtTestDate").value = data[0].testdate;
+    document.getElementById("txtOperator").value = data[0].operator;
     //添加新明细数据并更新缓存
     data.forEach((detail, index) => {
         //添加一行试验明细数据
@@ -662,7 +1216,7 @@ function loadTestDetails(data) {
             }
             //计算并更新对应行的失重率显示(四舍五入至小数点后1位)
             let lostper = ((CurrentDetails[idx].preweight - CurrentDetails[idx].postweight) / CurrentDetails[idx].preweight * 100).toFixed(1);
-            let cell = objTable.rows[idx].cells[10];
+            let cell = objTable.rows[idx].cells[4];
             if (parseInt(lostper * 10) <= 500) { //达标
                 cell.classList.remove("non-fullfilled");
                 cell.classList.add("fullfilled");
@@ -705,15 +1259,20 @@ function appInitialize() {
     window.fetch("api/TestMaster/getapparatusinfo")
         .then(response => response.json())
         .then(data => {
-            console.log(data);
             // 初始化数据模型
-            dmProxy_Master0.apparatusid = data[0].innernumber;
-            dmProxy_Master0.apparatusname = data[0].apparatusname;
-            dmProxy_Master0.checkdate = data[0].checkdatet.substring(0, 10);
-            dmProxy_Master0.constpower = data[0].constpower;
-            dmProxy_Master0.testaccord = "ISO 1182-2020";
-            dmProxy_Master0.operator = "刘小马";
-            dmProxy_Master0.testdate = "2023年6月12日";
+            var curDate = new Date();
+            for (var idx = 0; idx < 4; idx++) {
+                dmProxy_Master[idx].ambtemp = 25;
+                dmProxy_Master[idx].ambhumi = 55;
+                dmProxy_Master[idx].apparatusid = data[idx].innernumber;
+                dmProxy_Master[idx].apparatusname = data[idx].apparatusname;
+                dmProxy_Master[idx].checkdatef = data[idx].checkdatef.substring(0, 10);
+                dmProxy_Master[idx].checkdatet = data[idx].checkdatet.substring(0, 10);
+                dmProxy_Master[idx].constpower = data[idx].constpower;
+                dmProxy_Master[idx].testaccord = "ISO 1182-2020";
+                dmProxy_Master[idx].operator = "刘小马";
+                dmProxy_Master[idx].testdate = curDate.getFullYear() + "年" + (curDate.getMonth() + 1) + "月" + curDate.getDate() + "日";
+            }
         });
 }
 
@@ -729,53 +1288,138 @@ var connection = new signalR.HubConnectionBuilder()
 connection.on("MasterBroadCast", function (jsonObject) {
     // 解析服务器消息
     const data = JSON.parse(jsonObject);
-    // 处理消息: 根据试验控制器编号更新对应的数据模型
-    switch (model.MasterId) {
-        case 0:
-            dmProxy_Master0.ambtemp = 25;
-            dmProxy_Master0.ambhumi = 55;
-            dmProxy_Master0.timer = model.timer;
-            dmProxy_Master0.tr1 = model.sensorDataCatch.Temp1;
-            dmProxy_Master0.tr2 = model.sensorDataCatch.Temp2;
-            dmProxy_Master0.ts = model.sensorDataCatch.TempSuf;
-            dmProxy_Master0.tc = model.sensorDataCatch.TempCen;
-            dmProxy_Master0.driftmean = model.caculateDataCatch.TempDriftMean;
-            // 添加曲线数据
-            // ...
-            // 新增传感器历史数据
-            // ...
-            // 如果有新的系统消息,则添加
-            // ...
-            break;
-        case 1:
-
-            break;
-        case 2:
-
-            break;
-        case 3:
-
-            break;
+    if (data.MasterId === 0) {
+        /* 更新对应编号的控制器面板数据模型及显示 */
+        // 更新试验控制器数据模型
+        dmProxy_Master[data.MasterId].ambtemp = 25;
+        dmProxy_Master[data.MasterId].ambhumi = 55;
+        dmProxy_Master[data.MasterId].timer = data.Timer;
+        dmProxy_Master[data.MasterId].tf1 = data.sensorDataCatch.Temp1;
+        dmProxy_Master[data.MasterId].tf2 = data.sensorDataCatch.Temp2;
+        dmProxy_Master[data.MasterId].ts = data.sensorDataCatch.TempSuf;
+        dmProxy_Master[data.MasterId].tc = data.sensorDataCatch.TempCen;
+        dmProxy_Master[data.MasterId].driftmean = data.caculateDataCatch.TempDriftMean;
+        // 若试验控制器状态为[Recording]新增传感器历史数据及曲线数据
+        if (data.MasterStatus === 3) {
+            appendSensorData(data.MasterId, data);
+        }
+        // 如果有新的系统消息,则添加
+        data.MasterMessages.forEach((item) => {
+            appendSysMsgFromSigR(data.MasterId, item);
+            // 如果包含持续火焰事件,则设置试验记录数据
+            if (item.FlameDuration > 0) {
+                // 设置试验记录界面checkbox及input文本框状态
+                document.getElementById('chkFlame0').checked = true;
+                document.getElementById('txtFlameTime0').disabled = !document.getElementById('chkFlame0').checked;
+                document.getElementById('txtDurationTime0').disabled = !document.getElementById('chkFlame0').checked;
+                // 设置试验现象编码
+                dmProxy_Master0.pheno = setCharAt(dmProxy_Master0.pheno, 0, '1');
+                // 设置数据模型对应值
+                dmProxy_Master0.flametime = item.FlameTime;
+                dmProxy_Master0.flameduration = item.FlameDuration;
+            }
+        });
+        // 根据试验控制器状态更新面板工具栏命令按钮显示
+        switch (data.MasterStatus) {
+            case 0: // Idle
+                // 激活【新建试验】按钮
+                document.getElementById(`btnNewTest${data.MasterId}`).classList.remove("disabledbutton");
+                // 激活【开始加热】按钮
+                document.getElementById(`btnPowerOn${data.MasterId}`).classList.remove("disabledbutton");
+                // 屏蔽【停止加热】按钮
+                document.getElementById(`btnPowerOff${data.MasterId}`).classList.add("disabledbutton");
+                // 屏蔽【开始记录】按钮
+                document.getElementById(`btnStartRecord${data.MasterId}`).classList.add("disabledbutton");
+                // 屏蔽【停止记录】按钮
+                document.getElementById(`btnStopRecord${data.MasterId}`).classList.add("disabledbutton");
+                // 屏蔽【试验记录】按钮
+                document.getElementById(`btnSetPheno${data.MasterId}`).classList.add("disabledbutton");
+                break;
+            case 1: // Preparing            
+                // 屏蔽【开始记录】按钮
+                document.getElementById(`btnStartRecord${data.MasterId}`).classList.add("disabledbutton");
+                // 屏蔽【停止记录】按钮
+                document.getElementById(`btnStopRecord${data.MasterId}`).classList.add("disabledbutton");
+                // 屏蔽【试验记录】按钮
+                document.getElementById(`btnSetPheno${data.MasterId}`).classList.add("disabledbutton");
+                // 屏蔽【开始加热】按钮
+                document.getElementById(`btnPowerOn${data.MasterId}`).classList.add("disabledbutton");
+                // 激活【停止加热】按钮
+                document.getElementById(`btnPowerOff${data.MasterId}`).classList.remove("disabledbutton");
+                // 设置试验条件指示
+                document.getElementById(`imgIndicator${data.MasterId}`).src = "./libs/jquery-easyui-1.10.16/themes/images/16/heat.png";
+                break;
+            case 2: // Ready
+                // 激活【开始记录】按钮
+                document.getElementById(`btnStartRecord${data.MasterId}`).classList.remove("disabledbutton");
+                // 屏蔽【停止记录】按钮
+                document.getElementById(`btnStopRecord${data.MasterId}`).classList.add("disabledbutton");
+                // 屏蔽【试验记录】按钮
+                document.getElementById(`btnSetPheno${data.MasterId}`).classList.add("disabledbutton");
+                // 设置试验条件指示
+                document.getElementById(`imgIndicator${data.MasterId}`).src = "./libs/jquery-easyui-1.10.16/themes/images/16/greencircle.png";
+                break;
+            case 3: // Recording
+                // 屏蔽【新建试验】按钮
+                document.getElementById(`btnNewTest${data.MasterId}`).classList.add("disabledbutton");
+                // 屏蔽【开始记录】按钮
+                document.getElementById(`btnStartRecord${data.MasterId}`).classList.add("disabledbutton");
+                // 激活【停止记录】按钮
+                document.getElementById(`btnStopRecord${data.MasterId}`).classList.remove("disabledbutton");
+                // 激活【试验记录】按钮
+                document.getElementById(`btnSetPheno${data.MasterId}`).classList.remove("disabledbutton");
+                break;
+            case 4: // Complete                
+                // 激活【新建试验】按钮
+                document.getElementById(`btnNewTest${data.MasterId}`).classList.remove("disabledbutton");
+                // 屏蔽【开始记录】按钮
+                document.getElementById(`btnStartRecord${data.MasterId}`).classList.add("disabledbutton");
+                // 屏蔽【停止记录】按钮
+                document.getElementById(`btnStopRecord${data.MasterId}`).classList.add("disabledbutton");
+                // 屏蔽【试验记录】按钮
+                document.getElementById(`btnSetPheno${data.MasterId}`).classList.add("disabledbutton");
+                // 重置本次试验界面显示
+                resetMasterPanel(data.MasterId);
+                // 弹出试验记录对话框
+                $(`#dlgSetPheno${data.MasterId}`).dialog('open');
+                break;
+        }
     }
 });
-// 注册onClose事件处理函数
+// 注册onClose事件处理函数,连接意外中断时自动重新建立连接
 connection.onclose(async () => {
-    await start();
+    await startTestSignalR();
 });
-// SignalR连接函数
-async function start() {
+sigRCon_Cali.onclose(async () => {
+    await startCaliSignalR();
+});
+// 试验控制器SignalR连接函数
+async function startTestSignalR() {
     try {
         await connection.start();
     } catch (err) {
         // 提示错误信息
         $.messager.alert('错误提示', err.message, 'error');
         // 5秒后重新尝试连接
-        setTimeout(start, 5000);
+        setTimeout(startTestSignalR, 5000);
     }
 };
-// 启动连接
-// start();
-
+// 校准SignalR连接函数
+async function startCaliSignalR() {
+    try {
+        await sigRCon_Cali.start();
+    } catch (err) {
+        // 提示错误信息
+        $.messager.alert('错误提示', err.message, 'error');
+        // 5秒后重新尝试连接
+        setTimeout(startCaliSignalR, 5000);
+    }
+};
 //#endregion
 
+// 执行应用程序初始化
 appInitialize();
+// 启动试验控制器SignalR连接
+startTestSignalR();
+// 启动校准SignalR连接
+startCaliSignalR();

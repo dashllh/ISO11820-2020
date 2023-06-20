@@ -124,7 +124,8 @@ namespace TestServer.Models
         [Column("memo")]
         [Unicode(false)]
         public string Memo { get; set; }
-
+        [Column("flag")]
+        public string Flag { get; set; }
         [ForeignKey("Productid")]
         [InverseProperty("Testmasters")]
         public virtual Productmaster Product { get; set; }

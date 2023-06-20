@@ -142,6 +142,10 @@
 	background:url('images/16/set.png') no-repeat center center;
 }
 
+.icon-blank {
+	background:url('images/16/blank.png') no-repeat center center;
+}
+
 .icon-paste-large{
 	background:url('images/32/paste.png') no-repeat center center;
 }

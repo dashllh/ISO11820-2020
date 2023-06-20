@@ -97,10 +97,11 @@ namespace TestServer.Core
             /* 停止PID温控器输出 */
             //修改PID控制器为手动输出
             if (_pidClient.IsConnected)
+            {
                 _pidClient.WriteSingleRegister(_unitIdentifier, 0x0038, 3);
-            //设置手动控制时输出比例为0(默认已经为0)
-            //PidPort.WriteSingleRegister(0x0002, 0);
-
+                //设置手动控制时输出比例为0(默认已经为0)
+                _pidClient.WriteSingleRegister(_unitIdentifier, 0x0002, 0);
+            }                
             //停止电力调整器输出
             if (_powerClient.IsConnected)
                 _powerClient.WriteSingleRegister(_unitIdentifier, 0x0002, 0);
@@ -121,6 +122,15 @@ namespace TestServer.Core
         }
 
         /*
+         * 功能: 将PID控制器切换至手动控制模式
+         */
+        public void SwitchToManual()
+        {
+            if (_pidClient.IsConnected)
+                _pidClient.WriteSingleRegister(_unitIdentifier, 0x0038, 3);
+        }
+
+        /*
          * 功能: 将当前加热方式切换至恒功率方式
          */
         public void SwitchToConstPower()
@@ -134,6 +144,32 @@ namespace TestServer.Core
             //设置电力调整器输出为设定的恒功率值
             if (_powerClient.IsConnected)
                 _pidClient.WriteSingleRegister(_unitIdentifier, 0x0002, ConstPower);
+        }
+
+        /*
+         * 功能: 设置手动控制时输出比例(0-25600 对应 0%-100%)
+         * 参数:
+         *       value - 要设定为的输出比例
+         */
+        public void SetOutputPower(ushort value)
+        {
+            _pidClient.WriteSingleRegister(_unitIdentifier, 0x0002, value);
+        }
+
+        /*
+         * 功能: 获取当前控制输出比例
+         */
+        public ushort GetCurrentOutput()
+        {
+           return _pidClient.ReadHoldingRegisters<ushort>(_unitIdentifier, 0x0101, 1)[0];
+        }
+
+        /*
+         * 功能: 获取控温热电偶当前温度值
+         */
+        public ushort GetCurrentTemp()
+        {
+            return _pidClient.ReadHoldingRegisters<ushort>(_unitIdentifier, 0x0102, 1)[0];
         }
     }
 }

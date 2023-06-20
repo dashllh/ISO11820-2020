@@ -183,8 +183,30 @@ namespace TestServer.Controllers
             msg.Cmd = "startheating";
             //设置客户端返回消息
             msg.Ret = "0";
-            msg.Msg = "启动加热成功。";
+            msg.Msg = "试验装置开始加热。";
             msg.Param.Add("masterid", _masterId);
+            msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
+
+            return new JsonResult(msg);
+        }
+
+        /*
+         * 功能: 停止不燃炉加热
+         * 参数:
+         *      id - 试验控制器ID
+         */
+        [HttpGet("stopheating/{id}")]
+        public IActionResult StopHeating(int id)
+        {
+            //执行停止不燃炉加热的相关操作
+            _testMasters.DictTestMaster?[id].StopHeating();
+
+            Message msg = new Message();
+            msg.Param = new Dictionary<string, object>();
+            msg.Cmd = "stopheating";
+            msg.Ret = "0";
+            msg.Msg = "试验装置已停止加热。";
+            msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
 
             return new JsonResult(msg);
         }
@@ -238,19 +260,21 @@ namespace TestServer.Controllers
                 testmaster.Preweight = data.SmpWeight;
                 testmaster.Phenocode = "0000";
                 testmaster.Memo = data.TestMemo;
-
+                testmaster.Flag = "00000000"; // (第1位:本次试验是否完成, 第2位:本次试验是否出结论 ...)
                 _testMasters.DictTestMaster[_masterId].SetTestData(testmaster);                
 
                 //设置客户端返回消息
                 msg.Ret = "0";
-                msg.Msg = "创建新试验成功。";
+                msg.Msg = $"创建新试验成功。样品编号: [ {testmaster.Productid} ], 样品标识: [ {testmaster.Testid} ]";
+                msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
                 msg.Param.Add("masterid", _masterId);
                 msg.Param.Add("smpid", testmaster.Productid);
                 msg.Param.Add("testid", testmaster.Testid);
             } else {
                 //样品编号及试验编号重复,返回错误提示                
                 msg.Ret = "-1";
-                msg.Msg = "样品标识号(试验编号)重复,请检查输入。";
+                msg.Msg = $"样品标识号 [ {data.TestId} ] 重复,请检查输入。";
+                msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
                 msg.Param.Add("masterid", _masterId);
             }
 
@@ -258,7 +282,7 @@ namespace TestServer.Controllers
         }
 
         /*
-         * 功能:开始计时
+         * 功能:开始记录试验数据
          * 参数:
          *      id:int - 试验控制器ID
          */
@@ -266,14 +290,23 @@ namespace TestServer.Controllers
         public IActionResult StartTimer(int id)
         {
             int _masterId = id;
-            _testMasters.DictTestMaster?[id].StartRecording();
             Message msg = new Message();
             msg.Param = new Dictionary<string, object>();
             msg.Cmd = "starttimer";
-            msg.Ret = "0";
-            msg.Msg = "计时开始。";
             msg.Param.Add("masterid", _masterId);
-            msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
+            msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
+            // 判断是否新建样品试验,如果没有,则返回错误提示
+            if (_testMasters.DictTestMaster?[id].GetTestData() is null)
+            {                
+                msg.Ret = "-1";
+                msg.Msg = "试验控制器尚未接收试验样品信息,请先新建本次试验。";
+            } else {
+                _testMasters.DictTestMaster?[id].StartRecording();
+                var prodid = _testMasters.DictTestMaster?[id].GetTestData().Productid;
+                var testid = _testMasters.DictTestMaster?[id].GetTestData().Testid;
+                msg.Ret = "0";                
+                msg.Msg = $"开始记录试验数据。样品编号: [ {prodid} ], 样品标识: [ {testid} ]";                
+            }            
 
             return new JsonResult(msg);
         }
@@ -291,7 +324,7 @@ namespace TestServer.Controllers
             msg.Cmd = "stoptimer";
             msg.Ret = "0";
             msg.Msg = "计时结束。";
-            msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
+            msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
 
             return new JsonResult(msg);
         }
@@ -310,31 +343,10 @@ namespace TestServer.Controllers
             msg.Cmd = "canceltest";
             msg.Ret = "0";
             msg.Msg = "本次试验已取消。";
-            msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
+            msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
 
             return new JsonResult(msg);
-        }
-
-        /*
-         * 功能: 停止不燃炉加热
-         * 参数:
-         *      id - 试验控制器ID
-         */
-        [HttpGet("stopheating/{id}")]
-        public IActionResult StopHeating(int id)
-        {
-            //执行停止不燃炉加热的相关操作
-            _testMasters.DictTestMaster?[id].StopHeating();
-
-            Message msg = new Message();
-            msg.Param = new Dictionary<string, object>();
-            msg.Cmd = "stopheating";
-            msg.Ret = "0";
-            msg.Msg = "不燃炉已停止加热。";
-            msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
-
-            return new JsonResult(msg);
-        }
+        }        
 
         /*
          * 功能: 设置试验设备恒功率输出参数
@@ -373,14 +385,14 @@ namespace TestServer.Controllers
             msg.Param = new Dictionary<string, object>();
             msg.Cmd = "setconstpower";
             msg.Ret = "0";
-            msg.Msg = $"成功设置{id}号设备恒功率输出值。";
-            msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
+            msg.Msg = "更新设备参数成功。";
+            msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
 
             return new JsonResult(msg);
         }
 
         /*
-         * 功能: 设置试验后样品残余质量
+         * 功能: 设置试验后样品残余质量并生成本次试验的数据及报告文件
          * 参数:
          *      id   - 试验控制器索引
          *      mass - 当前试验样品的残余质量
@@ -389,21 +401,23 @@ namespace TestServer.Controllers
         public async Task<IActionResult> SetPostData(int id,[FromBody] PostTestData postdata)
         {
             //设置当前试验样品的残余质量及火焰信息
-            if(postdata.Flame) {
-                _testMasters.DictTestMaster[id].SetPostTestData(postdata.FlameTime,
+            if(postdata.Pheno.StartsWith('1')) {
+                _testMasters.DictTestMaster[id].SetPostTestData(postdata.Pheno,postdata.FlameTime,
                 postdata.FlameDur, postdata.PostWeight);
             } else {
-                _testMasters.DictTestMaster[id].SetPostTestData(0,0, postdata.PostWeight);
+                _testMasters.DictTestMaster[id].SetPostTestData(postdata.Pheno,0, 0, postdata.PostWeight);
             }            
             //执行试验后期处理并生成本次试验的数据及报告文件
             await _testMasters.DictTestMaster[id].PostTestProcess();
+            // 清空本次试验数据缓存
+            _testMasters.DictTestMaster[id].ResetTestData();
             //构造返回消息
             Message msg = new Message();
             msg.Param = new Dictionary<string, object>();
             msg.Cmd = "setpostmass";
             msg.Ret = "0";
             msg.Msg = "已设置试样残余质量并生成试验报告。";
-            msg.Param.Add("time", DateTime.Now.ToString("HH:mm"));
+            msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
 
             return new JsonResult(msg);
         }
@@ -625,7 +639,8 @@ namespace TestServer.Controllers
     //试验结束后需要客户端提交的关键数据
     public class PostTestData
     {
-        public bool Flame { get; set; }
+        //public bool Flame { get; set; }
+        public string Pheno { get; set; }
         public int FlameTime { get; set; }
         public int FlameDur { get; set; }
         public double PostWeight { get; set; }

@@ -5,6 +5,7 @@ using TestServer.Models;
 using TestServer.Hubs;
 using TestServer.Core;
 using TestServer.Global;
+using ISO11820_2020.Hubs;
 
 //设置ContentRoot路径以便WindowsService正常启动
 WebApplicationOptions options = new()
@@ -69,5 +70,7 @@ app.UseRouting();
 app.MapControllers();
 
 app.MapHub<NotificationHub>("/Notify");
+
+app.MapHub<CalibrationHub>("/Calibration");
 
 app.Run();

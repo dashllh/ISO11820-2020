@@ -6,6 +6,7 @@ using System.IO.Ports;
 using System.Text;
 using TestServer.Global;
 using TestServer.Core;
+using ISO11820_2020.Hubs;
 
 namespace TestServer.Services
 {
@@ -30,16 +31,21 @@ namespace TestServer.Services
         private SensorDictionary _sensors;
         //用于定时查询传感器实时值的计时器
         private Timer _timer;
+        //用于间隔1秒发送校准传感器温度实时值的计时器
+        private Timer _timerForCali;
+        /* IHubContext对象,用于发送实时数据广播 */
+        protected IHubContext<CalibrationHub> _calibrationHub;
         //串口对象
         SerialPort _serialPort;        
 
         //构造函数
         public DAQService(ILogger<DAQService> logger, IDbContextFactory<ISO11820DbContext> contextFactory,
-            SensorDictionary sensors)
+            SensorDictionary sensors, IHubContext<CalibrationHub> calibrationHub)
         {
             _logger = logger;
             _contextFactory = contextFactory;
             _sensors = sensors;
+            _calibrationHub = calibrationHub;
             //初始化串口对象
             _serialPort = new SerialPort("COM3", 9600, Parity.None, 8, StopBits.One);
             _serialPort.ReadTimeout = 200;  //设置读超时
@@ -49,6 +55,7 @@ namespace TestServer.Services
             _serialPort.Encoding = Encoding.UTF8; //使用UTF8编码
             //创建定时任务(未开启)
             _timer = new Timer(DoWork);
+            _timerForCali = new Timer(DoCalibration);
         }
         public Task StartAsync(CancellationToken cancellationToken)
         {            
@@ -58,12 +65,16 @@ namespace TestServer.Services
 
             //测试代码: 开启定时任务
             _timer.Change(0, 800);
+            _timerForCali.Change(0, 1000);
+
+            // 部署时,将以下注释打开
             //打开串口
             //_serialPort.Open();            
             //if(_serialPort.IsOpen)
             //{
             //    //开启定时任务
             //    _timer.Change(0, 800);
+            //    _timerForCali.Change(0, 1000);
             //    //记录服务开始日志
             //    _logger.LogInformation("DAQ service start working...");
             //}
@@ -81,6 +92,7 @@ namespace TestServer.Services
             _logger.LogInformation("DAQ service is stopping...");
             //停止定时任务
             _timer.Change(Timeout.Infinite, 0);
+            _timerForCali.Change(Timeout.Infinite, 0);
             //关闭串口
             _serialPort.Close();
             if (!_serialPort.IsOpen)
@@ -140,10 +152,19 @@ namespace TestServer.Services
             _sensors.Sensors[0].SetInputValue(value + 749);
             _sensors.Sensors[2].SetInputValue(value2 + 750);
         }
-        public void Dispose()
+
+        private void DoCalibration(object state)
+        {
+            Random rd = new Random();
+            double value = rd.Next() % 9;
+            _calibrationHub.Clients.All.SendAsync("CaliBroadCast", value+745);
+        }
+
+            public void Dispose()
         {
             //释放对象内存
             _timer.Dispose();
+            _timerForCali.Dispose();
             _serialPort.Close();
         }
     }

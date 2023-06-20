@@ -33,7 +33,8 @@ namespace TestServer.Models
         public double Diameter { get; set; }
         [Column("height")]
         public double Height { get; set; }
-
+        [Column("flag")]
+        public string Flag { get; set; }
         [InverseProperty("Product")]
         public virtual ICollection<Testmaster> Testmasters { get; set; }
     }
