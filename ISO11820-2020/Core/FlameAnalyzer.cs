@@ -209,9 +209,7 @@ namespace TestServer.Core
                     if (flameDuration >= 5)
                     {
                         // 停止后续检测
-                        _videoCapture.Stop();
-                        // 输出持续火焰视频文件
-                        OutputFlameFrames();
+                        _videoCapture.Stop();                        
                         // 发送事件消息                        
                         FlameEventArgs flameEvt = new()
                         {
@@ -220,6 +218,8 @@ namespace TestServer.Core
                         };
                         //调用事件委托
                         FireFlameDetected(flameEvt);
+                        // 输出持续火焰视频文件
+                        OutputFlameFrames();
                     }
                     // 清空火焰帧缓存
                     _flameFrames.Clear();

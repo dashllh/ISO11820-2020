@@ -34,7 +34,8 @@ namespace TestServer.Core
         {
             //设置本次试验火焰事件捕捉指示
             _bFlameDetected = true;
-            //设置本次试验火焰持续时间
+            //设置本次试验火焰起火时间及持续时间
+            _iFlameTime = eventArgs.Time;
             _iFlameDurTime = eventArgs.Duration;
         }
 

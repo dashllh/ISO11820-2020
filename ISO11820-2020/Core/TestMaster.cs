@@ -107,7 +107,8 @@ namespace TestServer.Core
         protected List<Emgu.CV.Mat> _FrameBuf;
         /* 指示本次试验过程是否已经检测到持续火焰事件(每次试验只捕捉一次持续火焰事件) */
         protected bool _bFlameDetected;
-        /* 当前试验过程检测到的火焰持续时间(秒) */
+        /* 当前试验过程检测到的火焰起火时间及持续时间(秒) */
+        protected DateTime _iFlameTime;
         protected int _iFlameDurTime;
 
         /* 本次试验的产品数据及试样数据缓存 */
