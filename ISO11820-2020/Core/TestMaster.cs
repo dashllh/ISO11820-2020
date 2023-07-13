@@ -14,6 +14,7 @@ using Emgu.CV.ML;
 using DevExpress.XtraPrinting;
 using OfficeOpenXml.FormulaParsing;
 using ISO11820_2020.Models;
+using DevExpress.Xpo.DB.Helpers;
 
 namespace TestServer.Core
 {
@@ -41,7 +42,7 @@ namespace TestServer.Core
     {
         /* 传感器数据项 */
         public int Timer { get; set; }      //试验计时器
-        public double Temp1 { get; set; }   //炉内温度1 
+        public double Temp1 { get; set; }   //炉内温度1(控温温度) 
         public double Temp2 { get; set; }   //炉内温度2
         public double TempSuf { get; set; } //表面温度
         public double TempCen { get; set; } //中心温度
@@ -131,6 +132,8 @@ namespace TestServer.Core
         protected int _iCntStable;    //10Min温度稳定读秒,当前秒满足范围则减1,否则重置为600
         protected int _iCntDeviation; //10Min温度偏离读秒,当前秒满足范围则减1,否则重置为600
         protected int _iCntDrift;     //10Min温度漂移读秒,当前秒满足范围则减1,否则重置为600
+        // PID温度控制器连续10分钟的输出值缓存(0-25600对应0-100%)
+        protected Queue<int> queuePidOutput;
 
         /* 构造函数 */
         public TestMaster(SensorDictionary sensors, IHubContext<NotificationHub> notificationHub,
@@ -142,6 +145,7 @@ namespace TestServer.Core
             _timer = new Timer(DoWork);
             _bufSensorData = new List<SensorDataCatch>();
             xData10Min = new Queue<double>();
+            queuePidOutput = new Queue<int>();
 
             _sensorDataCatch = new SensorDataCatch();
             _caculateDataCatch = new CaculateDataCatch();
@@ -172,6 +176,8 @@ namespace TestServer.Core
         /* 控制器初始化函数 */
         public void OnInitialized()
         {
+            //连接PID控温器
+            _apparatusManipulator.EstablishConnection();
             //启动试验控制器并设置状态为[Idle]           
             Status = MasterStatus.Idle;
             _timer?.Change(0, 1000);
@@ -209,9 +215,9 @@ namespace TestServer.Core
         /*
          * 功能: 更新恒功率值
          */
-        public void UpdateConstPower(Int16 value)
+        public void UpdateConstPower(ushort value)
         {
-            _apparatusManipulator.UpdateConstPower(value);
+            _apparatusManipulator.SetOutputPower(value);
         }
 
         /* 
@@ -264,8 +270,11 @@ namespace TestServer.Core
             /* 开始样品试验前的初始化工作 */
             //重置计时器
             Timer = 0;
+            // 2022-7-13 设置当前试验使用的恒功率值为: PID温度控制器连续10分钟的输出值的平均值
+            _apparatusManipulator.SetOutputPower(Convert.ToUInt16(queuePidOutput.Average()));
             //2022-11-20 向试验设备控制器发送指令,切换加热方式为恒功率输出
-            _apparatusManipulator.SwitchToConstPower();
+            //_apparatusManipulator.SwitchToConstPower();
+            _apparatusManipulator.SwitchToManual();
             //2022-11-21 启动火焰检测
             //_flameAnalyzer.StartAnalyzing();
             //修改试验控制器状态为[Recording]
@@ -277,7 +286,7 @@ namespace TestServer.Core
             //重置计时器
             Timer = 0;
             //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温
-            _apparatusManipulator.SwitchToPID();
+            //_apparatusManipulator.SwitchToPID();
             //修改试验控制器状态为[Preparing],根据具体试验任务确定
             Status = MasterStatus.Preparing;
         }

@@ -22,7 +22,7 @@ namespace TestServer.Core
             MasterId = 0;
             //初始化设备控制器
             _apparatusManipulator = new ApparatusManipulator(_global.DictApparatus[MasterId].Pidport,
-                _global.DictApparatus[MasterId].Powerport, Convert.ToInt16(_global.DictApparatus[MasterId].Constpower));
+                _global.DictApparatus[MasterId].Powerport, Convert.ToInt16(_global.DictApparatus[MasterId].Constpower));            
             //初始化视频分析器
             //_flameAnalyzer = new FlameAnalyzer(MasterId, "rtsp://...");
             //挂载火焰事件处理函数
@@ -44,7 +44,8 @@ namespace TestServer.Core
         {            
             //刷新传感器数据缓存            
             _sensorDataCatch.Timer = 0;
-            _sensorDataCatch.Temp1 = _sensors.Sensors[0].Outputvalue;
+            //_sensorDataCatch.Temp1 = _sensors.Sensors[0].Outputvalue;
+            //_sensorDataCatch.Temp1 = _apparatusManipulator.GetCurrentTemp() / 10.0;
             _sensorDataCatch.Temp2 = _sensors.Sensors[0].Outputvalue;
             _sensorDataCatch.TempSuf = _sensors.Sensors[0].Outputvalue;
             _sensorDataCatch.TempCen = _sensors.Sensors[0].Outputvalue;
@@ -115,7 +116,44 @@ namespace TestServer.Core
                 case MasterStatus.Idle:      //空闲状态
                     data.MasterStatus = (int)MasterStatus.Idle;
                     break;
-                case MasterStatus.Preparing: //PID升温状态
+                case MasterStatus.Preparing: //升温状态
+                    if (_sensorDataCatch.Temp1 < 1000)
+                    {
+                        _apparatusManipulator.SwitchToManual();
+                        _apparatusManipulator.SetOutputPower(5120); // 20%输出功率
+                    }
+                    else if (_sensorDataCatch.Temp1 < 3000)
+                    {
+                        _apparatusManipulator.SwitchToManual();
+                        _apparatusManipulator.SetOutputPower(6400); // 25%输出功率
+                    }
+                    else if (_sensorDataCatch.Temp1 < 5000)
+                    {
+                        _apparatusManipulator.SwitchToManual();
+                        _apparatusManipulator.SetOutputPower(10240); // 40%输出功率
+                    }
+                    else if (_sensorDataCatch.Temp1 < 7000)
+                    {
+                        _apparatusManipulator.SwitchToManual();
+                        _apparatusManipulator.SetOutputPower(12800); // 50%输出功率
+                    }
+                    else if (_sensorDataCatch.Temp1 < 7450)
+                    {
+                        _apparatusManipulator.SwitchToManual();
+                        _apparatusManipulator.SetOutputPower(15360); // 60%输出功率
+                    }
+                    else
+                    {
+                        _apparatusManipulator.SwitchToPID(); // 以目标控制温度执行PID控温
+                        // 记录PID温控器的实时输出
+                        queuePidOutput.Enqueue(_apparatusManipulator.GetCurrentOutput());
+                        if(queuePidOutput.Count == 601)
+                            queuePidOutput.Dequeue();
+                    }                    
+                    //判断是否达到试验初始条件并修改控制器状态
+                    if (CheckStartCriteria())
+                        Status = MasterStatus.Ready;
+                    break;
                 case MasterStatus.Ready:     //温度平衡状态
                     //设置控制器工作模式及状态
                     if (Status == MasterStatus.Preparing) {
@@ -129,6 +167,10 @@ namespace TestServer.Core
                         Status = MasterStatus.Ready;
                     else                     
                         Status = MasterStatus.Preparing;
+                    // 记录PID温控器的实时输出
+                    queuePidOutput.Enqueue(_apparatusManipulator.GetCurrentOutput());
+                    if (queuePidOutput.Count == 601)
+                        queuePidOutput.Dequeue();
                     break;
                 case MasterStatus.Recording: //试验中状态
                     data.MasterStatus = (int)MasterStatus.Recording;
@@ -207,7 +249,7 @@ namespace TestServer.Core
                     _iCntDrift = 0;
                     _iCntDeviation = 0;
                     //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温
-                    _apparatusManipulator.SwitchToPID();
+                    //_apparatusManipulator.SwitchToPID();
                     //2022-11-21 停止火焰检测
                     //_flameAnalyzer.StopAnalyzing();                    
                     break;
