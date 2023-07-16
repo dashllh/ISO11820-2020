@@ -15,9 +15,9 @@ namespace TestServer.Core
 
         /* =====================试验控制器工作状态变更接口方法========================= */
         /* 开始记录数据 */
-        public void StartRecording();
+        public bool StartRecording();
         /* 停止记录数据 */
-        public void StopRecording();
+        public bool StopRecording();
 
         /* =====================试验控制器状态判定接口方法========================= */
         /* 

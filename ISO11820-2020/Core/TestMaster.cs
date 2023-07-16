@@ -177,10 +177,12 @@ namespace TestServer.Core
         public void OnInitialized()
         {
             //连接PID控温器
-            _apparatusManipulator.EstablishConnection();
-            //启动试验控制器并设置状态为[Idle]           
-            Status = MasterStatus.Idle;
-            _timer?.Change(0, 1000);
+            if(_apparatusManipulator.EstablishConnection())
+            {
+                //启动试验控制器并设置状态为[Idle]           
+                Status = MasterStatus.Idle;
+                _timer?.Change(0, 1000);
+            }            
         }
 
         /* 定时任务函数,执行系统空闲时的任务[Idle] */
@@ -215,10 +217,10 @@ namespace TestServer.Core
         /*
          * 功能: 更新恒功率值
          */
-        public void UpdateConstPower(ushort value)
-        {
-            _apparatusManipulator.SetOutputPower(value);
-        }
+        //public void UpdateConstPower(ushort value)
+        //{
+        //    _apparatusManipulator.SetOutputPower(value);
+        //}
 
         /* 
          * 功能: 计算10min炉内温度漂移
@@ -264,31 +266,40 @@ namespace TestServer.Core
 
         /*
          * 功能: 开始试验并记录传感器数据,计算实时值并通过SignalR进行广播
+         *       1.设置当前试验使用的恒功率值为: PID温度控制器连续10分钟的输出值的平均值
+         *       2.向试验设备控制器发送指令,切换加热方式为手动控制方式
          */
-        public void StartRecording()
+        public bool StartRecording()
         {
-            /* 开始样品试验前的初始化工作 */
-            //重置计时器
-            Timer = 0;
-            // 2022-7-13 设置当前试验使用的恒功率值为: PID温度控制器连续10分钟的输出值的平均值
-            _apparatusManipulator.SetOutputPower(Convert.ToUInt16(queuePidOutput.Average()));
-            //2022-11-20 向试验设备控制器发送指令,切换加热方式为恒功率输出
-            //_apparatusManipulator.SwitchToConstPower();
-            _apparatusManipulator.SwitchToManual();
-            //2022-11-21 启动火焰检测
-            //_flameAnalyzer.StartAnalyzing();
-            //修改试验控制器状态为[Recording]
-            Status = MasterStatus.Recording;
+            /* 开始样品试验前的初始化工作 */            
+            if(_apparatusManipulator.SetOutputPower(Convert.ToUInt16(queuePidOutput.Average()))
+                && _apparatusManipulator.SwitchToManual())
+            {
+                //重置计时器
+                Timer = 0;
+                //修改试验控制器状态为[Recording]
+                Status = MasterStatus.Recording;
+                //2022-11-21 启动火焰检测
+                //_flameAnalyzer.StartAnalyzing();
+                return true;
+            }
+            return false;
         }
 
-        public void StopRecording()
-        {
-            //重置计时器
-            Timer = 0;
-            //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温
-            //_apparatusManipulator.SwitchToPID();
-            //修改试验控制器状态为[Preparing],根据具体试验任务确定
-            Status = MasterStatus.Preparing;
+        public bool StopRecording()
+        {            
+            //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温            
+            if(_apparatusManipulator.SwitchToPID())
+            {
+                //重置计时器
+                Timer = 0;
+                //修改试验控制器状态为[Preparing],根据具体试验任务确定
+                Status = MasterStatus.Preparing;
+                // 停止火焰检测
+                //_flameAnalyzer.StopAnalyzing();
+                return true;
+            }
+            return false;
         }
 
         /*
@@ -415,7 +426,7 @@ namespace TestServer.Core
                 }
 
                 //判断是否达到试验初始条件并修改控制器状态            
-                return (_iCntStable == 0 && _iCntDrift == 0 && _iCntDeviation == 0) ? true : false;
+                return _iCntStable == 0 && _iCntDrift == 0 && _iCntDeviation == 0;
             }
             //未满10Min的情况,默认返回false
             return false;

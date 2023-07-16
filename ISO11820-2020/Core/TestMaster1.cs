@@ -44,9 +44,8 @@ namespace TestServer.Core
         {            
             //刷新传感器数据缓存            
             _sensorDataCatch.Timer = 0;
-            //_sensorDataCatch.Temp1 = _sensors.Sensors[0].Outputvalue;
             //_sensorDataCatch.Temp1 = _apparatusManipulator.GetCurrentTemp() / 10.0;
-            _sensorDataCatch.Temp2 = _sensors.Sensors[0].Outputvalue;
+            _sensorDataCatch.Temp2 = _sensorDataCatch.Temp1;
             _sensorDataCatch.TempSuf = _sensors.Sensors[0].Outputvalue;
             _sensorDataCatch.TempCen = _sensors.Sensors[0].Outputvalue;
         }
@@ -117,36 +116,22 @@ namespace TestServer.Core
                     data.MasterStatus = (int)MasterStatus.Idle;
                     break;
                 case MasterStatus.Preparing: //升温状态
-                    if (_sensorDataCatch.Temp1 < 1000)
-                    {
+                    if ((int)(_sensorDataCatch.Temp1 * 10) < 3000) {
                         _apparatusManipulator.SwitchToManual();
-                        _apparatusManipulator.SetOutputPower(5120); // 20%输出功率
-                    }
-                    else if (_sensorDataCatch.Temp1 < 3000)
-                    {
-                        _apparatusManipulator.SwitchToManual();
-                        _apparatusManipulator.SetOutputPower(6400); // 25%输出功率
-                    }
-                    else if (_sensorDataCatch.Temp1 < 5000)
-                    {
-                        _apparatusManipulator.SwitchToManual();
-                        _apparatusManipulator.SetOutputPower(10240); // 40%输出功率
-                    }
-                    else if (_sensorDataCatch.Temp1 < 7000)
-                    {
+                        _apparatusManipulator.SetOutputPower(7680); // 30%输出功率
+                    } else if ((int)(_sensorDataCatch.Temp1 * 10) < 5000) {
                         _apparatusManipulator.SwitchToManual();
                         _apparatusManipulator.SetOutputPower(12800); // 50%输出功率
-                    }
-                    else if (_sensorDataCatch.Temp1 < 7450)
-                    {
+                    } else if ((int)(_sensorDataCatch.Temp1 * 10) < 6000) {
                         _apparatusManipulator.SwitchToManual();
-                        _apparatusManipulator.SetOutputPower(15360); // 60%输出功率
-                    }
-                    else
-                    {
+                        _apparatusManipulator.SetOutputPower(17920); // 70%输出功率
+                    } else if ((int)(_sensorDataCatch.Temp1 * 10) < 7000) {
+                        _apparatusManipulator.SwitchToManual();
+                        _apparatusManipulator.SetOutputPower(23040); // 90%输出功率
+                    } else {
                         _apparatusManipulator.SwitchToPID(); // 以目标控制温度执行PID控温
                         // 记录PID温控器的实时输出
-                        queuePidOutput.Enqueue(_apparatusManipulator.GetCurrentOutput());
+                        queuePidOutput.Enqueue(_apparatusManipulator.GetPidOutput());
                         if(queuePidOutput.Count == 601)
                             queuePidOutput.Dequeue();
                     }                    
@@ -168,7 +153,7 @@ namespace TestServer.Core
                     else                     
                         Status = MasterStatus.Preparing;
                     // 记录PID温控器的实时输出
-                    queuePidOutput.Enqueue(_apparatusManipulator.GetCurrentOutput());
+                    queuePidOutput.Enqueue(_apparatusManipulator.GetPidOutput());
                     if (queuePidOutput.Count == 601)
                         queuePidOutput.Dequeue();
                     break;
@@ -216,7 +201,7 @@ namespace TestServer.Core
                         });                       
                     }
                     // 在试验标准要求的时间点判断是否满足试验终止条件
-                    if (Timer == 600 || Timer == 2100 || Timer == 2400
+                    if (Timer == 1800 || Timer == 2100 || Timer == 2400
                         || Timer == 2700 || Timer == 3000 || Timer == 3300)
                     {
                         //判断试验终止条件是否满足                        

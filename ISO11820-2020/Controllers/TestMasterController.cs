@@ -332,21 +332,21 @@ namespace TestServer.Controllers
         /*
          * 功能: 取消当前试验
          */
-        [HttpGet("canceltest/{id}")]
-        public IActionResult CancelTest(int id)
-        {
-            //执行取消本次试验的控制器相关操作
-            //...
+        //[HttpGet("canceltest/{id}")]
+        //public IActionResult CancelTest(int id)
+        //{
+        //    //执行取消本次试验的控制器相关操作
+        //    //...
 
-            Message msg = new Message();
-            msg.Param = new Dictionary<string, object>();
-            msg.Cmd = "canceltest";
-            msg.Ret = "0";
-            msg.Msg = "本次试验已取消。";
-            msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
+        //    Message msg = new Message();
+        //    msg.Param = new Dictionary<string, object>();
+        //    msg.Cmd = "canceltest";
+        //    msg.Ret = "0";
+        //    msg.Msg = "本次试验已取消。";
+        //    msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
 
-            return new JsonResult(msg);
-        }        
+        //    return new JsonResult(msg);
+        //}        
 
         /*
          * 功能: 设置试验设备恒功率输出参数
@@ -379,7 +379,7 @@ namespace TestServer.Controllers
             _global.DictApparatus[id].Powerport     = data.Powerport;
             _global.DictApparatus[id].Constpower    = data.Constpower;
             //同步更新设备控制器恒功率值
-            _testMasters.DictTestMaster[id].UpdateConstPower(Convert.ToUInt16(data.Constpower));
+            //_testMasters.DictTestMaster[id].UpdateConstPower(Convert.ToUInt16(data.Constpower));
             //构造返回消息
             Message msg = new Message();
             msg.Param = new Dictionary<string, object>();
