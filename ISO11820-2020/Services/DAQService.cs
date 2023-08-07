@@ -33,6 +33,8 @@ namespace TestServer.Services
         private Timer _timer;
         //用于间隔1秒发送校准传感器温度实时值的计时器
         private Timer _timerForCali;
+        //串口读取异常计数器
+        private int _counter;
         /* IHubContext对象,用于发送实时数据广播 */
         protected IHubContext<CalibrationHub> _calibrationHub;
         //串口对象
@@ -56,6 +58,8 @@ namespace TestServer.Services
             //创建定时任务(未开启)
             _timer = new Timer(DoWork);
             _timerForCali = new Timer(DoCalibration);
+            //初始化串口异常计数器
+            _counter = 0;
         }
         public Task StartAsync(CancellationToken cancellationToken)
         {            
@@ -116,31 +120,51 @@ namespace TestServer.Services
         private void DoWork(object state)
         {
             //遍历传感器,更新传感器输出值                        
-            string cmd = "#01";
+            string cmd;
             string data = string.Empty;
             if (_serialPort.IsOpen)
             {
                 try
                 {
+                    // 获取第一个4018+模块的通道值
+                    cmd = "#01";
                     _serialPort.WriteLine(cmd);
                     data = _serialPort.ReadLine();
                     if (data.Length == 57)
                     {
+                        // 设置一号试验炉温度值
                         _sensors.Sensors[0].SetInputValue(double.Parse(data.Substring(1 + 0 * 7, 7)));
                         _sensors.Sensors[2].SetInputValue(double.Parse(data.Substring(1 + 1 * 7, 7)));
+                        // 设置二号试验炉温度值
+                        // ...
                     }
+                    // 获取第二个4018+模块的通道值
+                    cmd = "#02";
+                    data = string.Empty;
+                    _serialPort.WriteLine(cmd);
+                    data = _serialPort.ReadLine();
+                    if (data.Length == 57)
+                    {
+                        // 设置三号试验炉温度值
+                        _sensors.Sensors[0].SetInputValue(double.Parse(data.Substring(1 + 0 * 7, 7)));
+                        _sensors.Sensors[2].SetInputValue(double.Parse(data.Substring(1 + 1 * 7, 7)));
+                        // 设置四号试验炉温度值
+                        // ...
+                    }
+                }
+                catch(TimeoutException e)
+                {
+                    // 处理串口操作超时异常
+                    if(++_counter == 3)
+                    {
+                        //连续超时3次,系统认为串口出现意外终端情况,设置对应传感器采集值为异常指示值
+                        // ...
+                    }
+                    _logger.LogInformation(e.Message);
                 }
                 catch (Exception e)
                 {
-                    if (data.Length == 57)
-                    {
-                        _sensors.Sensors[0].SetInputValue(double.Parse(data.Substring(1 + 0 * 7, 7))); //获取通道0数据
-                        _sensors.Sensors[2].SetInputValue(double.Parse(data.Substring(1 + 1 * 7, 7)));
-                    } 
-                    else
-                    {
-                        _logger.LogInformation(e.Message);
-                    }
+                    _logger.LogInformation(e.Message);
                 }
             }
 
@@ -160,7 +184,7 @@ namespace TestServer.Services
             _calibrationHub.Clients.All.SendAsync("CaliBroadCast", value+745);
         }
 
-            public void Dispose()
+        public void Dispose()
         {
             //释放对象内存
             _timer.Dispose();

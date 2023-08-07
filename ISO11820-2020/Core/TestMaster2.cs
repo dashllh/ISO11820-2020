@@ -11,37 +11,46 @@ namespace TestServer.Core
 {
     public class TestMaster2 : TestMaster
     {
-        public TestMaster2(SensorDictionary sensors, IHubContext<NotificationHub> notificationHub,
+        //应用程序全局对象集合
+        private AppGlobal _global;
+        public TestMaster2(AppGlobal global, SensorDictionary sensors, IHubContext<NotificationHub> notificationHub,
             IDbContextFactory<ISO11820DbContext> contextFactory)
             : base(sensors, notificationHub, contextFactory)
         {
-            //设置试验控制器ID - 对应二号试验炉
+            _global = global;
+            //设置试验控制器ID - 对应一号试验炉
             MasterId = 1;
+            //初始化设备控制器
+            _apparatusManipulator = new ApparatusManipulator(_global.DictApparatus[MasterId].Pidport,
+                _global.DictApparatus[MasterId].Powerport, Convert.ToInt16(_global.DictApparatus[MasterId].Constpower));
+            //初始化视频分析器
+            //_flameAnalyzer = new FlameAnalyzer(MasterId, "rtsp://...");
+            //挂载火焰事件处理函数
+            //_flameAnalyzer.FlameDetected += OnFlameDetected;
+        }
+
+        /* 检测到持续火焰事件时调用的委托函数 */
+        private void OnFlameDetected(object sender, FlameEventArgs eventArgs)
+        {
+            //设置本次试验火焰事件捕捉指示
+            _bFlameDetected = true;
+            //设置本次试验火焰起火时间及持续时间
+            _iFlameTime = eventArgs.Time;
+            _iFlameDurTime = eventArgs.Duration;
         }
 
         // 重载传感器数据获取函数
         protected override void FetchSensorData()
         {
-            //取得该试验控制器需要的传感器数据
             //刷新传感器数据缓存            
             _sensorDataCatch.Timer = 0;
-            _sensorDataCatch.Temp1 = _sensors.Sensors[2].Outputvalue;
-            _sensorDataCatch.Temp2 = _sensors.Sensors[2].Outputvalue;
+            //_sensorDataCatch.Temp1 = _apparatusManipulator.GetCurrentTemp() / 10.0;
+            _sensorDataCatch.Temp2 = _sensorDataCatch.Temp1;
             _sensorDataCatch.TempSuf = _sensors.Sensors[2].Outputvalue;
             _sensorDataCatch.TempCen = _sensors.Sensors[2].Outputvalue;
-        }
+        }        
 
-        //重载设置试验数据的父函数
-        public override void SetProductData(Productmaster prodmaster)
-        {
-            _productMaster = prodmaster;
-        }
-        public override void SetTestData(Testmaster testmaster)
-        {
-            _testmaster = testmaster;
-        }
-
-        //重载试验状态线程函数,执行二号炉的试验控制逻辑
+        //试验控制器工作函数(状态机)
         protected override void DoWork(object state)
         {
             base.DoWork(state);
@@ -62,13 +71,13 @@ namespace TestServer.Core
             //创建并初始化SignalR客户端通信数据对象
             SignalRCatch data = new SignalRCatch()
             {
-                MasterId          = MasterId,           //控制器ID                
-                MasterMode        = (int)WorkMode,      //控制器实时工作模式
-                MasterStatus      = (int)Status,        //控制器实时状态
-                Timer             = 0,                  //计时器
-                sensorDataCatch   = _sensorDataCatch,   //传感器数据
+                MasterId = MasterId,           //控制器ID                
+                MasterMode = (int)WorkMode,      //控制器实时工作模式
+                MasterStatus = (int)Status,        //控制器实时状态
+                Timer = 0,                  //计时器
+                sensorDataCatch = _sensorDataCatch,   //传感器数据
                 caculateDataCatch = _caculateDataCatch, //计算数据                
-                MasterMessages    = new List<MasterMessage>() //消息对象
+                MasterMessages = new List<MasterMessage>() //消息对象
             };
 
             /* 根据控制器状态驱动试验逻辑 */
@@ -77,13 +86,47 @@ namespace TestServer.Core
                 case MasterStatus.Idle:      //空闲状态
                     data.MasterStatus = (int)MasterStatus.Idle;
                     break;
-                case MasterStatus.Preparing: //PID升温状态
+                case MasterStatus.Preparing: //升温状态
+                    if ((int)(_sensorDataCatch.Temp1 * 10) < 3000)
+                    {
+                        _apparatusManipulator.SwitchToManual();
+                        _apparatusManipulator.SetOutputPower(7680); // 30%输出功率
+                    }
+                    else if ((int)(_sensorDataCatch.Temp1 * 10) < 5000)
+                    {
+                        _apparatusManipulator.SwitchToManual();
+                        _apparatusManipulator.SetOutputPower(12800); // 50%输出功率
+                    }
+                    else if ((int)(_sensorDataCatch.Temp1 * 10) < 6000)
+                    {
+                        _apparatusManipulator.SwitchToManual();
+                        _apparatusManipulator.SetOutputPower(17920); // 70%输出功率
+                    }
+                    else if ((int)(_sensorDataCatch.Temp1 * 10) < 7000)
+                    {
+                        _apparatusManipulator.SwitchToManual();
+                        _apparatusManipulator.SetOutputPower(23040); // 90%输出功率
+                    }
+                    else
+                    {
+                        _apparatusManipulator.SwitchToPID(); // 以目标控制温度执行PID控温
+                        // 记录PID温控器的实时输出
+                        queuePidOutput.Enqueue(_apparatusManipulator.GetPidOutput());
+                        if (queuePidOutput.Count == 601)
+                            queuePidOutput.Dequeue();
+                    }
+                    //判断是否达到试验初始条件并修改控制器状态
+                    if (CheckStartCriteria())
+                        Status = MasterStatus.Ready;
+                    break;
                 case MasterStatus.Ready:     //温度平衡状态
                     //设置控制器工作模式及状态
-                    if (Status == MasterStatus.Preparing) {
+                    if (Status == MasterStatus.Preparing)
+                    {
                         data.MasterStatus = (int)MasterStatus.Preparing;
                     }
-                    if (Status == MasterStatus.Ready) {
+                    if (Status == MasterStatus.Ready)
+                    {
                         data.MasterStatus = (int)MasterStatus.Ready;
                     }
                     //判断是否达到试验初始条件并修改控制器状态
@@ -91,6 +134,10 @@ namespace TestServer.Core
                         Status = MasterStatus.Ready;
                     else
                         Status = MasterStatus.Preparing;
+                    // 记录PID温控器的实时输出
+                    queuePidOutput.Enqueue(_apparatusManipulator.GetPidOutput());
+                    if (queuePidOutput.Count == 601)
+                        queuePidOutput.Dequeue();
                     break;
                 case MasterStatus.Recording: //试验中状态
                     data.MasterStatus = (int)MasterStatus.Recording;
@@ -99,12 +146,28 @@ namespace TestServer.Core
                     //保存传感器数据至历史记录缓存
                     _bufSensorData.Add(new SensorDataCatch()
                     {
-                        Timer   = _sensorDataCatch.Timer,    //计时器
-                        Temp1   = _sensorDataCatch.Temp1,    //炉内温度1
-                        Temp2   = _sensorDataCatch.Temp2,    //炉内温度2
+                        Timer = _sensorDataCatch.Timer,    //计时器
+                        Temp1 = _sensorDataCatch.Temp1,    //炉内温度1
+                        Temp2 = _sensorDataCatch.Temp2,    //炉内温度2
                         TempSuf = _sensorDataCatch.TempSuf,  //试样表面温度 
                         TempCen = _sensorDataCatch.TempCen   //试样中心温度
                     });
+                    //如果捕捉到火焰事件,则记录
+                    if (_bFlameDetected)
+                    {
+                        //设置火焰捕捉无效(无需继续捕捉)
+                        _bFlameDetected = false;
+                        _testmaster.Flametime = Timer - _iFlameDurTime;
+                        _testmaster.Flameduration = _iFlameDurTime;
+                        //追加客户端消息
+                        data.MasterMessages.Add(new MasterMessage()
+                        {
+                            Time = DateTime.Now.ToString("HH:mm:ss"),
+                            Message = $"检测到持续火焰,持续时间 {_iFlameDurTime} s",
+                            FlameTime = Timer,
+                            FlameDuration = _iFlameDurTime
+                        });
+                    }
                     // 计时到达60Min,无条件终止本次试验
                     if (Timer == 3600)
                     {
@@ -152,6 +215,10 @@ namespace TestServer.Core
                     _iCntStable = 0;
                     _iCntDrift = 0;
                     _iCntDeviation = 0;
+                    //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温
+                    //_apparatusManipulator.SwitchToPID();
+                    //2022-11-21 停止火焰检测
+                    //_flameAnalyzer.StopAnalyzing();                    
                     break;
                 default:
                     break;
