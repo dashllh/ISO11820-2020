@@ -104,8 +104,6 @@ namespace TestServer.Core
         protected ApparatusManipulator _apparatusManipulator;
         /* 视频实时分析对象 */
         protected FlameAnalyzer _flameAnalyzer;
-        /* 持续火焰视频片段帧缓存对象 */
-        protected List<Emgu.CV.Mat> _FrameBuf;
         /* 指示本次试验过程是否已经检测到持续火焰事件(每次试验只捕捉一次持续火焰事件) */
         protected bool _bFlameDetected;
         /* 当前试验过程检测到的火焰起火时间及持续时间(秒) */
@@ -185,25 +183,25 @@ namespace TestServer.Core
             }            
         }
 
-        /* 定时任务函数,执行系统空闲时的任务[Idle] */
-        protected virtual void DoIdle()
-        {
-        }
+        ///* 定时任务函数,执行系统空闲时的任务[Idle] */
+        //protected virtual void DoIdle()
+        //{
+        //}
 
-        /* 定时任务函数,执行系统升温时的任务[Preparing] */
-        protected virtual void DoPreparing()
-        {
-        }
+        ///* 定时任务函数,执行系统升温时的任务[Preparing] */
+        //protected virtual void DoPreparing()
+        //{
+        //}
 
-        /* 定时任务函数,执行系统升温时的任务[Ready] */
-        protected virtual void DoReady()
-        {
-        }
+        ///* 定时任务函数,执行系统升温时的任务[Ready] */
+        //protected virtual void DoReady()
+        //{
+        //}
 
-        /* 定时任务函数,执行系统升温时的任务[Recording] */
-        protected virtual void DoRecording()
-        {
-        }
+        ///* 定时任务函数,执行系统升温时的任务[Recording] */
+        //protected virtual void DoRecording()
+        //{
+        //}
 
         /* 控制器工作函数 */
         protected virtual void DoWork(object state)
@@ -424,14 +422,11 @@ namespace TestServer.Core
                 {
                     _iCntDeviation = 600;
                 }
-
                 //判断是否达到试验初始条件并修改控制器状态            
                 return _iCntStable == 0 && _iCntDrift == 0 && _iCntDeviation == 0;
             }
             //未满10Min的情况,默认返回false
             return false;
-
-            //return (_iCntStable == 0 && _iCntDrift == 0 && _iCntDeviation == 0) ? true : false;
         }
 
         /*
@@ -442,179 +437,7 @@ namespace TestServer.Core
             //判断试验终止条件是否满足 
             return ((int)(_caculateDataCatch.Temp1Drift10Min * 10) <= 20 &&
                  (int)(_caculateDataCatch.Temp2Drift10Min * 10) <= 20) ? true : false;
-        }
-
-        /* 试验完成后期数据处理函数 */
-        //public virtual async Task PostTestProcess()
-        //{
-        //    /* 申明操作Excel文件的COM对象 */
-        //    Application oXL    = null;
-        //    Workbooks   oWBs   = null;
-        //    Workbook    oWB    = null;
-        //    Worksheet   oSheet = null;
-        //    /* 创建本地存储目录 */
-        //    string prodpath = $"D:\\ISO11820\\{_testmaster.Productid}";
-        //    string smppath = $"{prodpath}\\{_testmaster.Testid}";
-        //    string datapath = $"{smppath}\\data";
-        //    string rptpath = $"{smppath}\\report";
-        //    try
-        //    {
-        //        /* 创建本次试验结果文件的存储目录 */
-        //        //试验样品根目录
-        //        Directory.CreateDirectory(prodpath);
-        //        //本次试验根目录
-        //        Directory.CreateDirectory(smppath);
-        //        //本次试验原始数据目录
-        //        Directory.CreateDirectory(datapath);
-        //        //本次试验报表目录
-        //        Directory.CreateDirectory(rptpath);
-
-        //        /* 保存本次试验数据文件 */
-        //        //传感器采集数据
-        //        using (var writer = new StreamWriter($"{datapath}\\sensordata.csv", false))
-        //        using (var csvwriter = new CsvWriter(writer, CultureInfo.InvariantCulture))
-        //        {
-        //            //写入数据内容
-        //            await csvwriter.WriteRecordsAsync(_bufSensorData);
-        //        }
-        //        //其他数据文件(比如视频记录等)
-        //        OutputFlameVideo($"{datapath}\\flamevideo.avi");
-
-        //        /* 生成本次试验的报表 */
-        //        //设置EPPlus license版本为非商用版本
-        //        ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-        //        //设置CSV文件格式
-        //        var format = new ExcelTextFormat()
-        //        {
-        //            Delimiter = ',',
-        //            EOL = "\r"    // 修改行尾结束符,默认为 "\r\n" ("\r"为回车符 "\n"为换行符);
-        //                          // 字符类型引用符 format.TextQualifier = '"';
-        //        };
-        //        //操作Excel文件
-        //        using (ExcelPackage package = new ExcelPackage(new FileInfo($"D:\\ISO11820\\template_report_{MasterId}.xlsx")))
-        //        {
-        //            //取得rawdata页面
-        //            ExcelWorksheet sheet_rawdata = package.Workbook.Worksheets.ElementAt(1);
-        //            //将采集数据记录拷贝至试验报表的rawdata页面(含首行标题)
-        //            sheet_rawdata.Cells["A1"].LoadFromText(new FileInfo($"{datapath}\\sensordata.csv"), format, null, true);
-        //            //计算中间结果及试验结果
-        //            //ExcelWorksheet sheet_calcdata = package.Workbook.Worksheets.ElementAt(2);
-        //            /* 设置报表首页部分数据 */
-        //            //取得报表首页页面(页面索引从 0 开始)
-        //            ExcelWorksheet sheet_main = package.Workbook.Worksheets.ElementAt(0);
-        //            //实验室温度
-        //            sheet_main.Cells["B5"].Value = _testmaster.Ambtemp;
-        //            //环境湿度
-        //            sheet_main.Cells["E5"].Value = _testmaster.Ambhumi;
-        //            //试验日期
-        //            sheet_main.Cells["H5"].Value = _testmaster.Testdate.ToString("d");
-        //            //检验人员
-        //            sheet_main.Cells["K5"].Value = _testmaster.Operator;
-        //            //产品名称
-        //            sheet_main.Cells["B6"].Value = _productMaster.Productname;
-        //            //规格型号
-        //            sheet_main.Cells["B7"].Value = _productMaster.Specific;
-        //            //样品编号
-        //            sheet_main.Cells["K6"].Value = _productMaster.Productid + "-" + _testmaster.Testid;
-        //            //报告编号
-        //            sheet_main.Cells["K7"].Value = _productMaster.Productid;
-        //            //试样直径
-        //            sheet_main.Cells["B15"].Value = _productMaster.Diameter;
-        //            //试样高度
-        //            sheet_main.Cells["C15"].Value = _productMaster.Height;
-        //            //试样试验前质量
-        //            sheet_main.Cells["D15"].Value = _testmaster.Preweight;
-        //            //试样残余质量
-        //            sheet_main.Cells["E15"].Value = _testmaster.Postweight;
-        //            //火焰起始时间
-        //            sheet_main.Cells["H23"].Value = _testmaster.Flametime;
-        //            //火焰持续时间
-        //            sheet_main.Cells["I23"].Value = _testmaster.Flameduration;
-        //            //保存本次试验报表
-        //            //package.SaveAs($"{rptpath}\\report.xlsx");
-        //            await package.SaveAsAsync($"{rptpath}\\report.xlsx");
-        //        }
-
-        //        /* 使用COM接口操作Excel报表文件,以激活计算公式并回填关键数据项
-        //         * (以下函数调用只适用于Windows平台,非Windows平台解决方案待定)
-        //         */
-        //        oXL = new Application()
-        //        {
-        //            Visible = false,       //设置应用程序窗口不可见
-        //            DisplayAlerts = false  //禁止任何弹窗提示
-        //        };
-        //        oWBs = oXL.Workbooks;
-        //        //打开报表文件
-        //        oWB = oWBs.Open($"{rptpath}\\report.xlsx");
-        //        //选中报表首页(页面索引从 1 开始)
-        //        oSheet = (Worksheet)oWB.Sheets.Item[1];
-
-        //        /* 根据报表计算结果回填本次试验的【结论判定属性】 */
-        //        //最高温度
-        //        _testmaster.Maxtf1        = Convert.ToDouble(oSheet.Range["G15"].Value);
-        //        //最高温度时间
-        //        _testmaster.Maxtf1Time    = Convert.ToInt32(oSheet.Range["J15"].Value);
-        //        //终平衡温度
-        //        _testmaster.Finaltf1      = Convert.ToDouble(oSheet.Range["M15"].Value);
-        //        //终温时间
-        //        _testmaster.Totaltesttime = Convert.ToInt32(oSheet.Range["B23"].Value);
-        //        //温升
-        //        //...                
-        //        //其他关键属性
-        //        //...
-
-        //        //保存本次试验数据至试验数据库
-        //        var ctx = _contextFactory.CreateDbContext();
-        //        ctx.Testmasters.Add(_testmaster);
-        //        await ctx.SaveChangesAsync();
-        //        //保存报表
-        //        oWB.Save();
-        //        oSheet.ExportAsFixedFormat2(XlFixedFormatType.xlTypePDF, $"{rptpath}\\report.pdf",
-        //            Missing.Value, Missing.Value, Missing.Value, Missing.Value, Missing.Value,
-        //            false, Missing.Value, Missing.Value);
-        //    }
-        //    catch (Exception)
-        //    {
-        //        throw;
-        //    }
-        //    finally
-        //    {
-        //        if(oSheet != null)
-        //        {
-        //            //释放COM组件对象
-        //            while (Marshal.FinalReleaseComObject(oSheet) != 0) { }
-        //            oSheet = null;
-        //        }
-        //        if (oWB != null)
-        //        {
-        //            //关闭当前工作簿
-        //            oWB.Close(XlSaveAction.xlSaveChanges);
-        //            //释放COM组件对象
-        //            while (Marshal.FinalReleaseComObject(oWB) != 0) { }
-        //            oWB = null;
-        //        }
-        //        if (oWBs != null)
-        //        {
-        //            //关闭所有工作簿
-        //            oWBs.Close();
-        //            //释放COM组件对象
-        //            while (Marshal.FinalReleaseComObject(oWBs) != 0) { }
-        //            oWBs = null;
-        //        }                
-        //        if (oXL != null)
-        //        {
-        //            //退出Excel应用程序
-        //            oXL.Quit();
-        //            oXL.Application.Quit();
-        //            //释放COM组件对象
-        //            while (Marshal.FinalReleaseComObject(oXL) != 0) { }
-        //            oXL = null;
-        //        }
-        //        //垃圾回收,确保Excel进程被彻底清理
-        //        GC.Collect();
-        //        GC.WaitForPendingFinalizers();
-        //    }
-        //}
+        }        
 
         /*
          * 功能: 新版本试验计时结束后数据处理函数,
@@ -648,7 +471,7 @@ namespace TestServer.Core
                     await csvwriter.WriteRecordsAsync(_bufSensorData);
                 }
                 //其他数据文件(比如视频记录等)
-                //OutputFlameVideo($"{datapath}\\flamevideo.avi");
+                await _flameAnalyzer.OutputFlameFramesAsync($"{datapath}\\flamevideo.avi");
 
                 /* 生成本次试验的报表 */
                 //设置EPPlus license版本为非商用版本
@@ -745,7 +568,7 @@ namespace TestServer.Core
                 ctx.Testmasters.Add(_testmaster);
                 await ctx.SaveChangesAsync();                
             }
-            catch (Exception e)
+            catch (Exception)
             {
                 // 输出异常日志
                 // ...
@@ -762,6 +585,9 @@ namespace TestServer.Core
         /*
          * 功能: 设置当前试验样品的残余质量
          * 参数:
+         *      phenocode - 本次试验现象编码
+         *      flametime - 本次试验火焰起始时间(试验计时值)
+         *      flamedur  - 本次试验火焰持续时间(秒)
          *      mass - 样品残余质量
          */
         public void SetPostTestData(string phenocode,int flametime, int flamedur, double mass)
@@ -770,24 +596,6 @@ namespace TestServer.Core
             _testmaster.Flametime = flametime;
             _testmaster.Flameduration = flamedur;
             _testmaster.Postweight = mass;
-        }
-
-        /* ========== 视频处理函数 ========= */
-
-        /*
-         * 功能: 输出火焰视频
-         * 参数:
-         *       filepath - 文件路径
-         */
-        protected void OutputFlameVideo(string filepath)
-        {
-            System.Drawing.Size size = new(640, 480);
-            VideoWriter writer = new(filepath, VideoWriter.Fourcc('X', 'V', 'I', 'D'), size, true);
-            foreach (var frame in _FrameBuf)
-            {
-                writer.Write(frame);
-            }
-            _FrameBuf.Clear();
         }
     }
 }

@@ -46,7 +46,7 @@ builder.Services.Configure<EventLogSettings>(config =>
 {
     config.LogName = "ISO11820_Test_Manager";
     //该属性对应 Windows事件记录日志程序中的 "来源" 查询字段
-    config.SourceName = "ISO11820 Test Manager"; 
+    config.SourceName = "ISO11820 Test Manager";
 });
 
 var app = builder.Build();

@@ -60,25 +60,25 @@ namespace TestServer.Core
         //    _testmaster = testmaster;
         //}
 
-        //重载[Idle]状态驱动函数,广播属于一号炉的温度传感器数据
-        protected override void DoIdle()
-        {            
-        }
+        ////重载[Idle]状态驱动函数,广播属于一号炉的温度传感器数据
+        //protected override void DoIdle()
+        //{            
+        //}
 
-        //重载[Preparing]状态驱动函数,执行一号炉温度控制逻辑
-        protected override void DoPreparing()
-        {
-        }
+        ////重载[Preparing]状态驱动函数,执行一号炉温度控制逻辑
+        //protected override void DoPreparing()
+        //{
+        //}
 
-        //重载[Ready]状态驱动函数,执行一号炉温度控制逻辑
-        protected override void DoReady()
-        {
-        }
+        ////重载[Ready]状态驱动函数,执行一号炉温度控制逻辑
+        //protected override void DoReady()
+        //{
+        //}
 
-        //重载[Recording]状态驱动函数,执行一号炉温度控制逻辑
-        protected override void DoRecording()
-        {
-        }
+        ////重载[Recording]状态驱动函数,执行一号炉温度控制逻辑
+        //protected override void DoRecording()
+        //{
+        //}
 
         //试验控制器工作函数(状态机)
         protected override void DoWork(object state)

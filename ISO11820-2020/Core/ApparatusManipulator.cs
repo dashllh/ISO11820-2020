@@ -34,7 +34,7 @@ namespace TestServer.Core
         //PID控制器通信端口
         private ModbusRtuClient _pidClient;
         //恒功率控制器通信端口
-        private ModbusRtuClient _powerClient;
+        //private ModbusRtuClient _powerClient;
         //PID控制温度(默认为750℃)
         public Int16 Temperature { get; set; }
         //恒功率输出值(值域: 900 - 4096)

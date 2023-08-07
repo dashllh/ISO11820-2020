@@ -19,15 +19,13 @@ namespace TestServer.Core
         private System.Drawing.Size _newSize;
         //定义火焰事件的委托
         public event EventHandler<FlameEventArgs> FlameDetected;
-        // 火焰视频输出的文件名
-        private string _fileName;
         // ROI区域边界坐标数组
         private List<Point> _roiPts;
         // 背景移除对象
         BackgroundSubtractorMOG2 _substractor;
 
         /* 火焰分析函数使用的全局变量 */
-        private bool _bFirstFlame;          // 是否是当前试验过程中发生的第一帧火焰
+        //private bool _bFirstFlame;        // 是否是当前试验过程中发生的第一帧火焰
         private bool _detected;             // 指示当前帧是否检测出火焰
         private DateTime _dtFirstFlameTime; // 当前试验过程的第一火焰帧发生时间
         private DateTime _dtPreFlameTime;   // 火焰检测过程中前一火焰帧的发生时间
@@ -42,21 +40,25 @@ namespace TestServer.Core
         /*
          * 功能: 构造函数
          * 参数:
-         *       url - 视频地址
+         *       id  - 分析器ID(同试验控制器ID)
+         *       url - 摄像头RTSP协议字符串
+         *       filename - 视频文件保存地址
          */
-        public FlameAnalyzer(int id,string url,string filename)
+        public FlameAnalyzer(int id,string url)
         {
             AnalyzerId = id;
             lockObj = new object();
             _newSize = new System.Drawing.Size(240, 160);
-            _fileName = filename;
             _flameFrames = new List<Mat>();
             _roiPts = new List<Point>();
             _substractor = new BackgroundSubtractorMOG2(shadowDetection:false);
             //初始化当前帧Mask
             _mask = Mat.Zeros(_newSize.Height, _newSize.Width,DepthType.Cv8U,1);
             //初始化火焰分析相关变量
-            _bFirstFlame = true;
+            _frame = new Mat();
+            _maskFrame = new Mat();
+            _sizedFrame = new Mat();
+            //_bFirstFlame = true;
             _detected = false;
             _dtFirstFlameTime = DateTime.Now;
             _dtPreFlameTime = DateTime.Now;
@@ -219,7 +221,7 @@ namespace TestServer.Core
                         //调用事件委托
                         FireFlameDetected(flameEvt);
                         // 输出持续火焰视频文件
-                        OutputFlameFrames();
+                        //OutputFlameFrames();
                     }
                     // 清空火焰帧缓存
                     _flameFrames.Clear();
@@ -231,21 +233,41 @@ namespace TestServer.Core
 
         /*
          * 功能: 保存火焰帧至视频文件
+         * 参数:
+         *       filename - 视频文件的输出地址
          */
-        private void OutputFlameFrames()
+        public async Task<bool> OutputFlameFramesAsync(string filename)
         {
-            if(_flameFrames.Count > 0)
-            {
-                // 初始化视频输出对象
-                VideoWriter writer = new VideoWriter(_fileName, VideoWriter.Fourcc('X', 'V', 'I', 'D'),
-                   new Size(640, 480), true);
-                // 逐帧输出视频文件
-                _flameFrames.ForEach(frame => {
-                    writer.Write(frame);
-                });
-                // 清空火焰帧缓存
-                _flameFrames.Clear();
-            }            
+            bool ret = true;
+            await Task.Run(() => {
+                if (_flameFrames.Count > 0)
+                {
+                    try
+                    {
+                        // 初始化视频输出对象
+                        VideoWriter writer = new VideoWriter(filename, VideoWriter.Fourcc('X', 'V', 'I', 'D'),
+                           new Size(640, 480), true);
+                        // 逐帧输出视频文件
+                        if(writer.IsOpened) {
+                            _flameFrames.ForEach(frame => {
+                                writer.Write(frame);
+                            });
+                            // 视频输出完成,清空火焰帧缓存
+                            _flameFrames.Clear();
+                        } else {
+                            // 视频输出对象初始化失败
+                            ret = false;
+                        }    
+                    }
+                    catch (Exception)
+                    {
+                        // 视频输出异常处理
+                        // ...
+                        ret = false;
+                    }                    
+                }
+            });    
+            return ret;
         }
     }
     /* 定义火焰事件的参数 */
