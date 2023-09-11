@@ -129,6 +129,40 @@ function resetMasterPanel(idx) {
 
 //#endregion
 
+//#region 全局事件函数定义
+
+// 关于系统按钮
+document.getElementById("btnAbout").onclick = function () {
+    $('#dlgAbout').dialog('open');
+}
+
+// 退出系统按钮
+document.getElementById("btnQuit").onclick = function () {
+    window.fetch('api/testmaster/quitwithcheck')
+        .then(response => response.json())
+        .then(data => {
+            if (data.ret === "-1") {
+                $.messager.confirm('系统提示', data.msg, (confirm) => {
+                    if (confirm) {
+                        window.fetch('api/testmaster/quitanyway')
+                            .then(response => response.json())
+                            .then(data => {
+                                if (data.ret === "0") {
+                                    // 向本地应用程序发送退出消息
+                                    window.chrome.webview.postMessage("quit");
+                                } else {
+                                    // 服务端执行退出操作失败,提示客户端应执行的操作
+                                    // ...
+                                }
+                            });
+                    }
+                });
+            }
+        });
+};
+
+//#endregion
+
 //#region 用于与服务器端通信的客户端应用主数据模型(四个试验控制器独立数据模型)
 
 // 一号炉
@@ -142,7 +176,7 @@ let dmMaster0 = {
     checkdatef: '',    // 检定日期(起始)
     checkdatet: '',    // 检定日期(终止)
     pidport: '',       // PID控制端口
-    powerport: 'COM3',  // 恒功率值控制端口
+    powerport: 'COM3', // 恒功率值控制端口
     constpower: 0,     // 最新的恒功率输出值
     status: '',        // 当前状态
     mode: '',          // 当前工作模式
@@ -176,11 +210,137 @@ let dmMaster0 = {
     driftmean: 0.0     // 炉内温度1与炉内温度2的10分钟平均漂移值
 }
 // 二号炉
-let dmMaster1 = {}
+let dmMaster1 = {
+    // 环境
+    ambtemp: 25,       // 环境温度
+    ambhumi: 55,       // 环境湿度
+    // 设备
+    apparatusid: '',   // 设备编号
+    apparatusname: '', // 设备名称
+    checkdatef: '',    // 检定日期(起始)
+    checkdatet: '',    // 检定日期(终止)
+    pidport: '',       // PID控制端口
+    powerport: 'COM3', // 恒功率值控制端口
+    constpower: 0,     // 最新的恒功率输出值
+    status: '',        // 当前状态
+    mode: '',          // 当前工作模式
+    // 试样
+    specimanid: '',    // 试样编号
+    prodname: '',      // 产品名称
+    prodspec: '',      // 产品规格型号
+    prodheight: 0.0,   // 产品高度
+    proddiameter: 0.0, // 产品直径
+    prodweight: 0.0,   // 产品质量
+    // 试验
+    testid: '',        // 试验编号(样品标识号)
+    testdate: '',      // 试验日期
+    testaccord: '',    // 检验依据
+    testmemo: '',      // 试验备注
+    operator: '',      // 试验人员
+    timer: 0,          // 当前试验计时
+    // 试验记录
+    pheno: '0000',      // 现象编码
+    flametime: 0,       // 火焰发生时间
+    flameduration: 0,   // 火焰持续时间
+    postweight: 0,      // 试样残余质量
+    // 传感器
+    tf1: 0,            // 炉内温度1
+    tf2: 0,            // 炉内温度2
+    ts: 0,             // 试样表面温度
+    tc: 0,             // 试样中心温度
+    // 计算值
+    drift1: 0.0,       // 炉内温度1的10分钟漂移值
+    drift2: 0.0,       // 炉内温度2的10分钟漂移值
+    driftmean: 0.0     // 炉内温度1与炉内温度2的10分钟平均漂移值
+}
 // 三号炉
-let dmMaster2 = {}
+let dmMaster2 = {
+    // 环境
+    ambtemp: 25,       // 环境温度
+    ambhumi: 55,       // 环境湿度
+    // 设备
+    apparatusid: '',   // 设备编号
+    apparatusname: '', // 设备名称
+    checkdatef: '',    // 检定日期(起始)
+    checkdatet: '',    // 检定日期(终止)
+    pidport: '',       // PID控制端口
+    powerport: 'COM3', // 恒功率值控制端口
+    constpower: 0,     // 最新的恒功率输出值
+    status: '',        // 当前状态
+    mode: '',          // 当前工作模式
+    // 试样
+    specimanid: '',    // 试样编号
+    prodname: '',      // 产品名称
+    prodspec: '',      // 产品规格型号
+    prodheight: 0.0,   // 产品高度
+    proddiameter: 0.0, // 产品直径
+    prodweight: 0.0,   // 产品质量
+    // 试验
+    testid: '',        // 试验编号(样品标识号)
+    testdate: '',      // 试验日期
+    testaccord: '',    // 检验依据
+    testmemo: '',      // 试验备注
+    operator: '',      // 试验人员
+    timer: 0,          // 当前试验计时
+    // 试验记录
+    pheno: '0000',      // 现象编码
+    flametime: 0,       // 火焰发生时间
+    flameduration: 0,   // 火焰持续时间
+    postweight: 0,      // 试样残余质量
+    // 传感器
+    tf1: 0,            // 炉内温度1
+    tf2: 0,            // 炉内温度2
+    ts: 0,             // 试样表面温度
+    tc: 0,             // 试样中心温度
+    // 计算值
+    drift1: 0.0,       // 炉内温度1的10分钟漂移值
+    drift2: 0.0,       // 炉内温度2的10分钟漂移值
+    driftmean: 0.0     // 炉内温度1与炉内温度2的10分钟平均漂移值
+}
 // 四号炉
-let dmMaster3 = {}
+let dmMaster3 = {
+    // 环境
+    ambtemp: 25,       // 环境温度
+    ambhumi: 55,       // 环境湿度
+    // 设备
+    apparatusid: '',   // 设备编号
+    apparatusname: '', // 设备名称
+    checkdatef: '',    // 检定日期(起始)
+    checkdatet: '',    // 检定日期(终止)
+    pidport: '',       // PID控制端口
+    powerport: 'COM3', // 恒功率值控制端口
+    constpower: 0,     // 最新的恒功率输出值
+    status: '',        // 当前状态
+    mode: '',          // 当前工作模式
+    // 试样
+    specimanid: '',    // 试样编号
+    prodname: '',      // 产品名称
+    prodspec: '',      // 产品规格型号
+    prodheight: 0.0,   // 产品高度
+    proddiameter: 0.0, // 产品直径
+    prodweight: 0.0,   // 产品质量
+    // 试验
+    testid: '',        // 试验编号(样品标识号)
+    testdate: '',      // 试验日期
+    testaccord: '',    // 检验依据
+    testmemo: '',      // 试验备注
+    operator: '',      // 试验人员
+    timer: 0,          // 当前试验计时
+    // 试验记录
+    pheno: '0000',      // 现象编码
+    flametime: 0,       // 火焰发生时间
+    flameduration: 0,   // 火焰持续时间
+    postweight: 0,      // 试样残余质量
+    // 传感器
+    tf1: 0,            // 炉内温度1
+    tf2: 0,            // 炉内温度2
+    ts: 0,             // 试样表面温度
+    tc: 0,             // 试样中心温度
+    // 计算值
+    drift1: 0.0,       // 炉内温度1的10分钟漂移值
+    drift2: 0.0,       // 炉内温度2的10分钟漂移值
+    driftmean: 0.0     // 炉内温度1与炉内温度2的10分钟平均漂移值
+}
 
 // 校准视图数据模型
 let dmCalibration = {
@@ -534,6 +694,609 @@ document.getElementById('chkFlame0').addEventListener('change', (event) => {
     document.getElementById('txtDurationTime0').disabled = !document.getElementById('chkFlame0').checked;
     // 设置现象编码
     dmProxy_Master0.pheno = setCharAt(dmProxy_Master0.pheno, 0, document.getElementById('chkFlame0').checked ? '1' : '0');
+});
+
+//#endregion
+
+//#region 二号炉控制面板控件事件注册
+
+// 【开始计时】工具栏按钮
+document.getElementById('btnNewTest1').addEventListener('click', (event) => {
+    $('#dlgNewTest1').dialog('open');
+});
+// 新建试验对话框【取消】按钮
+document.getElementById('btnCancelNewTest1').addEventListener('click', (event) => {
+    $('#dlgNewTest1').dialog('close');
+});
+// 新建试验对话框【确定】按钮
+document.getElementById('btnSubmitNewTest1').addEventListener('click', (event) => {
+    /* 验证输入数据 */
+    let reg_float = /^[+]?\d+(\.\d+)?$/; //float类型正则表达式Pattern
+    // 环境温度
+    if (!reg_float.test(dmMaster1.ambtemp)) {
+        document.getElementById('txtAmbTemp1').invaid = true;
+        document.getElementById('txtAmbTemp1').focus();
+        return;
+    } else {
+        document.getElementById('txtAmbTemp1').invaid = false;
+    }
+    // 环境湿度
+    if (!reg_float.test(dmMaster1.ambhumi)) {
+        document.getElementById('txtAmbHumi1').invaid = true;
+        document.getElementById('txtAmbHumi1').focus();
+        return;
+    } else {
+        document.getElementById('txtAmbHumi1').invaid = false;
+    }
+    // 试样高度
+    if (!reg_float.test(dmMaster1.prodheight)) {
+        document.getElementById('txtProdHeight1').invaid = true;
+        document.getElementById('txtProdHeight1').focus();
+        return;
+    } else {
+        document.getElementById('txtProdHeight1').invaid = false;
+    }
+    // 试样直径
+    if (!reg_float.test(dmMaster1.proddiameter)) {
+        document.getElementById('txtProdDiameter1').invaid = true;
+        document.getElementById('txtProdDiameter1').focus();
+        return;
+    } else {
+        document.getElementById('txtProdDiameter1').invaid = false;
+    }
+    // 试样质量(烧前)
+    if (!reg_float.test(dmMaster1.prodweight)) {
+        document.getElementById('txtProdWeight1').invaid = true;
+        document.getElementById('txtProdWeight1').focus();
+        return;
+    } else {
+        document.getElementById('txtProdWeight1').invaid = false;
+    }
+    // 上传信息
+    let option = {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            AmbTemp: dmMaster1.ambtemp,
+            AmbHumi: dmMaster1.ambhumi,
+            SmpId: dmMaster1.specimanid,
+            SmpSubId: dmMaster1.testid,
+            SmpName: dmMaster1.prodname,
+            SmpSpec: dmMaster1.prodspec,
+            SmpHeight: dmMaster1.prodheight,
+            SmpDiameter: dmMaster1.proddiameter,
+            SmpWeight: dmMaster1.prodheight,
+            TestId: dmMaster1.testid,
+            TestDate: dmMaster1.testdate,
+            TestAccord: dmMaster1.testaccord,
+            Operator: dmMaster1.operator,
+            ApparatusId: dmMaster1.apparatusid,
+            ApparatusName: dmMaster1.apparatusname,
+            ApparatusChkDate: dmMaster1.checkdatet,
+            ConstPower: dmMaster1.constpower,
+            TestMemo: dmMaster1.testmemo
+        })
+    }
+    fetch('api/testmaster/newtest/1', option)
+        .then(response => response.json())
+        .then(data => appendSysMsg(1, data));
+    // 关闭对话框
+    $('#dlgNewTest1').dialog('close');
+});
+
+// 【开始记录】工具栏按钮
+document.getElementById('btnStartRecord1').addEventListener('click', (event) => {
+    window.fetch(`api/testmaster/starttimer/1`)
+        .then(response => response.json())
+        .then(data => appendSysMsg(1, data));
+});
+
+// 【停止记录】工具栏按钮
+document.getElementById('btnStopRecord1').addEventListener('click', (event) => {
+    window.fetch(`api/testmaster/stoptimer/1`)
+        .then(response => response.json())
+        .then(data => appendSysMsg(1, data));
+});
+
+// 【试验记录】工具栏按钮
+document.getElementById('btnSetPheno1').addEventListener('click', (event) => {
+    $('#dlgSetPheno1').dialog('open');
+});
+// 试验记录对话框【取消】按钮
+document.getElementById('btnCancelPheno1').addEventListener('click', (event) => {
+    $('#dlgSetPheno1').dialog('close');
+});
+// 试验记录对话框【确定】按钮
+document.getElementById('btnSubmitPheno1').addEventListener('click', (event) => {
+    //上传信息
+    let option = {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            pheno: dmProxy_Master1.pheno,
+            flametime: dmProxy_Master1.flametime,
+            flamedur: dmProxy_Master1.flameduration,
+            postweight: dmProxy_Master1.postweight
+        })
+    }
+    fetch(`api/testmaster/setpostdata/1`, option)
+        .then(response => response.json())
+        .then(data => appendSysMsg(1, data));
+    // 关闭对话框
+    $('#dlgSetPheno1').dialog('close');
+});
+
+// 【参数设置】工具栏按钮
+document.getElementById('btnSetParam1').addEventListener('click', (event) => {
+    $('#dlgSetParam1').dialog('open');
+});
+// 参数设置对话框【取消】按钮
+document.getElementById('btnCancelSetParam1').addEventListener('click', (event) => {
+    $('#dlgSetParam1').dialog('close');
+});
+// 参数设置对话框【确定】按钮
+document.getElementById('btnSubmitSetParam1').addEventListener('click', (event) => {
+    //上传信息
+    let option = {
+        method: "PUT",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            innernumber: dmProxy_Master1.apparatusid,
+            apparatusname: dmProxy_Master1.apparatusname,
+            checkdatef: dmProxy_Master1.checkdatef,
+            checkdatet: dmProxy_Master1.checkdatet,
+            pidport: dmProxy_Master1.pidport,
+            powerport: dmProxy_Master1.powerport,
+            constpower: dmProxy_Master1.constpower
+        })
+    }
+    fetch(`api/testmaster/setapparatusparam/1`, option)
+        .then(response => response.json())
+        .then(data => appendSysMsg(1, data));
+    // 关闭对话框
+    $('#dlgSetParam1').dialog('close');
+});
+
+// 【开始加热】工具栏按钮
+document.getElementById('btnPowerOn1').addEventListener('click', (event) => {
+    fetch(`api/testmaster/startheating/1`)
+        .then(response => response.json())
+        .then(data => {
+            // 启动加热程序成功,设置加热状态指示为[加热中]
+            if (data.ret === "0") {
+                document.getElementById(`imgIndicator1`).src = "./libs/jquery-easyui-1.10.16/themes/images/16/heat.png";
+            }
+            appendSysMsg(1, data);
+        });
+});
+
+// 【停止加热】工具栏按钮
+document.getElementById('btnPowerOff1').addEventListener('click', (event) => {
+    fetch(`api/testmaster/stopheating/1`)
+        .then(response => response.json())
+        .then(data => {
+            // 停止加热成功,设置加热指示为空白
+            if (data.ret === "0") {
+                document.getElementById(`imgIndicator1`).src = "";
+            }
+            appendSysMsg(1, data);
+        });
+});
+
+// 试验现象 - 持续火焰checkbox
+document.getElementById('chkFlame1').addEventListener('change', (event) => {
+    document.getElementById('txtFlameTime1').disabled = !document.getElementById('chkFlame1').checked;
+    document.getElementById('txtDurationTime1').disabled = !document.getElementById('chkFlame1').checked;
+    // 设置现象编码
+    dmProxy_Master1.pheno = setCharAt(dmProxy_Master1.pheno, 0, document.getElementById('chkFlame1').checked ? '1' : '0');
+});
+
+//#endregion 
+
+//#region 三号炉控制面板控件事件注册
+
+// 【开始计时】工具栏按钮
+document.getElementById('btnNewTest2').addEventListener('click', (event) => {
+    $('#dlgNewTest2').dialog('open');
+});
+// 新建试验对话框【取消】按钮
+document.getElementById('btnCancelNewTest2').addEventListener('click', (event) => {
+    $('#dlgNewTest2').dialog('close');
+});
+// 新建试验对话框【确定】按钮
+document.getElementById('btnSubmitNewTest2').addEventListener('click', (event) => {
+    /* 验证输入数据 */
+    let reg_float = /^[+]?\d+(\.\d+)?$/; //float类型正则表达式Pattern
+    // 环境温度
+    if (!reg_float.test(dmMaster2.ambtemp)) {
+        document.getElementById('txtAmbTemp2').invaid = true;
+        document.getElementById('txtAmbTemp2').focus();
+        return;
+    } else {
+        document.getElementById('txtAmbTemp2').invaid = false;
+    }
+    // 环境湿度
+    if (!reg_float.test(dmMaster2.ambhumi)) {
+        document.getElementById('txtAmbHumi2').invaid = true;
+        document.getElementById('txtAmbHumi2').focus();
+        return;
+    } else {
+        document.getElementById('txtAmbHumi2').invaid = false;
+    }
+    // 试样高度
+    if (!reg_float.test(dmMaster2.prodheight)) {
+        document.getElementById('txtProdHeight2').invaid = true;
+        document.getElementById('txtProdHeight2').focus();
+        return;
+    } else {
+        document.getElementById('txtProdHeight2').invaid = false;
+    }
+    // 试样直径
+    if (!reg_float.test(dmMaster2.proddiameter)) {
+        document.getElementById('txtProdDiameter2').invaid = true;
+        document.getElementById('txtProdDiameter2').focus();
+        return;
+    } else {
+        document.getElementById('txtProdDiameter2').invaid = false;
+    }
+    // 试样质量(烧前)
+    if (!reg_float.test(dmMaster2.prodweight)) {
+        document.getElementById('txtProdWeight2').invaid = true;
+        document.getElementById('txtProdWeight2').focus();
+        return;
+    } else {
+        document.getElementById('txtProdWeight2').invaid = false;
+    }
+    // 上传信息
+    let option = {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            AmbTemp: dmMaster2.ambtemp,
+            AmbHumi: dmMaster2.ambhumi,
+            SmpId: dmMaster2.specimanid,
+            SmpSubId: dmMaster2.testid,
+            SmpName: dmMaster2.prodname,
+            SmpSpec: dmMaster2.prodspec,
+            SmpHeight: dmMaster2.prodheight,
+            SmpDiameter: dmMaster2.proddiameter,
+            SmpWeight: dmMaster2.prodheight,
+            TestId: dmMaster2.testid,
+            TestDate: dmMaster2.testdate,
+            TestAccord: dmMaster2.testaccord,
+            Operator: dmMaster2.operator,
+            ApparatusId: dmMaster2.apparatusid,
+            ApparatusName: dmMaster2.apparatusname,
+            ApparatusChkDate: dmMaster2.checkdatet,
+            ConstPower: dmMaster2.constpower,
+            TestMemo: dmMaster2.testmemo
+        })
+    }
+    fetch('api/testmaster/newtest/2', option)
+        .then(response => response.json())
+        .then(data => appendSysMsg(2, data));
+    // 关闭对话框
+    $('#dlgNewTest2').dialog('close');
+});
+
+// 【开始记录】工具栏按钮
+document.getElementById('btnStartRecord2').addEventListener('click', (event) => {
+    window.fetch(`api/testmaster/starttimer/2`)
+        .then(response => response.json())
+        .then(data => appendSysMsg(2, data));
+});
+
+// 【停止记录】工具栏按钮
+document.getElementById('btnStopRecord2').addEventListener('click', (event) => {
+    window.fetch(`api/testmaster/stoptimer/2`)
+        .then(response => response.json())
+        .then(data => appendSysMsg(2, data));
+});
+
+// 【试验记录】工具栏按钮
+document.getElementById('btnSetPheno2').addEventListener('click', (event) => {
+    $('#dlgSetPheno2').dialog('open');
+});
+// 试验记录对话框【取消】按钮
+document.getElementById('btnCancelPheno2').addEventListener('click', (event) => {
+    $('#dlgSetPheno2').dialog('close');
+});
+// 试验记录对话框【确定】按钮
+document.getElementById('btnSubmitPheno2').addEventListener('click', (event) => {
+    //上传信息
+    let option = {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            pheno: dmProxy_Master2.pheno,
+            flametime: dmProxy_Master2.flametime,
+            flamedur: dmProxy_Master2.flameduration,
+            postweight: dmProxy_Master2.postweight
+        })
+    }
+    fetch(`api/testmaster/setpostdata/2`, option)
+        .then(response => response.json())
+        .then(data => appendSysMsg(2, data));
+    // 关闭对话框
+    $('#dlgSetPheno2').dialog('close');
+});
+
+// 【参数设置】工具栏按钮
+document.getElementById('btnSetParam2').addEventListener('click', (event) => {
+    $('#dlgSetParam2').dialog('open');
+});
+// 参数设置对话框【取消】按钮
+document.getElementById('btnCancelSetParam2').addEventListener('click', (event) => {
+    $('#dlgSetParam2').dialog('close');
+});
+// 参数设置对话框【确定】按钮
+document.getElementById('btnSubmitSetParam2').addEventListener('click', (event) => {
+    //上传信息
+    let option = {
+        method: "PUT",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            innernumber: dmProxy_Master2.apparatusid,
+            apparatusname: dmProxy_Master2.apparatusname,
+            checkdatef: dmProxy_Master2.checkdatef,
+            checkdatet: dmProxy_Master2.checkdatet,
+            pidport: dmProxy_Master2.pidport,
+            powerport: dmProxy_Master2.powerport,
+            constpower: dmProxy_Master2.constpower
+        })
+    }
+    fetch(`api/testmaster/setapparatusparam/2`, option)
+        .then(response => response.json())
+        .then(data => appendSysMsg(2, data));
+    // 关闭对话框
+    $('#dlgSetParam2').dialog('close');
+});
+
+// 【开始加热】工具栏按钮
+document.getElementById('btnPowerOn2').addEventListener('click', (event) => {
+    fetch(`api/testmaster/startheating/2`)
+        .then(response => response.json())
+        .then(data => {
+            // 启动加热程序成功,设置加热状态指示为[加热中]
+            if (data.ret === "0") {
+                document.getElementById(`imgIndicator2`).src = "./libs/jquery-easyui-1.10.16/themes/images/16/heat.png";
+            }
+            appendSysMsg(2, data);
+        });
+});
+
+// 【停止加热】工具栏按钮
+document.getElementById('btnPowerOff2').addEventListener('click', (event) => {
+    fetch(`api/testmaster/stopheating/2`)
+        .then(response => response.json())
+        .then(data => {
+            // 停止加热成功,设置加热指示为空白
+            if (data.ret === "0") {
+                document.getElementById(`imgIndicator2`).src = "";
+            }
+            appendSysMsg(2, data);
+        });
+});
+
+// 试验现象 - 持续火焰checkbox
+document.getElementById('chkFlame2').addEventListener('change', (event) => {
+    document.getElementById('txtFlameTime2').disabled = !document.getElementById('chkFlame2').checked;
+    document.getElementById('txtDurationTime2').disabled = !document.getElementById('chkFlame2').checked;
+    // 设置现象编码
+    dmProxy_Master2.pheno = setCharAt(dmProxy_Master2.pheno, 0, document.getElementById('chkFlame2').checked ? '1' : '0');
+});
+
+//#endregion
+
+//#region 四号炉控制面板控件事件注册
+
+// 【开始计时】工具栏按钮
+document.getElementById('btnNewTest3').addEventListener('click', (event) => {
+    $('#dlgNewTest3').dialog('open');
+});
+// 新建试验对话框【取消】按钮
+document.getElementById('btnCancelNewTest3').addEventListener('click', (event) => {
+    $('#dlgNewTest3').dialog('close');
+});
+// 新建试验对话框【确定】按钮
+document.getElementById('btnSubmitNewTest3').addEventListener('click', (event) => {
+    /* 验证输入数据 */
+    let reg_float = /^[+]?\d+(\.\d+)?$/; //float类型正则表达式Pattern
+    // 环境温度
+    if (!reg_float.test(dmMaster3.ambtemp)) {
+        document.getElementById('txtAmbTemp3').invaid = true;
+        document.getElementById('txtAmbTemp3').focus();
+        return;
+    } else {
+        document.getElementById('txtAmbTemp3').invaid = false;
+    }
+    // 环境湿度
+    if (!reg_float.test(dmMaster3.ambhumi)) {
+        document.getElementById('txtAmbHumi3').invaid = true;
+        document.getElementById('txtAmbHumi3').focus();
+        return;
+    } else {
+        document.getElementById('txtAmbHumi3').invaid = false;
+    }
+    // 试样高度
+    if (!reg_float.test(dmMaster3.prodheight)) {
+        document.getElementById('txtProdHeight3').invaid = true;
+        document.getElementById('txtProdHeight3').focus();
+        return;
+    } else {
+        document.getElementById('txtProdHeight3').invaid = false;
+    }
+    // 试样直径
+    if (!reg_float.test(dmMaster3.proddiameter)) {
+        document.getElementById('txtProdDiameter3').invaid = true;
+        document.getElementById('txtProdDiameter3').focus();
+        return;
+    } else {
+        document.getElementById('txtProdDiameter3').invaid = false;
+    }
+    // 试样质量(烧前)
+    if (!reg_float.test(dmMaster3.prodweight)) {
+        document.getElementById('txtProdWeight3').invaid = true;
+        document.getElementById('txtProdWeight3').focus();
+        return;
+    } else {
+        document.getElementById('txtProdWeight3').invaid = false;
+    }
+    // 上传信息
+    let option = {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            AmbTemp: dmMaster3.ambtemp,
+            AmbHumi: dmMaster3.ambhumi,
+            SmpId: dmMaster3.specimanid,
+            SmpSubId: dmMaster3.testid,
+            SmpName: dmMaster3.prodname,
+            SmpSpec: dmMaster3.prodspec,
+            SmpHeight: dmMaster3.prodheight,
+            SmpDiameter: dmMaster3.proddiameter,
+            SmpWeight: dmMaster3.prodheight,
+            TestId: dmMaster3.testid,
+            TestDate: dmMaster3.testdate,
+            TestAccord: dmMaster3.testaccord,
+            Operator: dmMaster3.operator,
+            ApparatusId: dmMaster3.apparatusid,
+            ApparatusName: dmMaster3.apparatusname,
+            ApparatusChkDate: dmMaster3.checkdatet,
+            ConstPower: dmMaster3.constpower,
+            TestMemo: dmMaster3.testmemo
+        })
+    }
+    fetch('api/testmaster/newtest/3', option)
+        .then(response => response.json())
+        .then(data => appendSysMsg(3, data));
+    // 关闭对话框
+    $('#dlgNewTest3').dialog('close');
+});
+
+// 【开始记录】工具栏按钮
+document.getElementById('btnStartRecord3').addEventListener('click', (event) => {
+    window.fetch(`api/testmaster/starttimer/3`)
+        .then(response => response.json())
+        .then(data => appendSysMsg(3, data));
+});
+
+// 【停止记录】工具栏按钮
+document.getElementById('btnStopRecord3').addEventListener('click', (event) => {
+    window.fetch(`api/testmaster/stoptimer/3`)
+        .then(response => response.json())
+        .then(data => appendSysMsg(3, data));
+});
+
+// 【试验记录】工具栏按钮
+document.getElementById('btnSetPheno3').addEventListener('click', (event) => {
+    $('#dlgSetPheno3').dialog('open');
+});
+// 试验记录对话框【取消】按钮
+document.getElementById('btnCancelPheno3').addEventListener('click', (event) => {
+    $('#dlgSetPheno3').dialog('close');
+});
+// 试验记录对话框【确定】按钮
+document.getElementById('btnSubmitPheno3').addEventListener('click', (event) => {
+    //上传信息
+    let option = {
+        method: "POST",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            pheno: dmProxy_Master3.pheno,
+            flametime: dmProxy_Master3.flametime,
+            flamedur: dmProxy_Master3.flameduration,
+            postweight: dmProxy_Master3.postweight
+        })
+    }
+    fetch(`api/testmaster/setpostdata/3`, option)
+        .then(response => response.json())
+        .then(data => appendSysMsg(3, data));
+    // 关闭对话框
+    $('#dlgSetPheno3').dialog('close');
+});
+
+// 【参数设置】工具栏按钮
+document.getElementById('btnSetParam3').addEventListener('click', (event) => {
+    $('#dlgSetParam3').dialog('open');
+});
+// 参数设置对话框【取消】按钮
+document.getElementById('btnCancelSetParam3').addEventListener('click', (event) => {
+    $('#dlgSetParam3').dialog('close');
+});
+// 参数设置对话框【确定】按钮
+document.getElementById('btnSubmitSetParam3').addEventListener('click', (event) => {
+    //上传信息
+    let option = {
+        method: "PUT",
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            innernumber: dmProxy_Master3.apparatusid,
+            apparatusname: dmProxy_Master3.apparatusname,
+            checkdatef: dmProxy_Master3.checkdatef,
+            checkdatet: dmProxy_Master3.checkdatet,
+            pidport: dmProxy_Master3.pidport,
+            powerport: dmProxy_Master3.powerport,
+            constpower: dmProxy_Master3.constpower
+        })
+    }
+    fetch(`api/testmaster/setapparatusparam/3`, option)
+        .then(response => response.json())
+        .then(data => appendSysMsg(3, data));
+    // 关闭对话框
+    $('#dlgSetParam3').dialog('close');
+});
+
+// 【开始加热】工具栏按钮
+document.getElementById('btnPowerOn3').addEventListener('click', (event) => {
+    fetch(`api/testmaster/startheating/3`)
+        .then(response => response.json())
+        .then(data => {
+            // 启动加热程序成功,设置加热状态指示为[加热中]
+            if (data.ret === "0") {
+                document.getElementById(`imgIndicator3`).src = "./libs/jquery-easyui-1.10.16/themes/images/16/heat.png";
+            }
+            appendSysMsg(3, data);
+        });
+});
+
+// 【停止加热】工具栏按钮
+document.getElementById('btnPowerOff3').addEventListener('click', (event) => {
+    fetch(`api/testmaster/stopheating/3`)
+        .then(response => response.json())
+        .then(data => {
+            // 停止加热成功,设置加热指示为空白
+            if (data.ret === "0") {
+                document.getElementById(`imgIndicator3`).src = "";
+            }
+            appendSysMsg(3, data);
+        });
+});
+
+// 试验现象 - 持续火焰checkbox
+document.getElementById('chkFlame3').addEventListener('change', (event) => {
+    document.getElementById('txtFlameTime3').disabled = !document.getElementById('chkFlame3').checked;
+    document.getElementById('txtDurationTime3').disabled = !document.getElementById('chkFlame3').checked;
+    // 设置现象编码
+    dmProxy_Master3.pheno = setCharAt(dmProxy_Master3.pheno, 0, document.getElementById('chkFlame3').checked ? '1' : '0');
 });
 
 //#endregion
@@ -1420,6 +2183,6 @@ async function startCaliSignalR() {
 // 执行应用程序初始化
 appInitialize();
 // 启动试验控制器SignalR连接
-startTestSignalR();
+// startTestSignalR();
 // 启动校准SignalR连接
-startCaliSignalR();
+// startCaliSignalR();

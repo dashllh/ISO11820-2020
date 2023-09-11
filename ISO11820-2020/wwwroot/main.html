@@ -39,16 +39,16 @@
 <body class="easyui-layout">
     <!-- 主窗体标题栏 -->
     <div data-options="region:'north'"
-        style="border: none;width: 100%;height: 60px;border-bottom: 2px rgb(233, 189, 96) solid;">
+        style="border: none;width: 100%;height: 60px;border-bottom: 2px rgb(225, 89, 0) solid;">
         <div class="apptitle">
             <div class="brand">
                 建筑材料不燃性试验系统 版本 3.0
             </div>
             <div class="sysbuttons">
-                <div class="easyui-linkbutton" data-options="iconCls:'icon-information',width:85">
+                <div id="btnAbout" class="easyui-linkbutton" data-options="iconCls:'icon-information',width:85">
                     关于
                 </div>
-                <div class="easyui-linkbutton" data-options="iconCls:'icon-quit',width:85">
+                <div id="btnQuit" class="easyui-linkbutton" data-options="iconCls:'icon-quit',width:85">
                     退出
                 </div>
             </div>
@@ -729,16 +729,256 @@
         </div>
     </div>
     <!-- 新建试验对话框(二号炉) -->
-    <div id="dlgNewTest1" class="easyui-dialog" data-options="title:'新建试验',modal:true,closed:true">
-        新建试验对话框
+    <div id="newtest-buttons-1">
+        <a id="btnSubmitNewTest1" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">确定</a>
+        <a id="btnCancelNewTest1" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">取消</a>
+    </div>
+    <div id="dlgNewTest1" class="easyui-dialog" style="width:40%;height:470px;"
+        data-options="title:'&nbsp;二号炉 - 新建试验',left:'990px',top:'150px',closed:true,iconCls:'icon-file',buttons:'#newtest-buttons-1'">
+        <div class="dlg-newtest-container">
+            <!-- 环境信息 -->
+            <fieldset class="dlg-newtest-ambinfo">
+                <legend>环境信息</legend>
+                <!-- 环境温度 -->
+                <label for="txtAmbTemp1">环境温度(℃):</label>
+                <input id="txtAmbTemp1" type="text" data-bind-master1="ambtemp" pattern="[+]?\d+(\.\d+)?"
+                    style="width: 95px;text-align: center;">
+                <!-- 环境湿度 -->
+                <label for="txtAmbHumi1">环境湿度(%):</label>
+                <input id="txtAmbHumi1" type="text" data-bind-master1="ambhumi" pattern="[+]?\d+(\.\d+)?"
+                    style="width: 95px;text-align: center;">
+            </fieldset>
+            <!-- 试验信息 -->
+            <fieldset class="dlg-newtest-testinfo">
+                <legend>试验信息</legend>
+                <!-- 试验日期 -->
+                <label for="txtTestDate1">试验日期:</label>
+                <input id="txtTestDate1" type="text" data-bind-master1="testdate">
+                <!-- 试验依据 -->
+                <label for="txtTestAccord1">试验依据:</label>
+                <input id="txtTestAccord1" type="text" data-bind-master1="testaccord" disabled>
+                <!-- 试验人员 -->
+                <label for="txtOperator1">试验人员:</label>
+                <input id="txtOperator1" type="text" data-bind-master1="operator">
+            </fieldset>
+            <!-- 试样信息 -->
+            <fieldset class="dlg-newtest-specimaninfo">
+                <legend>试样信息</legend>
+                <!-- 试样编号 -->
+                <label for="txtSpecimanId1">试样编号:</label>
+                <input id="txtSpecimanId1" type="text" data-bind-master1="specimanid" style="grid-column: 2 / span 2;">
+                <!-- 样品标识号 -->
+                <label for="txtTestId1">样品标识号:</label>
+                <input id="txtTestId1" type="text" data-bind-master1="testid" style="grid-column: 5 / span 2;">
+                <!-- 产品名称 -->
+                <label for="txtProdName1">产品名称:</label>
+                <input id="txtProdName1" type="text" data-bind-master1="prodname" style="grid-column: 2 / span 5;">
+                <!-- 规格型号 -->
+                <label for="txtProdSpec1">规格型号:</label>
+                <input id="txtProdSpec1" type="text" data-bind-master1="prodspec" style="grid-column: 2 / span 5;">
+                <!-- 高度 -->
+                <label for="txtProdHeight1">高度(mm):</label>
+                <input id="txtProdHeight1" type="text" data-bind-master1="prodheight" pattern="[+]?\d+(\.\d+)?"
+                    style="text-align: center;">
+                <!-- 直径 -->
+                <label for="txtProdDiameter1">直径(mm):</label>
+                <input id="txtProdDiameter1" type="text" data-bind-master1="proddiameter" pattern="[+]?\d+(\.\d+)?"
+                    style="text-align: center;">
+                <!-- 质量 -->
+                <label for="txtProdWeight1">质量(g):</label>
+                <input id="txtProdWeight1" type="text" data-bind-master1="prodweight" pattern="[+]?\d+(\.\d+)?"
+                    style="text-align: center;">
+            </fieldset>
+            <!-- 设备信息 -->
+            <fieldset class="dlg-newtest-apparatusinfo">
+                <legend>设备信息</legend>
+                <!-- 设备编号 -->
+                <label for="txtApparatusId1">设备编号:</label>
+                <input id="txtApparatusId1" type="text" data-bind-master1="apparatusid" disabled>
+                <!-- 设备名称 -->
+                <label for="txtApparatusName1">设备名称:</label>
+                <input id="txtApparatusName1" type="text" data-bind-master1="apparatusname" disabled>
+                <!-- 检定日期 -->
+                <label for="txtCheckDate1">检定日期:</label>
+                <input id="txtCheckDate1" type="text" data-bind-master1="checkdate" disabled>
+                <!-- 恒功率值 -->
+                <label for="txtConstPower1">恒功率值(%):</label>
+                <input id="txtConstPower1" type="text" data-bind-master1="constpower" disabled>
+            </fieldset>
+            <!-- 其他信息 -->
+            <fieldset class="dlg-newtest-otherinfo">
+                <legend>试验备注</legend>
+                <input id="txtTestMemo1" type="text" data-bind-master1="testmemo">
+            </fieldset>
+        </div>
     </div>
     <!-- 新建试验对话框(三号炉) -->
-    <div id="dlgNewTest2" class="easyui-dialog" data-options="title:'新建试验',modal:true,closed:true">
-        新建试验对话框
+    <div id="newtest-buttons-2">
+        <a id="btnSubmitNewTest2" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">确定</a>
+        <a id="btnCancelNewTest2" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">取消</a>
+    </div>
+    <div id="dlgNewTest2" class="easyui-dialog" style="width:40%;height:470px;"
+        data-options="title:'&nbsp;三号炉 - 新建试验',left:'50px',top:'620px',closed:true,iconCls:'icon-file',buttons:'#newtest-buttons-2'">
+        <div class="dlg-newtest-container">
+            <!-- 环境信息 -->
+            <fieldset class="dlg-newtest-ambinfo">
+                <legend>环境信息</legend>
+                <!-- 环境温度 -->
+                <label for="txtAmbTemp2">环境温度(℃):</label>
+                <input id="txtAmbTemp2" type="text" data-bind-master2="ambtemp" pattern="[+]?\d+(\.\d+)?"
+                    style="width: 95px;text-align: center;">
+                <!-- 环境湿度 -->
+                <label for="txtAmbHumi2">环境湿度(%):</label>
+                <input id="txtAmbHumi2" type="text" data-bind-master2="ambhumi" pattern="[+]?\d+(\.\d+)?"
+                    style="width: 95px;text-align: center;">
+            </fieldset>
+            <!-- 试验信息 -->
+            <fieldset class="dlg-newtest-testinfo">
+                <legend>试验信息</legend>
+                <!-- 试验日期 -->
+                <label for="txtTestDate2">试验日期:</label>
+                <input id="txtTestDate2" type="text" data-bind-master2="testdate">
+                <!-- 试验依据 -->
+                <label for="txtTestAccord2">试验依据:</label>
+                <input id="txtTestAccord2" type="text" data-bind-master2="testaccord" disabled>
+                <!-- 试验人员 -->
+                <label for="txtOperator2">试验人员:</label>
+                <input id="txtOperator2" type="text" data-bind-master2="operator">
+            </fieldset>
+            <!-- 试样信息 -->
+            <fieldset class="dlg-newtest-specimaninfo">
+                <legend>试样信息</legend>
+                <!-- 试样编号 -->
+                <label for="txtSpecimanId2">试样编号:</label>
+                <input id="txtSpecimanId2" type="text" data-bind-master2="specimanid" style="grid-column: 2 / span 2;">
+                <!-- 样品标识号 -->
+                <label for="txtTestId2">样品标识号:</label>
+                <input id="txtTestId2" type="text" data-bind-master2="testid" style="grid-column: 5 / span 2;">
+                <!-- 产品名称 -->
+                <label for="txtProdName2">产品名称:</label>
+                <input id="txtProdName2" type="text" data-bind-master2="prodname" style="grid-column: 2 / span 5;">
+                <!-- 规格型号 -->
+                <label for="txtProdSpec2">规格型号:</label>
+                <input id="txtProdSpec2" type="text" data-bind-master2="prodspec" style="grid-column: 2 / span 5;">
+                <!-- 高度 -->
+                <label for="txtProdHeight2">高度(mm):</label>
+                <input id="txtProdHeight2" type="text" data-bind-master2="prodheight" pattern="[+]?\d+(\.\d+)?"
+                    style="text-align: center;">
+                <!-- 直径 -->
+                <label for="txtProdDiameter2">直径(mm):</label>
+                <input id="txtProdDiameter2" type="text" data-bind-master2="proddiameter" pattern="[+]?\d+(\.\d+)?"
+                    style="text-align: center;">
+                <!-- 质量 -->
+                <label for="txtProdWeight2">质量(g):</label>
+                <input id="txtProdWeight2" type="text" data-bind-master2="prodweight" pattern="[+]?\d+(\.\d+)?"
+                    style="text-align: center;">
+            </fieldset>
+            <!-- 设备信息 -->
+            <fieldset class="dlg-newtest-apparatusinfo">
+                <legend>设备信息</legend>
+                <!-- 设备编号 -->
+                <label for="txtApparatusId2">设备编号:</label>
+                <input id="txtApparatusId2" type="text" data-bind-master2="apparatusid" disabled>
+                <!-- 设备名称 -->
+                <label for="txtApparatusName2">设备名称:</label>
+                <input id="txtApparatusName2" type="text" data-bind-master2="apparatusname" disabled>
+                <!-- 检定日期 -->
+                <label for="txtCheckDate2">检定日期:</label>
+                <input id="txtCheckDate2" type="text" data-bind-master2="checkdate" disabled>
+                <!-- 恒功率值 -->
+                <label for="txtConstPower2">恒功率值(%):</label>
+                <input id="txtConstPower2" type="text" data-bind-master2="constpower" disabled>
+            </fieldset>
+            <!-- 其他信息 -->
+            <fieldset class="dlg-newtest-otherinfo">
+                <legend>试验备注</legend>
+                <input id="txtTestMemo2" type="text" data-bind-master2="testmemo">
+            </fieldset>
+        </div>
     </div>
     <!-- 新建试验对话框(四号炉) -->
-    <div id="dlgNewTest3" class="easyui-dialog" data-options="title:'新建试验',modal:true,closed:true">
-        新建试验对话框
+    <div id="newtest-buttons-3">
+        <a id="btnSubmitNewTest3" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">确定</a>
+        <a id="btnCancelNewTest3" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">取消</a>
+    </div>
+    <div id="dlgNewTest3" class="easyui-dialog" style="width:40%;height:470px;"
+        data-options="title:'&nbsp;四号炉 - 新建试验',left:'990px',top:'620px',closed:true,iconCls:'icon-file',buttons:'#newtest-buttons-3'">
+        <div class="dlg-newtest-container">
+            <!-- 环境信息 -->
+            <fieldset class="dlg-newtest-ambinfo">
+                <legend>环境信息</legend>
+                <!-- 环境温度 -->
+                <label for="txtAmbTemp3">环境温度(℃):</label>
+                <input id="txtAmbTemp3" type="text" data-bind-master3="ambtemp" pattern="[+]?\d+(\.\d+)?"
+                    style="width: 95px;text-align: center;">
+                <!-- 环境湿度 -->
+                <label for="txtAmbHumi3">环境湿度(%):</label>
+                <input id="txtAmbHumi3" type="text" data-bind-master3="ambhumi" pattern="[+]?\d+(\.\d+)?"
+                    style="width: 95px;text-align: center;">
+            </fieldset>
+            <!-- 试验信息 -->
+            <fieldset class="dlg-newtest-testinfo">
+                <legend>试验信息</legend>
+                <!-- 试验日期 -->
+                <label for="txtTestDate3">试验日期:</label>
+                <input id="txtTestDate3" type="text" data-bind-master3="testdate">
+                <!-- 试验依据 -->
+                <label for="txtTestAccord3">试验依据:</label>
+                <input id="txtTestAccord3" type="text" data-bind-master3="testaccord" disabled>
+                <!-- 试验人员 -->
+                <label for="txtOperator3">试验人员:</label>
+                <input id="txtOperator3" type="text" data-bind-master3="operator">
+            </fieldset>
+            <!-- 试样信息 -->
+            <fieldset class="dlg-newtest-specimaninfo">
+                <legend>试样信息</legend>
+                <!-- 试样编号 -->
+                <label for="txtSpecimanId3">试样编号:</label>
+                <input id="txtSpecimanId3" type="text" data-bind-master3="specimanid" style="grid-column: 2 / span 2;">
+                <!-- 样品标识号 -->
+                <label for="txtTestId3">样品标识号:</label>
+                <input id="txtTestId3" type="text" data-bind-master3="testid" style="grid-column: 5 / span 2;">
+                <!-- 产品名称 -->
+                <label for="txtProdName3">产品名称:</label>
+                <input id="txtProdName3" type="text" data-bind-master3="prodname" style="grid-column: 2 / span 5;">
+                <!-- 规格型号 -->
+                <label for="txtProdSpec3">规格型号:</label>
+                <input id="txtProdSpec3" type="text" data-bind-master3="prodspec" style="grid-column: 2 / span 5;">
+                <!-- 高度 -->
+                <label for="txtProdHeight3">高度(mm):</label>
+                <input id="txtProdHeight3" type="text" data-bind-master3="prodheight" pattern="[+]?\d+(\.\d+)?"
+                    style="text-align: center;">
+                <!-- 直径 -->
+                <label for="txtProdDiameter3">直径(mm):</label>
+                <input id="txtProdDiameter3" type="text" data-bind-master3="proddiameter" pattern="[+]?\d+(\.\d+)?"
+                    style="text-align: center;">
+                <!-- 质量 -->
+                <label for="txtProdWeight3">质量(g):</label>
+                <input id="txtProdWeight3" type="text" data-bind-master3="prodweight" pattern="[+]?\d+(\.\d+)?"
+                    style="text-align: center;">
+            </fieldset>
+            <!-- 设备信息 -->
+            <fieldset class="dlg-newtest-apparatusinfo">
+                <legend>设备信息</legend>
+                <!-- 设备编号 -->
+                <label for="txtApparatusId3">设备编号:</label>
+                <input id="txtApparatusId3" type="text" data-bind-master3="apparatusid" disabled>
+                <!-- 设备名称 -->
+                <label for="txtApparatusName3">设备名称:</label>
+                <input id="txtApparatusName3" type="text" data-bind-master3="apparatusname" disabled>
+                <!-- 检定日期 -->
+                <label for="txtCheckDate3">检定日期:</label>
+                <input id="txtCheckDate3" type="text" data-bind-master3="checkdate" disabled>
+                <!-- 恒功率值 -->
+                <label for="txtConstPower3">恒功率值(%):</label>
+                <input id="txtConstPower3" type="text" data-bind-master3="constpower" disabled>
+            </fieldset>
+            <!-- 其他信息 -->
+            <fieldset class="dlg-newtest-otherinfo">
+                <legend>试验备注</legend>
+                <input id="txtTestMemo3" type="text" data-bind-master3="testmemo">
+            </fieldset>
+        </div>
     </div>
     <!-- ================= 新建试验对话框(结束) ================ -->
 
@@ -774,10 +1014,95 @@
         </div>
     </div>
     <!-- 二号炉 -->
-
+    <div id="setpheno-buttons-1">
+        <a id="btnSubmitPheno1" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">确定</a>
+        <a id="btnCancelPheno1" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">取消</a>
+    </div>
+    <div id="dlgSetPheno1" class="easyui-dialog" style="width:13%;height:310px;"
+        data-options="title:'&nbsp;二号炉 - 试验记录',left:'1245px',top:'150px',iconCls:'icon-checklist',closed:true,buttons:'#setpheno-buttons-1'">
+        <div class="dlg-testpheno">
+            <fieldset class="pheno-flame">
+                <legend
+                    style="display: grid; grid-template-columns: 1fr 2fr;align-items: center;justify-content: space-around;">
+                    <input type="checkbox" id="chkFlame1">
+                    <label for="chkFlame1" style="line-height: 25px;">持续火焰</label>
+                </legend>
+                <!-- 发生时间 -->
+                <label for="txtFlameTime1">发生时间(s):</label>
+                <input id="txtFlameTime1" type="text" class="input-numeric" data-bind-master1="flametime" disabled>
+                <!-- 持续时间 -->
+                <label for="txtDurationTime1">持续时间(s):</label>
+                <input id="txtDurationTime1" type="text" class="input-numeric" data-bind-master1="flameduration"
+                    disabled>
+            </fieldset>
+            <fieldset class="postweight">
+                <legend>试件质量</legend>
+                <!-- 残余质量 -->
+                <label for="txtPostWeight1">残余质量(g):</label>
+                <input id="txtPostWeight1" type="text" class="input-numeric" data-bind-master1="postweight">
+            </fieldset>
+        </div>
+    </div>
     <!-- 三号炉 -->
-
+    <div id="setpheno-buttons-2">
+        <a id="btnSubmitPheno2" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">确定</a>
+        <a id="btnCancelPheno2" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">取消</a>
+    </div>
+    <div id="dlgSetPheno2" class="easyui-dialog" style="width:13%;height:310px;"
+        data-options="title:'&nbsp;三号炉 - 试验记录',left:'300px',top:'628px',iconCls:'icon-checklist',closed:true,buttons:'#setpheno-buttons-2'">
+        <div class="dlg-testpheno">
+            <fieldset class="pheno-flame">
+                <legend
+                    style="display: grid; grid-template-columns: 1fr 2fr;align-items: center;justify-content: space-around;">
+                    <input type="checkbox" id="chkFlame2">
+                    <label for="chkFlame2" style="line-height: 25px;">持续火焰</label>
+                </legend>
+                <!-- 发生时间 -->
+                <label for="txtFlameTime2">发生时间(s):</label>
+                <input id="txtFlameTime2" type="text" class="input-numeric" data-bind-master2="flametime" disabled>
+                <!-- 持续时间 -->
+                <label for="txtDurationTime2">持续时间(s):</label>
+                <input id="txtDurationTime2" type="text" class="input-numeric" data-bind-master2="flameduration"
+                    disabled>
+            </fieldset>
+            <fieldset class="postweight">
+                <legend>试件质量</legend>
+                <!-- 残余质量 -->
+                <label for="txtPostWeight2">残余质量(g):</label>
+                <input id="txtPostWeight2" type="text" class="input-numeric" data-bind-master2="postweight">
+            </fieldset>
+        </div>
+    </div>
     <!-- 四号炉 -->
+    <div id="setpheno-buttons-3">
+        <a id="btnSubmitPheno3" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">确定</a>
+        <a id="btnCancelPheno3" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">取消</a>
+    </div>
+    <div id="dlgSetPheno3" class="easyui-dialog" style="width:13%;height:310px;"
+        data-options="title:'&nbsp;四号炉 - 试验记录',left:'1245px',top:'628px',iconCls:'icon-checklist',closed:true,buttons:'#setpheno-buttons-3'">
+        <div class="dlg-testpheno">
+            <fieldset class="pheno-flame">
+                <legend
+                    style="display: grid; grid-template-columns: 1fr 2fr;align-items: center;justify-content: space-around;">
+                    <input type="checkbox" id="chkFlame3">
+                    <label for="chkFlame3" style="line-height: 25px;">持续火焰</label>
+                </legend>
+                <!-- 发生时间 -->
+                <label for="txtFlameTime3">发生时间(s):</label>
+                <input id="txtFlameTime3" type="text" class="input-numeric" data-bind-master3="flametime" disabled>
+                <!-- 持续时间 -->
+                <label for="txtDurationTime3">持续时间(s):</label>
+                <input id="txtDurationTime3" type="text" class="input-numeric" data-bind-master3="flameduration"
+                    disabled>
+            </fieldset>
+            <fieldset class="postweight">
+                <legend>试件质量</legend>
+                <!-- 残余质量 -->
+                <label for="txtPostWeight3">残余质量(g):</label>
+                <input id="txtPostWeight3" type="text" class="input-numeric" data-bind-master3="postweight">
+            </fieldset>
+        </div>
+    </div>
 
     <!-- ================= 试验记录对话框(结束) ================ -->
 
@@ -817,14 +1142,129 @@
             </fieldset>
         </div>
     </div>
-
     <!-- 二号炉 -->
-
+    <div id="setparam-buttons-1">
+        <a id="btnSubmitSetParam1" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">确定</a>
+        <a id="btnCancelSetParam1" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">取消</a>
+    </div>
+    <div id="dlgSetParam1" class="easyui-dialog" style="width:30%;height:305px;"
+        data-options="title:'&nbsp;二号炉 - 参数设置',left:'1320px',top:'150px',iconCls:'icon-set',closed:true,buttons:'#setparam-buttons-1'">
+        <div class="dlg-setparam">
+            <fieldset class="param-apparatus">
+                <legend>设备参数</legend>
+                <!-- 设备编号 -->
+                <label for="txtApparatusId_SetParam1">设备编号:</label>
+                <input id="txtApparatusId_SetParam1" type="text" data-bind-master1="apparatusid">
+                <!-- 设备名称 -->
+                <label for="txtApparatusName_SetParam1">设备名称:</label>
+                <input id="txtApparatusName_SetParam1" type="text" data-bind-master1="apparatusname">
+                <!-- 检定日期(起始) -->
+                <label for="txtCheckDateF_SetParam1">检定日期:</label>
+                <input id="txtCheckDateF_SetParam1" type="date" data-bind-master1="checkdatef">
+                <!-- 检定日期(终止) -->
+                <label for="txtCheckDateT_SetParam1">至:</label>
+                <input id="txtCheckDateT_SetParam1" type="date" data-bind-master1="checkdatet">
+            </fieldset>
+            <fieldset class="param-communication">
+                <legend>通信参数</legend>
+                <!-- Pid端口 -->
+                <label for="txtPidPort1">PID端口:</label>
+                <input id="txtPidPort1" type="text" data-bind-master1="pidport">
+                <!-- 恒功率值 -->
+                <label for="txtConstPower_SetParam1">恒功率值:</label>
+                <input id="txtConstPower_SetParam1" type="text" data-bind-master1="constpower">
+            </fieldset>
+        </div>
+    </div>
     <!-- 三号炉 -->
-
+    <div id="setparam-buttons-2">
+        <a id="btnSubmitSetParam2" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">确定</a>
+        <a id="btnCancelSetParam2" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">取消</a>
+    </div>
+    <div id="dlgSetParam2" class="easyui-dialog" style="width:30%;height:305px;"
+        data-options="title:'&nbsp;三号炉 - 参数设置',left:'380px',top:'628px',iconCls:'icon-set',closed:true,buttons:'#setparam-buttons-2'">
+        <div class="dlg-setparam">
+            <fieldset class="param-apparatus">
+                <legend>设备参数</legend>
+                <!-- 设备编号 -->
+                <label for="txtApparatusId_SetParam2">设备编号:</label>
+                <input id="txtApparatusId_SetParam2" type="text" data-bind-master2="apparatusid">
+                <!-- 设备名称 -->
+                <label for="txtApparatusName_SetParam2">设备名称:</label>
+                <input id="txtApparatusName_SetParam2" type="text" data-bind-master2="apparatusname">
+                <!-- 检定日期(起始) -->
+                <label for="txtCheckDateF_SetParam2">检定日期:</label>
+                <input id="txtCheckDateF_SetParam2" type="date" data-bind-master2="checkdatef">
+                <!-- 检定日期(终止) -->
+                <label for="txtCheckDateT_SetParam2">至:</label>
+                <input id="txtCheckDateT_SetParam2" type="date" data-bind-master2="checkdatet">
+            </fieldset>
+            <fieldset class="param-communication">
+                <legend>通信参数</legend>
+                <!-- Pid端口 -->
+                <label for="txtPidPort2">PID端口:</label>
+                <input id="txtPidPort2" type="text" data-bind-master2="pidport">
+                <!-- 恒功率值 -->
+                <label for="txtConstPower_SetParam2">恒功率值:</label>
+                <input id="txtConstPower_SetParam2" type="text" data-bind-master2="constpower">
+            </fieldset>
+        </div>
+    </div>
     <!-- 四号炉 -->
+    <div id="setparam-buttons-3">
+        <a id="btnSubmitSetParam3" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">确定</a>
+        <a id="btnCancelSetParam3" class="easyui-linkbutton" data-options="iconCls:'icon-cancel'">取消</a>
+    </div>
+    <div id="dlgSetParam3" class="easyui-dialog" style="width:30%;height:305px;"
+        data-options="title:'&nbsp;四号炉 - 参数设置',left:'1320px',top:'628px',iconCls:'icon-set',closed:true,buttons:'#setparam-buttons-3'">
+        <div class="dlg-setparam">
+            <fieldset class="param-apparatus">
+                <legend>设备参数</legend>
+                <!-- 设备编号 -->
+                <label for="txtApparatusId_SetParam3">设备编号:</label>
+                <input id="txtApparatusId_SetParam3" type="text" data-bind-master3="apparatusid">
+                <!-- 设备名称 -->
+                <label for="txtApparatusName_SetParam3">设备名称:</label>
+                <input id="txtApparatusName_SetParam3" type="text" data-bind-master3="apparatusname">
+                <!-- 检定日期(起始) -->
+                <label for="txtCheckDateF_SetParam3">检定日期:</label>
+                <input id="txtCheckDateF_SetParam3" type="date" data-bind-master3="checkdatef">
+                <!-- 检定日期(终止) -->
+                <label for="txtCheckDateT_SetParam3">至:</label>
+                <input id="txtCheckDateT_SetParam3" type="date" data-bind-master3="checkdatet">
+            </fieldset>
+            <fieldset class="param-communication">
+                <legend>通信参数</legend>
+                <!-- Pid端口 -->
+                <label for="txtPidPort3">PID端口:</label>
+                <input id="txtPidPort3" type="text" data-bind-master3="pidport">
+                <!-- 恒功率值 -->
+                <label for="txtConstPower_SetParam3">恒功率值:</label>
+                <input id="txtConstPower_SetParam3" type="text" data-bind-master3="constpower">
+            </fieldset>
+        </div>
+    </div>
 
     <!-- ================= 参数设置对话框(结束) ================ -->
+
+    <!-- 关于系统对话框 -->
+    <div id="dlgabout-buttons">
+        <a id="btnConfirmDlgAbout" class="easyui-linkbutton" data-options="iconCls:'icon-ok'">确定</a>
+    </div>
+    <div id="dlgAbout" class="easyui-dialog" title="关于系统" style="width: 420px;height: 180px;"
+        data-options="closed:true">
+        <img src="furnace.png" style="grid-row: 1 / span 4;align-self: normal;padding-right: 15px;">
+        <div>系统名称:</div>
+        <div>建筑材料不燃性试验系统</div>
+        <div>系统版本:</div>
+        <div>3.0</div>
+        <div>生产厂商:</div>
+        <div>成都九驱创智科技有限公司</div>
+        <div>技术支持:</div>
+        <div>19980772362</div>
+    </div>
+
+    <!-- 关于系统对话框(结束) -->
 </body>
 <footer>
     <!-- 导入客户端初始化文件 -->

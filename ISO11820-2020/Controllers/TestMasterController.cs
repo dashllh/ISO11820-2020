@@ -1,14 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Hosting;
 using TestServer.Core;
 using TestServer.Models;
 using TestServer.Global;
 using Microsoft.EntityFrameworkCore;
 using ISO11820_2020.Models;
 using OfficeOpenXml;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Diagnostics;
 using DevExpress.XtraPrinting;
 using DevExpress.Spreadsheet;
 
@@ -48,7 +44,7 @@ namespace TestServer.Controllers
             //初始化服务器环境对象
             _Environment = Environment;
             if (!bMasterInitialized)
-            {                
+            {
                 //添加四个试验控制器对象,对应四个试验炉
                 _testMasters.addMaster(testMaster1);
                 _testMasters.addMaster(testMaster2);
@@ -57,7 +53,7 @@ namespace TestServer.Controllers
                 //开启每个控制器的数据采集线程
                 foreach (var master in _testMasters.DictTestMaster.Values)
                 {
-                    master.OnInitialized();                    
+                    //master.OnInitialized();                    
                 }
                 //设置控制器初始化完成标记
                 bMasterInitialized = true;
@@ -106,7 +102,7 @@ namespace TestServer.Controllers
         public async Task<IList<Apparatus>> GetApparatusInfo()
         {
             var ctx = _contextFactory.CreateDbContext();
-            var apparatus = await ctx.Apparatuses.ToListAsync();             
+            var apparatus = await ctx.Apparatuses.ToListAsync();
             return apparatus;
         }
 
@@ -114,7 +110,7 @@ namespace TestServer.Controllers
         [HttpGet("startidle/{id}")]
         public void StartIdle(int id)
         {
-            _testMasters.DictTestMaster?[id].OnInitialized();            
+            _testMasters.DictTestMaster?[id].OnInitialized();
         }
 
         // POST api/<TestMasterController>
@@ -145,22 +141,68 @@ namespace TestServer.Controllers
         public async Task<IActionResult> ProcessLogin([FromBody] LoginData data)
         {
             Message msg = new Message();
-            msg.Param = new Dictionary<string, object>();
             //查询数据库,判断登录信息是否合法
             var ctx = _contextFactory.CreateDbContext();
             var user = await ctx.Operators.Where(x => x.Username == data.UserName && x.Pwd == data.Password)
                 .FirstOrDefaultAsync();
-            if (user != null) {
+            if (user != null)
+            {
                 msg.Ret = "0";
                 msg.Msg = "登录成功。";
                 msg.Param.Add("user", user.Username);
-                msg.Param.Add("usertype",user.Usertype);
-            } else {
+                msg.Param.Add("usertype", user.Usertype);
+            }
+            else
+            {
                 msg.Ret = "-1";
                 msg.Msg = "没有该用户的信息,请检查输入是否有误。";
             }
-            
+
             return new JsonResult(msg);
+        }
+
+        /*
+         * 功能: 尝试退出系统,若存在试验控制器正在试验中,则终止退出并返回询问消息
+         */
+        [HttpGet("quitwithcheck")]
+        public IActionResult QuitWithCheck()
+        {
+            var response = new Message();
+            response.Cmd = "quitwithcheck";
+            // 检查试验控制器当前状态,如果正在工作中则返回提示信息
+            for (int i = 0; i < 4; i++)
+            {
+                if(_testMasters.DictTestMaster[i].Status == MasterStatus.Recording)
+                {
+                    response.Ret = "-1";
+                    response.Msg = $"{i}号试验装置正在试验中,继续退出将导致数据丢失,是否继续 ?";
+
+                    return new JsonResult(response);
+                }
+            }
+            response.Ret = "0";
+            return new JsonResult(response);
+        }
+
+        /*
+         * 功能: 无条件退出系统
+         */
+        [HttpGet("quitanyway")]
+        public async Task<IActionResult> QuitAnyway()
+        {
+            var response = new Message();
+            response.Cmd = "quitanyway";
+
+            /*  终止正在试验进行中的试验控制器 */
+            // 停止数据记录
+
+            // 停止试验炉加热
+
+            // 保存必要数据
+
+            // 清空缓存数据
+
+            return new JsonResult(response);
         }
 
         /* 样品试验操作相关接口函数定义 */
@@ -179,7 +221,6 @@ namespace TestServer.Controllers
             await _testMasters.DictTestMaster[_masterId].StartHeatingAsync();
 
             Message msg = new Message();
-            msg.Param = new Dictionary<string, object>();
             msg.Cmd = "startheating";
             //设置客户端返回消息
             msg.Ret = "0";
@@ -202,7 +243,6 @@ namespace TestServer.Controllers
             _testMasters.DictTestMaster?[id].StopHeating();
 
             Message msg = new Message();
-            msg.Param = new Dictionary<string, object>();
             msg.Cmd = "stopheating";
             msg.Ret = "0";
             msg.Msg = "试验装置已停止加热。";
@@ -222,7 +262,6 @@ namespace TestServer.Controllers
         {
             int _masterId = id;
             Message msg = new Message();
-            msg.Param = new Dictionary<string, object>();
             msg.Cmd = "newtest";
             /* 检查是否第一次创建该样品的试验 */
             var ctx = _contextFactory.CreateDbContext();
@@ -236,15 +275,15 @@ namespace TestServer.Controllers
             _testMasters.DictTestMaster?[_masterId].SetProductData(productmaster);
             //第一次创建该产品的试验,新增产品信息
             if (!ctx.Productmasters.Any(prod => (prod.Productid == data.SmpId)))
-            {                
+            {
                 ctx.Productmasters.Add(productmaster);
                 await ctx.SaveChangesAsync();
             }
             //判断试验编号是否重复(重复则返回提示信息)
-            if(!ctx.Testmasters.Any(test => (test.Productid == data.SmpId && test.Testid == data.TestId)))
+            if (!ctx.Testmasters.Any(test => (test.Productid == data.SmpId && test.Testid == data.TestId)))
             {
                 //样品编号及试验编号没有重复,创建并设置控制器内部数据缓存
-                var testmaster = new Testmaster();                
+                var testmaster = new Testmaster();
                 testmaster.Productid = data.SmpId;
                 testmaster.Testid = data.TestId;
                 testmaster.Ambtemp = data.AmbTemp;
@@ -261,7 +300,7 @@ namespace TestServer.Controllers
                 testmaster.Phenocode = "0000";
                 testmaster.Memo = data.TestMemo;
                 testmaster.Flag = "00000000"; // (第1位:本次试验是否完成, 第2位:本次试验是否出结论 ...)
-                _testMasters.DictTestMaster[_masterId].SetTestData(testmaster);                
+                _testMasters.DictTestMaster[_masterId].SetTestData(testmaster);
 
                 //设置客户端返回消息
                 msg.Ret = "0";
@@ -270,7 +309,9 @@ namespace TestServer.Controllers
                 msg.Param.Add("masterid", _masterId);
                 msg.Param.Add("smpid", testmaster.Productid);
                 msg.Param.Add("testid", testmaster.Testid);
-            } else {
+            }
+            else
+            {
                 //样品编号及试验编号重复,返回错误提示                
                 msg.Ret = "-1";
                 msg.Msg = $"样品标识号 [ {data.TestId} ] 重复,请检查输入。";
@@ -291,22 +332,23 @@ namespace TestServer.Controllers
         {
             int _masterId = id;
             Message msg = new Message();
-            msg.Param = new Dictionary<string, object>();
             msg.Cmd = "starttimer";
             msg.Param.Add("masterid", _masterId);
             msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
             // 判断是否新建样品试验,如果没有,则返回错误提示
             if (_testMasters.DictTestMaster?[id].GetTestData() is null)
-            {                
+            {
                 msg.Ret = "-1";
                 msg.Msg = "试验控制器尚未接收试验样品信息,请先新建本次试验。";
-            } else {
+            }
+            else
+            {
                 _testMasters.DictTestMaster?[id].StartRecording();
                 var prodid = _testMasters.DictTestMaster?[id].GetTestData().Productid;
                 var testid = _testMasters.DictTestMaster?[id].GetTestData().Testid;
-                msg.Ret = "0";                
-                msg.Msg = $"开始记录试验数据。样品编号: [ {prodid} ], 样品标识: [ {testid} ]";                
-            }            
+                msg.Ret = "0";
+                msg.Msg = $"开始记录试验数据。样品编号: [ {prodid} ], 样品标识: [ {testid} ]";
+            }
 
             return new JsonResult(msg);
         }
@@ -320,7 +362,6 @@ namespace TestServer.Controllers
             _testMasters.DictTestMaster?[id].StopRecording();
 
             Message msg = new Message();
-            msg.Param = new Dictionary<string, object>();
             msg.Cmd = "stoptimer";
             msg.Ret = "0";
             msg.Msg = "计时结束。";
@@ -339,7 +380,6 @@ namespace TestServer.Controllers
         //    //...
 
         //    Message msg = new Message();
-        //    msg.Param = new Dictionary<string, object>();
         //    msg.Cmd = "canceltest";
         //    msg.Ret = "0";
         //    msg.Msg = "本次试验已取消。";
@@ -361,28 +401,27 @@ namespace TestServer.Controllers
             var ctx = _contextFactory.CreateDbContext();
             var apparatus = await ctx.Apparatuses.FirstAsync(r => r.Apparatusid == id);
             //更新数据库中的相应值
-            apparatus.Innernumber   = data.Innernumber;
+            apparatus.Innernumber = data.Innernumber;
             apparatus.Apparatusname = data.Apparatusname;
-            apparatus.Checkdatef    = data.Checkdatef;
-            apparatus.Checkdatet    = data.Checkdatet;
-            apparatus.Pidport       = data.Pidport;
-            apparatus.Powerport     = data.Powerport;
-            apparatus.Constpower    = data.Constpower;
+            apparatus.Checkdatef = data.Checkdatef;
+            apparatus.Checkdatet = data.Checkdatet;
+            apparatus.Pidport = data.Pidport;
+            apparatus.Powerport = data.Powerport;
+            apparatus.Constpower = data.Constpower;
             //保存更改
             await ctx.SaveChangesAsync();
             //同步更新服务端全局缓存
-            _global.DictApparatus[id].Innernumber   = data.Innernumber;
+            _global.DictApparatus[id].Innernumber = data.Innernumber;
             _global.DictApparatus[id].Apparatusname = data.Apparatusname;
-            _global.DictApparatus[id].Checkdatef    = data.Checkdatef;
-            _global.DictApparatus[id].Checkdatet    = data.Checkdatet;
-            _global.DictApparatus[id].Pidport       = data.Pidport;
-            _global.DictApparatus[id].Powerport     = data.Powerport;
-            _global.DictApparatus[id].Constpower    = data.Constpower;
+            _global.DictApparatus[id].Checkdatef = data.Checkdatef;
+            _global.DictApparatus[id].Checkdatet = data.Checkdatet;
+            _global.DictApparatus[id].Pidport = data.Pidport;
+            _global.DictApparatus[id].Powerport = data.Powerport;
+            _global.DictApparatus[id].Constpower = data.Constpower;
             //同步更新设备控制器恒功率值
             //_testMasters.DictTestMaster[id].UpdateConstPower(Convert.ToUInt16(data.Constpower));
             //构造返回消息
             Message msg = new Message();
-            msg.Param = new Dictionary<string, object>();
             msg.Cmd = "setconstpower";
             msg.Ret = "0";
             msg.Msg = "更新设备参数成功。";
@@ -398,22 +437,24 @@ namespace TestServer.Controllers
          *      mass - 当前试验样品的残余质量
          */
         [HttpPost("setpostdata/{id}")]
-        public async Task<IActionResult> SetPostData(int id,[FromBody] PostTestData postdata)
+        public async Task<IActionResult> SetPostData(int id, [FromBody] PostTestData postdata)
         {
             //设置当前试验样品的残余质量及火焰信息
-            if(postdata.Pheno.StartsWith('1')) {
-                _testMasters.DictTestMaster[id].SetPostTestData(postdata.Pheno,postdata.FlameTime,
+            if (postdata.Pheno.StartsWith('1'))
+            {
+                _testMasters.DictTestMaster[id].SetPostTestData(postdata.Pheno, postdata.FlameTime,
                 postdata.FlameDur, postdata.PostWeight);
-            } else {
-                _testMasters.DictTestMaster[id].SetPostTestData(postdata.Pheno,0, 0, postdata.PostWeight);
-            }            
+            }
+            else
+            {
+                _testMasters.DictTestMaster[id].SetPostTestData(postdata.Pheno, 0, 0, postdata.PostWeight);
+            }
             //执行试验后期处理并生成本次试验的数据及报告文件
             await _testMasters.DictTestMaster[id].PostTestProcess();
             // 清空本次试验数据缓存
             _testMasters.DictTestMaster[id].ResetTestData();
             //构造返回消息
             Message msg = new Message();
-            msg.Param = new Dictionary<string, object>();
             msg.Cmd = "setpostmass";
             msg.Ret = "0";
             msg.Msg = "已设置试样残余质量并生成试验报告。";
@@ -446,7 +487,7 @@ namespace TestServer.Controllers
          */
         [HttpPost("getfinalreport")]
         public async Task<IActionResult> GetFinalReport([FromBody] FinalReportData postdata)
-        {            
+        {
             /* 更新数据库中对应样品编号的试验明细数据的残余质量 */
             var ctx = _contextFactory.CreateDbContext();
             var records = await ctx.Testmasters.Where(x => x.Productid == postdata.Details[0].Productid).ToListAsync();
@@ -454,7 +495,7 @@ namespace TestServer.Controllers
             {
                 foreach (var detail in postdata.Details)
                 {
-                    if(item.Testid == detail.Testid)
+                    if (item.Testid == detail.Testid)
                     {
                         item.Postweight = detail.Postweight;
                         break;
@@ -576,17 +617,17 @@ namespace TestServer.Controllers
                 //另存为汇总报表
                 await package.SaveAsAsync($"D:\\ISO11820\\{postdata.Details[0].Productid}\\final_report.xlsx");
             }
-            /* 使用DevExpress Office API另存为PDF格式 */            
+            /* 使用DevExpress Office API另存为PDF格式 */
             using (DevExpress.Spreadsheet.Workbook workbook = new())
             {
                 // 加载报表文件
                 workbook.LoadDocument($"D:\\ISO11820\\{postdata.Details[0].Productid}\\final_report.xlsx", DocumentFormat.Xlsx);
-                                
+
                 // 导出报表首页为PDF格式
                 PdfExportOptions options = new PdfExportOptions();
                 options.DocumentOptions.Author = "李西黎";
                 workbook.ExportToPdf($"D:\\ISO11820\\{postdata.Details[0].Productid}\\final_report.pdf", options, "main");
-            }                  
+            }
 
             //复制报表文件至客户端下载文件夹
             string path = _Environment.WebRootPath + $"\\finalreports\\{postdata.Details[0].Productid}";
@@ -596,15 +637,14 @@ namespace TestServer.Controllers
 
             //构造返回消息
             Message msg = new Message();
-            msg.Param = new Dictionary<string, object>();
             msg.Cmd = "finalreport";
             msg.Ret = "0";
             msg.Msg = "已生成汇总报告。";
-            msg.Param.Add("downloadpath",$"finalreports\\{postdata.Details[0].Productid}\\final_report.pdf");
+            msg.Param.Add("downloadpath", $"finalreports\\{postdata.Details[0].Productid}\\final_report.pdf");
 
             return new JsonResult(msg);
         }
-    }    
+    }
 
     /* =========== 定义用于Action方法调用时的数据绑定的类型 ========== */
     //用户登录所需的信息类型
@@ -657,12 +697,20 @@ namespace TestServer.Controllers
         public string Msg { get; set; }
         //返回的附加参数
         public Dictionary<string, object> Param { get; set; }
+
+        public Message()
+        {
+            Cmd = string.Empty;
+            Ret = string.Empty;
+            Msg = string.Empty;
+            Param = new Dictionary<string, object>();
+        }
     }
 
     //生成汇总报表的上传数据对象
     public class FinalReportData
     {
-       public IList<int> Indexes { get; set; }
-       public IList<ViewTestInfo> Details { get; set; }
+        public IList<int> Indexes { get; set; }
+        public IList<ViewTestInfo> Details { get; set; }
     }
 }
