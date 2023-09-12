@@ -6,12 +6,13 @@ using TestServer.Hubs;
 using TestServer.Core;
 using TestServer.Global;
 using ISO11820_2020.Hubs;
+using Microsoft.Extensions.Hosting.WindowsServices;
 
 //设置ContentRoot路径以便WindowsService正常启动
 WebApplicationOptions options = new()
 {
-    ContentRootPath = AppContext.BaseDirectory,
-    Args = args
+    Args = args,
+    ContentRootPath = WindowsServiceHelpers.IsWindowsService() ? AppContext.BaseDirectory : default    
 };
 
 var builder = WebApplication.CreateBuilder(args);
@@ -48,6 +49,9 @@ builder.Services.Configure<EventLogSettings>(config =>
     //该属性对应 Windows事件记录日志程序中的 "来源" 查询字段
     config.SourceName = "ISO11820 Test Manager";
 });
+
+// 支持以WindowsService方式启动试验服务器
+builder.Host.UseWindowsService();
 
 var app = builder.Build();
 

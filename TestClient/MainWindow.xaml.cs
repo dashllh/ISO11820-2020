@@ -29,5 +29,14 @@ namespace TestClient
         {
             await wvContent.CoreWebView2.CallDevToolsProtocolMethodAsync("Network.clearBrowserCache", "{}");
         }
+
+        private void wvContent_WebMessageReceived(object sender, Microsoft.Web.WebView2.Core.CoreWebView2WebMessageReceivedEventArgs e)
+        {
+            var message = e.TryGetWebMessageAsString();
+            if(message == "quit")
+            {
+                Application.Current.Shutdown();
+            }
+        }
     }
 }

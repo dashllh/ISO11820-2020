@@ -141,7 +141,10 @@ document.getElementById("btnQuit").onclick = function () {
     window.fetch('api/testmaster/quitwithcheck')
         .then(response => response.json())
         .then(data => {
-            if (data.ret === "-1") {
+            if (data.ret === "0") {
+                // 向本地应用程序发送退出消息
+                window.chrome.webview.postMessage("quit");
+            } else if (data.ret === "-1") {
                 $.messager.confirm('系统提示', data.msg, (confirm) => {
                     if (confirm) {
                         window.fetch('api/testmaster/quitanyway')
