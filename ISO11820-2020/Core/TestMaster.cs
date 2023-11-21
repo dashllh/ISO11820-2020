@@ -95,8 +95,6 @@ namespace TestServer.Core
         protected SensorDictionary _sensors;
         /* IHubContext对象,用于发送实时数据广播 */
         protected IHubContext<NotificationHub> _notificationHub;
-        /* 传感器数据CSV文件输出路径 */
-        protected string _csvFilePath;
         /* [Recording]状态所需数据结构 */
         // 试验数据缓存(包括实时传感器数据,计算数据以及控制器消息)
         protected List<SensorDataCatch> _bufSensorData;
@@ -175,12 +173,12 @@ namespace TestServer.Core
         public void OnInitialized()
         {
             //连接PID控温器
-            if(_apparatusManipulator.EstablishConnection())
+            if (_apparatusManipulator.EstablishConnection())
             {
                 //启动试验控制器并设置状态为[Idle]           
                 Status = MasterStatus.Idle;
                 _timer?.Change(0, 1000);
-            }            
+            }
         }
 
         ///* 定时任务函数,执行系统空闲时的任务[Idle] */
@@ -269,8 +267,8 @@ namespace TestServer.Core
          */
         public bool StartRecording()
         {
-            /* 开始样品试验前的初始化工作 */            
-            if(_apparatusManipulator.SetOutputPower(Convert.ToUInt16(queuePidOutput.Average()))
+            /* 开始样品试验前的初始化工作 */
+            if (_apparatusManipulator.SetOutputPower(Convert.ToUInt16(queuePidOutput.Average()))
                 && _apparatusManipulator.SwitchToManual())
             {
                 //重置计时器
@@ -285,9 +283,9 @@ namespace TestServer.Core
         }
 
         public bool StopRecording()
-        {            
+        {
             //2022-11-20 向试验设备控制器发送指令,切换加热方式为PID控温            
-            if(_apparatusManipulator.SwitchToPID())
+            if (_apparatusManipulator.SwitchToPID())
             {
                 //重置计时器
                 Timer = 0;
@@ -313,25 +311,37 @@ namespace TestServer.Core
 
         /*
          * 功能: 启动不燃炉加热
+         * 参数:
+         *       无
+         * 返回:
+         *       0  - 设置成功,开始升温
+         *       -1 - 设置失败,未开始升温
          */
         public async Task<int> StartHeatingAsync()
         {
             // 向试验设备控制器发送指令,启动试验炉加热
-            await Task.Run(() => _apparatusManipulator.StartHeating());
-            // 设置控制器状态为[Preparing]
-            Status = MasterStatus.Preparing;
-            return 0;
+            var ret = await Task.Run(() => _apparatusManipulator.StartHeating());
+            // 设置启动加热成功,则设置控制器状态为[Preparing]
+            if(ret)
+            {
+                Status = MasterStatus.Preparing;
+            }            
+            return ret ? 0 : -1;
         }
 
         /*
          * 功能: 停止不燃炉加热
          */
-        public void StopHeating()
+        public int StopHeating()
         {
             //2022-11-20 向试验设备控制器发送指令,停止加热
-            _apparatusManipulator.StopHeating();
-            //修改试验控制器状态为[Preparing],根据具体试验任务确定
-            Status = MasterStatus.Idle;
+            var ret = _apparatusManipulator.StopHeating();
+            //设置停止加热成功,则修改试验控制器状态为[Preparing],根据具体试验任务确定
+            if(ret)
+            {
+                Status = MasterStatus.Idle;
+            }            
+            return ret ? 0 : -1;
         }
 
         public virtual void SetProductData(Productmaster prodmaster)
@@ -359,9 +369,9 @@ namespace TestServer.Core
             return _testmaster;
         }
 
-        public virtual void ResetTestData() 
+        public virtual void ResetTestData()
         {
-            _testmaster = null; 
+            _testmaster = null;
         }
 
         /*
@@ -437,7 +447,7 @@ namespace TestServer.Core
             //判断试验终止条件是否满足 
             return ((int)(_caculateDataCatch.Temp1Drift10Min * 10) <= 20 &&
                  (int)(_caculateDataCatch.Temp2Drift10Min * 10) <= 20) ? true : false;
-        }        
+        }
 
         /*
          * 功能: 新版本试验计时结束后数据处理函数,
@@ -487,11 +497,11 @@ namespace TestServer.Core
                 };
                 //操作Excel文件
                 using (ExcelPackage package = new ExcelPackage(new FileInfo($"D:\\ISO11820\\template_report_{MasterId}.xlsx")))
-                {    
+                {
                     //取得rawdata页面
                     ExcelWorksheet sheet_rawdata = package.Workbook.Worksheets.ElementAt(1);
                     //将采集数据记录拷贝至试验报表的rawdata页面(含首行标题)
-                    sheet_rawdata.Cells["A1"].LoadFromText(new FileInfo($"{datapath}\\sensordata.csv"), format, null, true);                    
+                    sheet_rawdata.Cells["A1"].LoadFromText(new FileInfo($"{datapath}\\sensordata.csv"), format, null, true);
                     /* 设置报表首页部分数据 */
                     //取得报表首页页面(页面索引从 0 开始)
                     ExcelWorksheet sheet_main = package.Workbook.Worksheets.ElementAt(0);
@@ -566,7 +576,7 @@ namespace TestServer.Core
                 //保存本次试验数据至试验数据库
                 var ctx = _contextFactory.CreateDbContext();
                 ctx.Testmasters.Add(_testmaster);
-                await ctx.SaveChangesAsync();                
+                await ctx.SaveChangesAsync();
             }
             catch (Exception)
             {
@@ -590,7 +600,7 @@ namespace TestServer.Core
          *      flamedur  - 本次试验火焰持续时间(秒)
          *      mass - 样品残余质量
          */
-        public void SetPostTestData(string phenocode,int flametime, int flamedur, double mass)
+        public void SetPostTestData(string phenocode, int flametime, int flamedur, double mass)
         {
             _testmaster.Phenocode = phenocode;
             _testmaster.Flametime = flametime;

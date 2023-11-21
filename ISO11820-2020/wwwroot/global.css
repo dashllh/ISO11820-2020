@@ -4,6 +4,43 @@ body {
     user-select: none;
 }
 
+.overlay {
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(255, 255, 255, 1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.spinner {
+    border: 4px solid #F3F3F3;
+    border-top: 4px solid #3498DB;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+}
+
+.loading-text {
+    font-size: 14px;
+    margin-top: 10px;
+    color: #CCCCCC;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
 /* =========== 对话框布局通用属性设置 =========== */
 fieldset {
     border: 1px lightgray solid;
@@ -207,7 +244,7 @@ input:invalid {
 #dlgAbout {
     display: grid;
     grid-template-rows: repeat(4, fr);
-    grid-template-columns:1fr 1fr 3fr;
+    grid-template-columns: 1fr 1fr 3fr;
     justify-content: center;
     align-items: center;
     padding: 15px 20px;

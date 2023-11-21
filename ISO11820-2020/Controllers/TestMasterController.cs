@@ -101,8 +101,17 @@ namespace TestServer.Controllers
         [HttpGet("getapparatusinfo")]
         public async Task<IList<Apparatus>> GetApparatusInfo()
         {
+            IList<Apparatus> apparatus;
             var ctx = _contextFactory.CreateDbContext();
-            var apparatus = await ctx.Apparatuses.ToListAsync();
+            try
+            {
+                apparatus = await ctx.Apparatuses.ToListAsync();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+
             return apparatus;
         }
 
@@ -143,19 +152,28 @@ namespace TestServer.Controllers
             Message msg = new Message();
             //查询数据库,判断登录信息是否合法
             var ctx = _contextFactory.CreateDbContext();
-            var user = await ctx.Operators.Where(x => x.Username == data.UserName && x.Pwd == data.Password)
-                .FirstOrDefaultAsync();
-            if (user != null)
+            try
             {
-                msg.Ret = "0";
-                msg.Msg = "登录成功。";
-                msg.Param.Add("user", user.Username);
-                msg.Param.Add("usertype", user.Usertype);
+                var user = await ctx.Operators.Where(x => x.Username == data.UserName && x.Pwd == data.Password)
+                .FirstOrDefaultAsync();
+                if (user != null)
+                {
+                    msg.Ret = "0";
+                    msg.Msg = "登录成功。";
+                    msg.Param.Add("user", user.Username);
+                    msg.Param.Add("usertype", user.Usertype);
+                }
+                else
+                {
+                    msg.Ret = "-1";
+                    msg.Msg = "没有该用户的信息,请检查输入是否有误。";
+                }
             }
-            else
+            catch (Exception e)
             {
                 msg.Ret = "-1";
-                msg.Msg = "没有该用户的信息,请检查输入是否有误。";
+                msg.Msg = e.Message;
+                throw;
             }
 
             return new JsonResult(msg);
@@ -172,7 +190,7 @@ namespace TestServer.Controllers
             // 检查试验控制器当前状态,如果正在工作中则返回提示信息
             for (int i = 0; i < 4; i++)
             {
-                if(_testMasters.DictTestMaster[i].Status == MasterStatus.Recording)
+                if (_testMasters.DictTestMaster[i].Status == MasterStatus.Recording)
                 {
                     response.Ret = "-1";
                     response.Msg = $"{i}号试验装置正在试验中,继续退出将导致数据丢失,是否继续 ?";
@@ -216,15 +234,22 @@ namespace TestServer.Controllers
         public async Task<IActionResult> StartHeating(int id)
         {
             int _masterId = id;
-
-            //设置控制器状态为[Preparing],开始升温
-            await _testMasters.DictTestMaster[_masterId].StartHeatingAsync();
-
             Message msg = new Message();
             msg.Cmd = "startheating";
-            //设置客户端返回消息
-            msg.Ret = "0";
-            msg.Msg = "试验装置开始加热。";
+            //设置控制器状态为[Preparing],开始升温
+            var ret = await _testMasters.DictTestMaster[_masterId].StartHeatingAsync();
+            if (ret == 0)
+            {
+                //启动加热成功,设置客户端返回消息
+                msg.Ret = "0";
+                msg.Msg = "试验装置开始加热。";
+            }
+            else if (ret == -1)
+            {
+                //启动加热失败,设置客户端返回消息
+                msg.Ret = "-1";
+                msg.Msg = "通信异常,炉温加热未能启动。";
+            }
             msg.Param.Add("masterid", _masterId);
             msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
 
@@ -235,17 +260,27 @@ namespace TestServer.Controllers
          * 功能: 停止不燃炉加热
          * 参数:
          *      id - 试验控制器ID
+         * 返回:
+         *      0  - 停止加热成功
+         *      -1 - 停止加热失败
          */
         [HttpGet("stopheating/{id}")]
         public IActionResult StopHeating(int id)
         {
-            //执行停止不燃炉加热的相关操作
-            _testMasters.DictTestMaster?[id].StopHeating();
-
             Message msg = new Message();
             msg.Cmd = "stopheating";
-            msg.Ret = "0";
-            msg.Msg = "试验装置已停止加热。";
+            //执行停止不燃炉加热的相关操作
+            var ret = _testMasters.DictTestMaster?[id].StopHeating();
+            if (ret == 0)
+            {
+                msg.Ret = "0";
+                msg.Msg = "试验装置已停止加热。";
+            }
+            else if (ret == -1)
+            {
+                msg.Ret = "-1";
+                msg.Msg = "通信异常,试验装置未能停止加热。";
+            }
             msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
 
             return new JsonResult(msg);
@@ -273,48 +308,58 @@ namespace TestServer.Controllers
             productmaster.Diameter = data.SmpDiameter;
 
             _testMasters.DictTestMaster?[_masterId].SetProductData(productmaster);
-            //第一次创建该产品的试验,新增产品信息
-            if (!ctx.Productmasters.Any(prod => (prod.Productid == data.SmpId)))
+            try
             {
-                ctx.Productmasters.Add(productmaster);
-                await ctx.SaveChangesAsync();
-            }
-            //判断试验编号是否重复(重复则返回提示信息)
-            if (!ctx.Testmasters.Any(test => (test.Productid == data.SmpId && test.Testid == data.TestId)))
-            {
-                //样品编号及试验编号没有重复,创建并设置控制器内部数据缓存
-                var testmaster = new Testmaster();
-                testmaster.Productid = data.SmpId;
-                testmaster.Testid = data.TestId;
-                testmaster.Ambtemp = data.AmbTemp;
-                testmaster.Ambhumi = data.AmbHumi;
-                testmaster.Testdate = DateTime.Parse(data.TestDate);
-                testmaster.According = data.TestAccord;
-                testmaster.Operator = data.Operator;
-                testmaster.Apparatusid = data.ApparatusId;
-                testmaster.Apparatusname = data.ApparatusName;
-                testmaster.Apparatuschkdate = DateTime.Parse(data.ApparatusChkDate);
-                testmaster.Constpower = data.ConstPower;
-                testmaster.Rptno = data.SmpId;  //(暂时将报告编号自动设置为样品编号)
-                testmaster.Preweight = data.SmpWeight;
-                testmaster.Phenocode = "0000";
-                testmaster.Memo = data.TestMemo;
-                testmaster.Flag = "00000000"; // (第1位:本次试验是否完成, 第2位:本次试验是否出结论 ...)
-                _testMasters.DictTestMaster[_masterId].SetTestData(testmaster);
+                //第一次创建该产品的试验,新增产品信息
+                if (!ctx.Productmasters.Any(prod => (prod.Productid == data.SmpId)))
+                {
+                    ctx.Productmasters.Add(productmaster);
+                    await ctx.SaveChangesAsync();
+                }
+                //判断试验编号是否重复(重复则返回提示信息)
+                if (!ctx.Testmasters.Any(test => (test.Productid == data.SmpId && test.Testid == data.TestId)))
+                {
+                    //样品编号及试验编号没有重复,创建并设置控制器内部数据缓存
+                    var testmaster = new Testmaster();
+                    testmaster.Productid = data.SmpId;
+                    testmaster.Testid = data.TestId;
+                    testmaster.Ambtemp = data.AmbTemp;
+                    testmaster.Ambhumi = data.AmbHumi;
+                    testmaster.Testdate = DateTime.Parse(data.TestDate);
+                    testmaster.According = data.TestAccord;
+                    testmaster.Operator = data.Operator;
+                    testmaster.Apparatusid = data.ApparatusId;
+                    testmaster.Apparatusname = data.ApparatusName;
+                    testmaster.Apparatuschkdate = DateTime.Parse(data.ApparatusChkDate);
+                    testmaster.Constpower = data.ConstPower;
+                    testmaster.Rptno = data.SmpId;  //(暂时将报告编号自动设置为样品编号)
+                    testmaster.Preweight = data.SmpWeight;
+                    testmaster.Phenocode = "0000";
+                    testmaster.Memo = data.TestMemo;
+                    testmaster.Flag = "00000000"; // (第1位:本次试验是否完成, 第2位:本次试验是否出结论 ...)
+                    _testMasters.DictTestMaster[_masterId].SetTestData(testmaster);
 
-                //设置客户端返回消息
-                msg.Ret = "0";
-                msg.Msg = $"创建新试验成功。样品编号: [ {testmaster.Productid} ], 样品标识: [ {testmaster.Testid} ]";
-                msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
-                msg.Param.Add("masterid", _masterId);
-                msg.Param.Add("smpid", testmaster.Productid);
-                msg.Param.Add("testid", testmaster.Testid);
+                    //设置客户端返回消息
+                    msg.Ret = "0";
+                    msg.Msg = $"创建新试验成功。样品编号: [ {testmaster.Productid} ], 样品标识: [ {testmaster.Testid} ]";
+                    msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
+                    msg.Param.Add("masterid", _masterId);
+                    msg.Param.Add("smpid", testmaster.Productid);
+                    msg.Param.Add("testid", testmaster.Testid);
+                }
+                else
+                {
+                    //样品编号及试验编号重复,返回错误提示                
+                    msg.Ret = "-1";
+                    msg.Msg = $"样品标识号 [ {data.TestId} ] 重复,请检查输入。";
+                    msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
+                    msg.Param.Add("masterid", _masterId);
+                }
             }
-            else
+            catch (Exception e)
             {
-                //样品编号及试验编号重复,返回错误提示                
                 msg.Ret = "-1";
-                msg.Msg = $"样品标识号 [ {data.TestId} ] 重复,请检查输入。";
+                msg.Msg = e.Message;
                 msg.Param.Add("time", DateTime.Now.ToString("HH:mm:ss"));
                 msg.Param.Add("masterid", _masterId);
             }

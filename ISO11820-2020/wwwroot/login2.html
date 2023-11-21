@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>System Login</title>
+
+    <link rel="stylesheet" href="./login2.css">
+
+    <script src="./login.js" defer></script>
+</head>
+
+<body>
+    <div class="login-panel">
+        <div class="login-panel-left">
+            <div class="overlay">
+            </div>
+            <div class="title">                
+                建筑材料不燃性试验系统
+            </div>
+            <div class="accordings">
+                <label>GB/T 5464-2010</label>
+                <label>ISO 1182-2020</label>
+            </div>
+        </div>
+        <div class="login-panel-right">
+            <h1>系统登录</h1>
+            <div class="input-field">
+                <select data-binding="username">
+                    <option value="operator" selected>试验员</option>
+                    <option value="admin">管理员</option>
+                </select>
+            </div>
+            <div class="input-field">
+                <input type="password" data-binding="password" required>
+                <label>密码</label>
+            </div>
+            <button id="btnSubmit" class="btn-login">登 录</button>
+        </div>
+    </div>
+</body>
+
+</html>

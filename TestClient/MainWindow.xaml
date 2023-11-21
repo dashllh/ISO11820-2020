@@ -11,6 +11,6 @@
         WindowStyle="None"
         Closed="Window_Closed" d:DesignHeight="82.639" d:DesignWidth="198.072">
     <Grid>
-        <wv2:WebView2 x:Name="wvContent" Source="https://localhost:7241/login.html" WebMessageReceived="wvContent_WebMessageReceived"></wv2:WebView2>
+        <wv2:WebView2 x:Name="wvContent" Source="https://localhost:7241/login2.html" WebMessageReceived="wvContent_WebMessageReceived"></wv2:WebView2>
     </Grid>
 </Window>

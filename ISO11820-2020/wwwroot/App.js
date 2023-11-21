@@ -141,10 +141,10 @@ document.getElementById("btnQuit").onclick = function () {
     window.fetch('api/testmaster/quitwithcheck')
         .then(response => response.json())
         .then(data => {
-            if (data.ret === "0") {
+            if (data.ret === "0") {  // 所有试验控制器都处于空闲的情况,直接退出
                 // 向本地应用程序发送退出消息
                 window.chrome.webview.postMessage("quit");
-            } else if (data.ret === "-1") {
+            } else if (data.ret === "-1") { // 存在试验控制器处于试验中的情况,提示
                 $.messager.confirm('系统提示', data.msg, (confirm) => {
                     if (confirm) {
                         window.fetch('api/testmaster/quitanyway')

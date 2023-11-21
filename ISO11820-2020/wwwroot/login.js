@@ -1,5 +1,5 @@
 let dmLogin = {
-    username: '',
+    username: 'operator',
     password: ''
 }
 
@@ -27,7 +27,7 @@ items_view_login.forEach((item) => {
     // 获取当前input元素绑定的ViewModel属性
     const propName = item.dataset.binding;
     // 实时更新数据模型的值
-    item.addEventListener('input', (event) => {
+    item.addEventListener('change', (event) => {
         dmLogin[propName] = item.value;
     });
 });

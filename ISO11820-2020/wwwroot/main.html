@@ -37,6 +37,13 @@
 </head>
 
 <body class="easyui-layout">
+    <!-- 用户界面初始化overlay -->
+    <div id="loading" class="overlay">
+        <div class="spinner"></div>
+        <div class="loading-text">
+            初始化用户界面...
+        </div>
+    </div>
     <!-- 主窗体标题栏 -->
     <div data-options="region:'north'"
         style="border: none;width: 100%;height: 60px;border-bottom: 2px rgb(225, 89, 0) solid;">
@@ -1265,6 +1272,12 @@
     </div>
 
     <!-- 关于系统对话框(结束) -->
+
+    <script>
+        document.onload = setTimeout(() => {
+            document.getElementById('loading').style.display = 'none';
+        }, 1000); 
+    </script>
 </body>
 <footer>
     <!-- 导入客户端初始化文件 -->

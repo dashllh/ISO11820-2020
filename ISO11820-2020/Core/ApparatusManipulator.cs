@@ -22,9 +22,7 @@ namespace TestServer.Core
     public class ApparatusManipulator
     {
         private string _pidPort = string.Empty;
-        private string _powerPort = string.Empty;
         private int _unitIdentifier = 0x01;
-
         private ushort _currentOutput; // 当前Pid控制模块的输出功率值(0-25600)(手动方式)
         private ushort _pidOutput;     // 当前Pid控制模块的输出功率值(0-25600)(Pid方式)
         private ushort _currentTemp;   // 当前控温热电偶的温度(单位:0.1)
@@ -33,8 +31,6 @@ namespace TestServer.Core
         public ApparatusStatus apparatusStatus { get; set; }
         //PID控制器通信端口
         private ModbusRtuClient _pidClient;
-        //恒功率控制器通信端口
-        //private ModbusRtuClient _powerClient;
         //PID控制温度(默认为750℃)
         public Int16 Temperature { get; set; }
         //恒功率输出值(值域: 900 - 4096)
@@ -43,7 +39,6 @@ namespace TestServer.Core
         public ApparatusManipulator(string pidport,string powerport, Int16 constPower, Int16 temperature = 750)
         {
             _pidPort = pidport;
-            _powerPort = powerport;
             apparatusStatus = ApparatusStatus.None;
             _currentOutput = 0xFFFF;
             _pidOutput = 0x6400; // 对应100%
@@ -54,13 +49,6 @@ namespace TestServer.Core
             _pidClient.StopBits = StopBits.One;
             _pidClient.ReadTimeout = 1000;
             _pidClient.WriteTimeout = 1000;
-            //初始化恒功率控制器连接
-            //_powerClient = new();
-            //_powerClient.BaudRate = 9600;
-            //_powerClient.Parity = Parity.None;
-            //_powerClient.StopBits = StopBits.Two;
-            //_powerClient.ReadTimeout = 1000;
-            //_powerClient.WriteTimeout = 1000;
             //初始化PID控制器与电力调整器输出控制参数
             Temperature = temperature;
             ConstPower = constPower;
@@ -88,18 +76,6 @@ namespace TestServer.Core
             }
             return false;
         }
-
-        /*
-         * 功能: 更新恒功率值
-         * 说明: 该函数由SetOutputPower替代
-         */
-        //public void UpdateConstPower(Int16 newvalue)
-        //{
-        //    ConstPower = newvalue;
-        //    //向电力调整器发送更新输出指令
-        //    if (_powerClient.IsConnected)
-        //        _powerClient.WriteSingleRegister(_unitIdentifier, 0x0002, ConstPower);
-        //}
 
         /* =========定义设备的执行动作函数,这些函数使用设备的通信端口发送控制指令 ========== */
 
@@ -141,6 +117,9 @@ namespace TestServer.Core
 
         /*
          * 功能: 开始加热,按温度阶段调整输出功率
+         * 返回:
+         *       true  - 设置成功,开始加热
+         *       false - 设置失败,未开始加热
          */
         public bool StartHeating()
         {
